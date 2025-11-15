@@ -102,7 +102,8 @@ const HomePageOne = () => {
      </a>
 
       {/* Right Card */}
-      <div
+  <a href="/login-in">
+        <div
         style={styles.centerCard}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -110,6 +111,7 @@ const HomePageOne = () => {
         <img src={png1} alt="Profile" style={styles.image} />
         <h4 style={styles.name}>Frenchise Admin</h4>
       </div>
+  </a>
     </div>
   );
 };

@@ -17,6 +17,7 @@ import contactUsLeadReducer from './slice/contachUsLead'
 import counsellorLeadReducer from './slice/counsellorLead'
 import queryReducer from './slice/QuerySlice'
 import profileReducer from './slice/profileSlice'
+import partnerSliceReducer from './slice/PartnerSlice'
 
 const store = configureStore({
   reducer: {
@@ -37,7 +38,8 @@ const store = configureStore({
       contactUsLead:contactUsLeadReducer, 
       counsellorLead:counsellorLeadReducer, 
       query:queryReducer, 
-      profile:profileReducer
+      profile:profileReducer,
+      partner:partnerSliceReducer 
   },
  
 });

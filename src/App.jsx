@@ -122,6 +122,8 @@ import PasswordResetPage from "./pages/PasswordResetPage";
 import ChangePassword from "./pages/ChangePassword";
 import Cookies from "js-cookie";
 import { useEffect } from "react";
+import FrenchiseLogin from "./pages/FrenchiseLogin";
+import PartnerManagement from "./pages/PartnerManagement";
 function App() {
 
    const navigate = useNavigate();
@@ -179,7 +181,10 @@ function App() {
         <Route exact path='/index-3' element={<HomePageThree />} />
         <Route exact path='/index-4' element={<HomePageFour />} />
         <Route exact path='/index-5' element={<HomePageFive />} /> */}
+       
         <Route exact path='/dashboard' element={<HomePageSix />} />
+        <Route exact path='/frenchise-dashboard' element={<HomePageSeven />} />
+       
         {/* <Route exact path='/index-7' element={<HomePageSeven />} />
         <Route exact path='/index-8' element={<HomePageEight />} />
         <Route exact path='/index-9' element={<HomePageNine />} />
@@ -315,9 +320,18 @@ function App() {
         <Route exact path='/webinar-lead' element={<WebinarPage  />} />
         <Route exact path='/password-reset' element={<PasswordResetPage  />} />
         <Route exact path='/change-password/:id' element={<ChangePassword/>} />
-        
+        <Route exact path='/login-in' element={<FrenchiseLogin/>} />
+
          
 
+
+
+
+
+
+
+
+          <Route exact path='/partener-management' element={<PartnerManagement/>} />
         <Route exact path='*' element={<ErrorPage />} />
       </Routes>
     </>
