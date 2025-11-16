@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 
-// Create Webinar
+
 export const createPartner = createAsyncThunk(
   'blogs/createPartner',
   async (partnerData, thunkAPI) => {
@@ -33,8 +33,6 @@ export const createPartner = createAsyncThunk(
     }
   }
 );
-
-
 export const fetchPartner = createAsyncThunk(
   'webinar/fetchPartner',
   async (_, { rejectWithValue }) => {
@@ -48,8 +46,20 @@ export const fetchPartner = createAsyncThunk(
     }
   }
 );
+export const fetchFrenchise = createAsyncThunk(
+  'webinar/fetchPartner',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get('https://searchmystudy.com/api/users/profile/frenchise');
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+  }
+);
 
-// DeleteWebinar
 export const deleteWebinar = createAsyncThunk(
   'blogs/deleteWebinar',
   async (ids, { rejectWithValue }) => {
@@ -68,7 +78,8 @@ export const deleteWebinar = createAsyncThunk(
     }
   }
 );
-// updateWebinar
+
+
 export const updateWebinar = createAsyncThunk(
   'blogs/updateWebinar',
   async ({id, data}, { rejectWithValue }) => {

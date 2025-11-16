@@ -124,6 +124,8 @@ import Cookies from "js-cookie";
 import { useEffect } from "react";
 import FrenchiseLogin from "./pages/FrenchiseLogin";
 import PartnerManagement from "./pages/PartnerManagement";
+import FrechiseManagement from "./pages/FrechiseManagement";
+import CountryManagement from "./pages/CountryManagement";
 function App() {
 
    const navigate = useNavigate();
@@ -332,6 +334,9 @@ function App() {
 
 
           <Route exact path='/partener-management' element={<PartnerManagement/>} />
+          <Route exact path='/country-management' element={<CountryManagement/>} />
+          <Route exact path='/frenchise-management' element={<FrechiseManagement/>} />
+
         <Route exact path='*' element={<ErrorPage />} />
       </Routes>
     </>

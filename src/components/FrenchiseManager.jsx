@@ -8,10 +8,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
 import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { fetchPartner } from "../slice/PartnerSlice";
+import { fetchFrenchise, fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
+import CreateFrenchise from "../form/CreateFrenchise";
 
-const PartnerManager = () => {
+const FrenchiseManager = () => {
   const dispatch = useDispatch();
   const webinars  = useSelector((state) => state.partner.partner);
 
@@ -20,7 +21,7 @@ const PartnerManager = () => {
   const [editingWebinar, setEditingWebinar] = useState(null);
 
   const fetchData = async () => {
-    const a = await dispatch(fetchPartner());
+    const a = await dispatch(fetchFrenchise());
     // console.log(a)
   };
   console.log(webinars)
@@ -98,14 +99,14 @@ const PartnerManager = () => {
         className="card-header"
         style={{ display: "flex", justifyContent: "space-between" }}
       >
-        <h5 className="card-title mb-0">Partner Table</h5>
+        <h5 className="card-title mb-0">Frenchise Table</h5>
         <div>
           <button
             type="button"
             className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
             onClick={() => setShowModal(true)}
           >
-            Add Partner
+            Add Frenchise
           </button>
 
           <button
@@ -116,7 +117,7 @@ const PartnerManager = () => {
           </button>
 
           {showModal && (
-            <CreatePartner
+            <CreateFrenchise
               fetchData={fetchData}
               ele={editingWebinar}
               handleClose={() => {
@@ -187,4 +188,4 @@ const PartnerManager = () => {
   );
 };
 
-export default PartnerManager;
+export default FrenchiseManager;

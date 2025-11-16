@@ -18,7 +18,7 @@ import counsellorLeadReducer from './slice/counsellorLead'
 import queryReducer from './slice/QuerySlice'
 import profileReducer from './slice/profileSlice'
 import partnerSliceReducer from './slice/PartnerSlice'
-
+import countrySliceReducer from './slice/CountrySlicr'
 const store = configureStore({
   reducer: {
       blog: blogReducer,
@@ -39,7 +39,8 @@ const store = configureStore({
       counsellorLead:counsellorLeadReducer, 
       query:queryReducer, 
       profile:profileReducer,
-      partner:partnerSliceReducer 
+      partner:partnerSliceReducer,
+      country:countrySliceReducer  
   },
  
 });

@@ -206,7 +206,7 @@ const navigate = useNavigate();
             </li>
             <li>
               <NavLink
-                to='/country-management'
+                to='/country-manager'       
                 className={(navData) => (navData.isActive ? "active-page" : "")}
               >
                 <Icon
@@ -216,7 +216,7 @@ const navigate = useNavigate();
                 <span>Country Management</span>
               </NavLink>
             </li>
-            {/* <li>
+            <li>
               <NavLink
                 to='/counselor-manager'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -253,7 +253,7 @@ const navigate = useNavigate();
                 />
                 <span>Video Management</span>
               </NavLink>
-            </li> */}
+            </li>
 
             {/* <li>
               <NavLink
@@ -269,7 +269,7 @@ const navigate = useNavigate();
             </li> */}
 
             {/* Abroad Study Dropdown */}
-{/*            
+           
             <li className='dropdown'>
               <Link to='#'>
                 <Icon icon='hugeicons:invoice-03' className='menu-icon' />
@@ -377,7 +377,7 @@ const navigate = useNavigate();
 
                 </li>
               </ul>
-            </li>  */}
+            </li> 
 
 
             {/* <li>
@@ -394,7 +394,7 @@ const navigate = useNavigate();
 
 
 
-            {/* <li>
+            <li>
               <NavLink
                 to='/testemonials-manager'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -420,11 +420,11 @@ const navigate = useNavigate();
                 />
                 <span>Study India Management</span>
               </NavLink>
-            </li> */}
+            </li>
 
 
 
-  {/* <li className='dropdown'>
+  <li className='dropdown'>
               <Link to='#'>
                 <Icon icon='hugeicons:invoice-03' className='menu-icon' />
                 <span>Others</span>
@@ -455,12 +455,23 @@ const navigate = useNavigate();
                     Website Details
                   </NavLink>
                 </li>
-
+{/*  
+                <li>
+                  <NavLink
+                    to='/social-details'
+                    className={(navData) =>
+                      navData.isActive ? "active-page" : ""
+                    }
+                  >
+                    <i className='ri-circle-fill circle-icon text-danger-main w-auto' />{" "}
+                    Social Details
+                  </NavLink>
+                </li> */}
                 
 
                 
               </ul>
-            </li> */}
+            </li>
 
 
 

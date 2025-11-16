@@ -10,17 +10,20 @@ import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
 import { fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
+import { fetchCountry } from "../slice/CountrySlicr";
 
-const PartnerManager = () => {
+const CountryManager = () => {
   const dispatch = useDispatch();
-  const webinars  = useSelector((state) => state.partner.partner);
+  const webinars  = useSelector((state) => state.country.country);
+  console.log(webinars);
+  
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingWebinar, setEditingWebinar] = useState(null);
 
   const fetchData = async () => {
-    const a = await dispatch(fetchPartner());
+    const a = await dispatch(fetchCountry());
     // console.log(a)
   };
   console.log(webinars)
@@ -187,4 +190,4 @@ const PartnerManager = () => {
   );
 };
 
-export default PartnerManager;
+export default CountryManager;
