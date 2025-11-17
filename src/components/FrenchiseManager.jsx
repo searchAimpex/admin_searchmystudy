@@ -14,7 +14,11 @@ import CreateFrenchise from "../form/CreateFrenchise";
 
 const FrenchiseManager = () => {
   const dispatch = useDispatch();
-  const webinars  = useSelector((state) => state.partner.partner);
+
+  // const webinars1  = useSelector((state) => state);
+  // console.log(webinars1);
+  
+  const webinars  = useSelector((state) => state.partner.frenchise);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +26,7 @@ const FrenchiseManager = () => {
 
   const fetchData = async () => {
     const a = await dispatch(fetchFrenchise());
-    // console.log(a)
+    // console.log(a)  
   };
   console.log(webinars)
 

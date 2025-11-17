@@ -85,7 +85,7 @@ const PartnerManager = () => {
       toast.success("Selected webinar(s) deleted successfully");
       setSelectedIds([]);
       fetchData()
-      dispatch(fetchWebinar());
+      // dispatch(fetchWebinar());
     } catch (error) {
       console.log(error);
       toast.error("Error deleting webinar(s)");

@@ -47,7 +47,7 @@ export const fetchPartner = createAsyncThunk(
   }
 );
 export const fetchFrenchise = createAsyncThunk(
-  'webinar/fetchPartner',
+  'webinar/fetchFrenchise',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('https://searchmystudy.com/api/users/profile/frenchise');
@@ -60,48 +60,12 @@ export const fetchFrenchise = createAsyncThunk(
   }
 );
 
-export const deleteWebinar = createAsyncThunk(
-  'blogs/deleteWebinar',
-  async (ids, { rejectWithValue }) => {
-    console.log(ids);
-    
-    if (!ids || ids.length === 0) {
-      return rejectWithValue({ message: "No Webinar IDs provided" });
-    }
-    try {
-      const response = await axios.delete("https://searchmystudy.com/api/admin/webinar", {
-        data: { ids },
-      });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
-    }
-  }
-);
-
-
-export const updateWebinar = createAsyncThunk(
-  'blogs/updateWebinar',
-  async ({id, data}, { rejectWithValue }) => {
-    if (!id) {
-      return rejectWithValue({ message: "No Webinar ID provided" });
-    }
-    try {
-      const response = await axios.put(`https://searchmystudy.com/api/admin/webinar/${id}`,data);
-      fetchWebinar();
-      console.log("Update response:", response.data);
-      
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
-    }
-  }
-);
 
 const partnerSlice = createSlice({
   name: 'partners',
   initialState: {
     partner: [],
+    frenchise:[],
     loading: false,
     error: null,
   },
@@ -119,7 +83,23 @@ const partnerSlice = createSlice({
       .addCase(fetchPartner.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+
+        .addCase(fetchFrenchise.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFrenchise.fulfilled, (state, action) => {
+        state.loading = false;
+        state.frenchise = action.payload;
+      })
+      .addCase(fetchFrenchise.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
+
+      
   },
 });
 

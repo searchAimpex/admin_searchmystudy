@@ -5,6 +5,7 @@ import { app } from "../firebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { createPartner } from "../slice/PartnerSlice";
 
 const storage = getStorage(app);
 
@@ -13,9 +14,9 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
   const [formValues, setFormValues] = useState({
     email: ele?.email || '',
-    password: '',
+    password: ele?.password || '',
     role: ele?.role || '',
-    name: ele?.name || '',
+    name: ele?.name || 'Null',
     OwnerName: ele?.OwnerName || '',
     OwnerFatherName: ele?.OwnerFatherName || '',
     InstitutionName: ele?.InstitutionName || '',
@@ -32,11 +33,15 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     PanCard: ele?.PanCard || null,
     ProfilePhoto: ele?.ProfilePhoto || null,
     VisitOffice: ele?.VisitOffice || '',
+    OfficePhoto: ele?.OfficePhoto || null,
+    OwnerPhoto: ele?.OwnerPhoto || null,
     CancelledCheck: ele?.CancelledCheck || null,
     Logo: ele?.Logo || null,
     accountedDetails: ele?.accountedDetails || '',
     IFSC: ele?.IFSC || '',
-    bankName: ele?.bankName || ''
+    bankName: ele?.bankName || '',
+    mou:ele?.mou || '',
+    registration:ele?.registration || '',
   });
 
   const [uploads, setUploads] = useState({
@@ -95,10 +100,10 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      toast.error("Please fill required fields");
-      return;
-    }
+    // if (!validateForm()) {
+    //   toast.error("Please fill required fields");
+    //   return;
+    // }
 
     try {
       // send formValues to your create/update action
@@ -112,7 +117,8 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
           toast.error("Update failed");
         }
       } else {
-        const res = await dispatch(createWebinar(formValues));
+        console.log(formValues,"++++++++++++++++++++++++++++++++++++")
+        const res = await dispatch(CreateFrenchise(formValues));
         if (res?.type?.endsWith("/fulfilled")) {
           toast.success("Partner created");
           handleClose();
@@ -134,21 +140,26 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
         <div className="modal-dialog" style={{ maxWidth: 900 }}>
           <div className="modal-content p-20">
             <div className="modal-header">
-              <h5 className="modal-title">{ele ? "Edit Frenchise" : "Create Frenchise"}</h5>
+              <h5 className="modal-title">{ele ? "Edit Partner" : "Create Partner"}</h5>
               <button type="button" className="btn-close" onClick={handleClose}></button>
             </div>
+
             <div className="modal-body">
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="form-label">Name</label>
-                  <input name="name" value={formValues.name} onChange={handleInputChange} className={`form-control ${errors.name ? "is-invalid" : ""}`} />
-                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                  <label className="form-label">Owner Name</label>
+                  <input name="OwnerName" value={formValues.OwnerName} onChange={handleInputChange} className="form-control" />
                 </div>
 
+
                 <div className="col-md-6">
-                  <label className="form-label">Email</label>
-                  <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
-                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                  <label className="form-label">Owner Father's Name</label>
+                  <input name="OwnerFatherName" value={formValues.OwnerFatherName} onChange={handleInputChange} className="form-control" />
+                </div>
+
+                  <div className="col-md-6">
+                  <label className="form-label">Institution Name</label>
+                  <input name="InstitutionName" value={formValues.InstitutionName} onChange={handleInputChange} className="form-control" />
                 </div>
 
                 <div className="col-md-6">
@@ -162,25 +173,54 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                   <input name="WhatsAppNumber" value={formValues.WhatsAppNumber} onChange={handleInputChange} className="form-control" />
                 </div>
 
+             
+                <div className="col-md-4">
+                  <label className="form-label">Center Code</label>
+                  <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
+                </div>
+
+
+
+                <div className="col-md-4">
+                  <label className="form-label">Date Of Birth</label>
+                  <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className="form-control" />
+                </div>
+
+
                 <div className="col-md-6">
-                  <label className="form-label">Role</label>
+                  <label className="form-label">Type</label>
+                  {/* <option value=""></option> */}
                   <input name="role" value={formValues.role} onChange={handleInputChange} className="form-control" />
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label">Owner Name</label>
-                  <input name="OwnerName" value={formValues.OwnerName} onChange={handleInputChange} className="form-control" />
+                  <label className="form-label">Email</label>
+                  <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
+                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label">Owner Father's Name</label>
-                  <input name="OwnerFatherName" value={formValues.OwnerFatherName} onChange={handleInputChange} className="form-control" />
+                  <label className="form-label">Password</label>
+                  <input name="password" value={formValues.password} onChange={handleInputChange} className={`form-control ${errors.password ? "is-invalid" : ""}`} />
+                  {errors.password && <div className="invalid-feedback">{errors.password}</div>}
                 </div>
 
+{/* 
                 <div className="col-md-6">
-                  <label className="form-label">Institution Name</label>
-                  <input name="InstitutionName" value={formValues.InstitutionName} onChange={handleInputChange} className="form-control" />
-                </div>
+                  <label className="form-label">Name</label>
+                  <input name="name" value={formValues.name} onChange={handleInputChange} className={`form-control ${errors.name ? "is-invalid" : ""}`} />
+                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                </div> */}
+
+
+
+
+
+
+
+
+
+             
 
                 <div className="col-md-4">
                   <label className="form-label">City</label>
@@ -200,40 +240,28 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                   <textarea name="address" value={formValues.address} onChange={handleInputChange} className="form-control" />
                 </div>
 
-                <div className="col-md-4">
-                  <label className="form-label">Date Of Birth</label>
-                  <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className="form-control" />
-                </div>
 
-                <div className="col-md-4">
-                  <label className="form-label">Center Code</label>
-                  <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
-                </div>
 
-                <div className="col-md-4">
-                  <label className="form-label">Visit Office</label>
-                  <input name="VisitOffice" value={formValues.VisitOffice} onChange={handleInputChange} className="form-control" />
-                </div>
 
                 {/* Bank details */}
-                <div className="col-md-4">
+                {/* <div className="">
                   <label className="form-label">Accounted Details</label>
                   <input name="accountedDetails" value={formValues.accountedDetails} onChange={handleInputChange} className="form-control" />
-                </div>
-                <div className="col-md-4">
+                </div> */}
+                {/* <div className="col-md-4">
                   <label className="form-label">IFSC</label>
                   <input name="IFSC" value={formValues.IFSC} onChange={handleInputChange} className="form-control" />
-                </div>
-                <div className="col-md-4">
+                </div> */}
+                {/* <div className="col-md-4">
                   <label className="form-label">Bank Name</label>
                   <input name="bankName" value={formValues.bankName} onChange={handleInputChange} className="form-control" />
-                </div>
+                </div> */}
 
                 {/* File uploads */}
-                {["ProfilePhoto","Logo","FrontAadhar","BackAadhar","PanCard","CancelledCheck"].map((f) => (
+                {[ "FrontAadhar","BackAadhar", "OfficePhoto", "OwnerPhoto","VisitOffice","MOU", "PanCard", "Registration"].map((f) => (
                   <div className="col-md-6" key={f}>
                     <label className="form-label">{f}</label>
-                    <input type="file" accept="image/*,application/pdf" onChange={(e)=>handleFileChange(e, f)} className="form-control" />
+                    <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, f)} className="form-control" />
                     {uploads[f]?.preview && (
                       <div className="mt-2">
                         <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
