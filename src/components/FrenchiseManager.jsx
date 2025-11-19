@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
 import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { fetchFrenchise, fetchPartner } from "../slice/PartnerSlice";
+import { deletePartner, fetchFrenchise, fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
 import CreateFrenchise from "../form/CreateFrenchise";
 
@@ -84,13 +84,14 @@ const FrenchiseManager = () => {
       );
       if (!confirmed) return;
 
-      // Send array of IDs to API
-      await dispatch(deleteWebinar(selectedIds));
+      // console.log(selectedIds);
+      const a = await dispatch(deletePartner(selectedIds));
+      // console.log(a)
 
-      toast.success("Selected webinar(s) deleted successfully");
+      toast.success("Selected User(s) deleted successfully");
       setSelectedIds([]);
       fetchData()
-      dispatch(fetchWebinar());
+       await dispatch(fetchFrenchise());
     } catch (error) {
       console.log(error);
       toast.error("Error deleting webinar(s)");

@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
 import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { fetchPartner } from "../slice/PartnerSlice";
+import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
 
 const PartnerManager = () => {
@@ -80,12 +80,12 @@ const PartnerManager = () => {
       if (!confirmed) return;
 
       // Send array of IDs to API
-      await dispatch(deleteWebinar(selectedIds));
+      await dispatch(deletePartner(selectedIds));
 
       toast.success("Selected webinar(s) deleted successfully");
       setSelectedIds([]);
       fetchData()
-      // dispatch(fetchWebinar());
+      await dispatch(fetchPartner());
     } catch (error) {
       console.log(error);
       toast.error("Error deleting webinar(s)");

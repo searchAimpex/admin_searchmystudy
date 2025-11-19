@@ -31,7 +31,7 @@ const navigate = useNavigate();
 
   const loadCounsellors = async () => {
     const res = await dispatch(fetchTestemonial());
-    console.log(res.payload, "}}}}}}}}}}}}}}}}}}}}}}}}]");
+    // console.log(res.payload, "}}}}}}}}}}}}}}}}}}}}}}}}]");
     if (res?.meta?.requestStatus === "fulfilled") {
       setCounsellor(res.payload);
     }

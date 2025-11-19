@@ -5,34 +5,36 @@ import { app } from "../firebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createPartner } from "../slice/PartnerSlice";
+import { createPartner, updatePartner } from "../slice/PartnerSlice";
 
 const storage = getStorage(app);
 
 const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
+  console.log(ele);
+  
 
   const [formValues, setFormValues] = useState({
     email: ele?.email || '',
     password: ele?.password || '',
-    role: ele?.role || '',
+    role: ele?.role || 'franchise',
     name: ele?.name || 'Null',
     OwnerName: ele?.OwnerName || '',
     OwnerFatherName: ele?.OwnerFatherName || '',
-    InstitutionName: ele?.InstitutionName || '',
+    InstitutionName: ele?.InsitutionName || '',
     ContactNumber: ele?.ContactNumber || '',
-    WhatsAppNumber: ele?.WhatsAppNumber || '',
+    WhatsAppNumber: ele?.WhatappNumber || '',
     CenterCode: ele?.CenterCode || '',
     DateOfBirth: ele?.DateOfBirth || '',
     city: ele?.city || '',
     state: ele?.state || '',
     zipCode: ele?.zipCode || '',
     address: ele?.address || '',
-    FrontAadhar: ele?.FrontAadhar || null,
-    BackAadhar: ele?.BackAadhar || null,
+    FrontAadhar: ele?.FrontAdhar || null,
+    BackAadhar: ele?.BackAdhar || null,
     PanCard: ele?.PanCard || null,
     ProfilePhoto: ele?.ProfilePhoto || null,
-    VisitOffice: ele?.VisitOffice || '',
+    VisitOffice: ele?.VistOffice || '',
     OfficePhoto: ele?.OfficePhoto || null,
     OwnerPhoto: ele?.OwnerPhoto || null,
     CancelledCheck: ele?.CancelledCheck || null,
@@ -106,19 +108,23 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     // }
 
     try {
+      
       // send formValues to your create/update action
+      // console.log(formValues);
+      
       if (ele && ele._id) {
-        const res = await dispatch(updateWebinar({ id: ele._id, data: formValues }));
-        if (updateWebinar.fulfilled.match(res)) {
+        const res = await dispatch(updatePartner({ id: ele._id, data: formValues }));
+        // console.log(res);
+        if (updatePartner.fulfilled.match(res)) {
           toast.success("Partner updated");
-          handleClose();
+          // handleClose();
           fetchData?.();
         } else {
           toast.error("Update failed");
         }
       } else {
         console.log(formValues,"++++++++++++++++++++++++++++++++++++")
-        const res = await dispatch(CreateFrenchise(formValues));
+        const res = await dispatch(createPartner(formValues));
         if (res?.type?.endsWith("/fulfilled")) {
           toast.success("Partner created");
           handleClose();
@@ -157,7 +163,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                   <input name="OwnerFatherName" value={formValues.OwnerFatherName} onChange={handleInputChange} className="form-control" />
                 </div>
 
-                  <div className="col-md-6">
+                <div className="col-md-6">
                   <label className="form-label">Institution Name</label>
                   <input name="InstitutionName" value={formValues.InstitutionName} onChange={handleInputChange} className="form-control" />
                 </div>
@@ -187,10 +193,18 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                 </div>
 
 
-                <div className="col-md-6">
+                 <div className="col-md-6">
                   <label className="form-label">Type</label>
-                  {/* <option value=""></option> */}
-                  <input name="role" value={formValues.role} onChange={handleInputChange} className="form-control" />
+
+                  <select
+                    name="role"
+                    value={formValues.role}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  >
+                    <option value="partner" selected>Partner</option>
+                    <option value="franchise" disabled>Franchise</option>
+                  </select>
                 </div>
 
                 <div className="col-md-6">

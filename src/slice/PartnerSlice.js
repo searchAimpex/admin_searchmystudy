@@ -9,7 +9,7 @@ export const createPartner = createAsyncThunk(
     try {
       console.log("Sending Webinar data:", partnerData);
 
-      const response = await fetch("https://searchmystudy.com/api/users", {
+      const response = await fetch("http://localhost:3000/api/users", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,8 +59,40 @@ export const fetchFrenchise = createAsyncThunk(
     }
   }
 );
-
-
+export const deletePartner = createAsyncThunk(
+  'blogs/deletePartner',
+  async (ids, { rejectWithValue }) => {
+    console.log(ids);
+    try {
+      const response = await axios.delete('http://localhost:3000/api/users/profile/delete', {
+        data: { ids },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+  }
+);
+export const updatePartner = createAsyncThunk(
+  'blogs/updateWebinar',
+  async ({id, data}, { rejectWithValue }) => {
+    if (!id) {
+      return rejectWithValue({ message: "No Webinar ID provided" });
+    }
+    try {
+      console.log(data,"--------------------");
+      
+      const response = await axios.put(`http://localhost:3000/api/users/updateUser/${id}`,data);
+      // fetchWebinar();     
+      // console.log("Update response:", response.data);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 const partnerSlice = createSlice({
   name: 'partners',
   initialState: {

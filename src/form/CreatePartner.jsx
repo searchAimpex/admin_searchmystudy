@@ -1,59 +1,85 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { createWebinar, updateWebinar } from "../slice/webinarSlice";
 import { app } from "../firebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createPartner } from "../slice/PartnerSlice";
+import { createPartner, updatePartner } from "../slice/PartnerSlice";
 
 const storage = getStorage(app);
 
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
 
-  const [formValues, setFormValues] = useState({
-    email: ele?.email || '',
-    password: ele?.password || '',
-    role: ele?.role || '',
-    name: ele?.name || 'Null',
-    OwnerName: ele?.OwnerName || '',
-    OwnerFatherName: ele?.OwnerFatherName || '',
-    InstitutionName: ele?.InstitutionName || '',
-    ContactNumber: ele?.ContactNumber || '',
-    WhatsAppNumber: ele?.WhatsAppNumber || '',
-    CenterCode: ele?.CenterCode || '',
-    DateOfBirth: ele?.DateOfBirth || '',
-    city: ele?.city || '',
-    state: ele?.state || '',
-    zipCode: ele?.zipCode || '',
-    address: ele?.address || '',
-    FrontAadhar: ele?.FrontAadhar || null,
-    BackAadhar: ele?.BackAadhar || null,
-    PanCard: ele?.PanCard || null,
-    ProfilePhoto: ele?.ProfilePhoto || null,
-    VisitOffice: ele?.VisitOffice || '',
-    OfficePhoto: ele?.OfficePhoto || null,
-    OwnerPhoto: ele?.OwnerPhoto || null,
-    CancelledCheck: ele?.CancelledCheck || null,
-    Logo: ele?.Logo || null,
-    accountedDetails: ele?.accountedDetails || '',
-    IFSC: ele?.IFSC || '',
-    bankName: ele?.bankName || '',
-    mou:ele?.mou || '',
-    registration:ele?.registration || '',
-  });
+  // align keys with your Mongoose schema (accept common variants from older code)
+  const initial = {
+    name: ele?.name || ele?.OwnerName || "",
+    email: ele?.email || "",
+    password: "",
+    passwordTracker: ele?.passwordTracker || "",
+    role: ele?.role || "partner",
+    OwnerName: ele?.OwnerName || ele?.name || "",
+    OwnerFatherName: ele?.OwnerFatherName || "",
+    InsitutionName: ele?.InsitutionName || ele?.InstitutionName || "",
+    ContactNumber: ele?.ContactNumber || "",
+    WhatappNumber: ele?.WhatappNumber || ele?.WhatsAppNumber || "",
+    CenterCode: ele?.CenterCode || "",
+    DateOfBirth: ele?.DateOfBirth ? ele.DateOfBirth.split("T")[0] : "",
+    city: ele?.city || "",
+    state: ele?.state || "",
+    zipCode: ele?.zipCode || "",
+    address: ele?.address || "",
+    FrontAdhar: ele?.FrontAdhar || ele?.FrontAadhar || "",
+    BackAdhar: ele?.BackAdhar || ele?.BackAadhar || "",
+    PanCard: ele?.PanCard || "",
+    ProfilePhoto: ele?.ProfilePhoto || "",
+    OwnerPhoto: ele?.OwnerPhoto || "",
+    OfficePhoto: ele?.OfficePhoto || "",
+    VistOffice: ele?.VistOffice || ele?.VisitOffice || "",
+    CancelledCheck: ele?.CancelledCheck || "",
+    Logo: ele?.Logo || "",
+    mou: ele?.mou || ele?.MOU || "",
+    registration: ele?.registration || ele?.Registration || "",
+    accountedDetails: ele?.accountedDetails || "",
+    IFSC: ele?.IFSC || "",
+    bankName: ele?.bankName || "",
+    bio: ele?.bio || "",
+  };
+
+  const [formValues, setFormValues] = useState(initial);
+
+  useEffect(() => {
+    setFormValues(prev => ({ ...prev, ...(ele || {}) }));
+    // populate upload previews from ele if available
+    // eslint-disable-next-line
+  }, [ele]);
 
   const [uploads, setUploads] = useState({
-    FrontAadhar: { progress: 0, preview: formValues.FrontAadhar || null, loading: false },
-    BackAadhar: { progress: 0, preview: formValues.BackAadhar || null, loading: false },
-    PanCard: { progress: 0, preview: formValues.PanCard || null, loading: false },
-    ProfilePhoto: { progress: 0, preview: formValues.ProfilePhoto || null, loading: false },
-    CancelledCheck: { progress: 0, preview: formValues.CancelledCheck || null, loading: false },
-    Logo: { progress: 0, preview: formValues.Logo || null, loading: false },
+    FrontAdhar: { progress: 0, preview: initial.FrontAdhar || null, loading: false },
+    BackAdhar: { progress: 0, preview: initial.BackAdhar || null, loading: false },
+    PanCard: { progress: 0, preview: initial.PanCard || null, loading: false },
+    ProfilePhoto: { progress: 0, preview: initial.ProfilePhoto || null, loading: false },
+    OwnerPhoto: { progress: 0, preview: initial.OwnerPhoto || null, loading: false },
+    OfficePhoto: { progress: 0, preview: initial.OfficePhoto || null, loading: false },
+    CancelledCheck: { progress: 0, preview: initial.CancelledCheck || null, loading: false },
+    Logo: { progress: 0, preview: initial.Logo || null, loading: false },
+    mou: { progress: 0, preview: initial.mou || null, loading: false },
+    registration: { progress: 0, preview: initial.registration || null, loading: false },
   });
 
-  const [errors, setErrors] = useState({});
+  // keep uploads previews in sync when ele changes
+  useEffect(() => {
+    if (!ele) return;
+    setUploads(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => {
+        if (ele[k]) next[k].preview = ele[k];
+      });
+      return next;
+    });
+  }, [ele]);
+
+  const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -65,7 +91,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     if (!file) return;
 
     const previewURL = URL.createObjectURL(file);
-    setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL } }));
+    setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL, progress: 0 } }));
 
     const storageRef = ref(storage, `partners/${fieldName}/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
@@ -92,39 +118,69 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formValues.name?.trim()) newErrors.name = "Name is required";
+    if (!formValues.OwnerName?.trim()) newErrors.OwnerName = "Owner name is required";
     if (!formValues.email?.trim()) newErrors.email = "Email is required";
     if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = "Contact number is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  const [errors, setErrors] = useState({});
 
-  const handleSubmit = async () => {
-    // if (!validateForm()) {
-    //   toast.error("Please fill required fields");
-    //   return;
-    // }
+  const fileFields = [
+    "ProfilePhoto",
+    "FrontAdhar",
+    "BackAdhar",
+    "PanCard",
+    "OwnerPhoto",
+    "OfficePhoto",
+    "CancelledCheck",
+    "Logo",
+    "mou",
+    "registration",
+  ];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (anyUploading()) {
+      toast.error("Please wait for file uploads to finish.");
+      return;
+    }
+
+    if (!validateForm()) {
+      toast.error("Please fix validation errors.");
+      return;
+    }
 
     try {
-      // send formValues to your create/update action
+      const payload = { ...formValues };
+
+      if (payload.DateOfBirth) {
+        payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
+      }
+
+      // don't overwrite password with empty value on update
+      if (ele && ele._id && !payload.password) delete payload.password;
+
       if (ele && ele._id) {
-        const res = await dispatch(updateWebinar({ id: ele._id, data: formValues }));
-        if (updateWebinar.fulfilled.match(res)) {
+        const res = await dispatch(updatePartner({ id: ele._id, data: payload }));
+        if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner updated");
-          handleClose();
           fetchData?.();
+          handleClose?.();
         } else {
-          toast.error("Update failed");
+          const msg = res?.payload?.message || res?.error?.message || "Update failed";
+          toast.error(msg);
         }
       } else {
-        console.log(formValues,"++++++++++++++++++++++++++++++++++++")
-        const res = await dispatch(createPartner(formValues));
-        if (res?.type?.endsWith("/fulfilled")) {
+        const res = await dispatch(createPartner(payload));
+        if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner created");
-          handleClose();
           fetchData?.();
+          handleClose?.();
         } else {
-          toast.error("Creation failed");
+          const msg = res?.payload?.message || res?.error?.message || "Creation failed";
+          toast.error(msg);
         }
       }
     } catch (err) {
@@ -144,142 +200,108 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
               <button type="button" className="btn-close" onClick={handleClose}></button>
             </div>
 
-            <div className="modal-body">
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label">Owner Name</label>
-                  <input name="OwnerName" value={formValues.OwnerName} onChange={handleInputChange} className="form-control" />
-                </div>
-
-
-                <div className="col-md-6">
-                  <label className="form-label">Owner Father's Name</label>
-                  <input name="OwnerFatherName" value={formValues.OwnerFatherName} onChange={handleInputChange} className="form-control" />
-                </div>
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label">Owner Name</label>
+                    <input name="OwnerName" value={formValues.OwnerName} onChange={handleInputChange} className={`form-control ${errors.OwnerName ? "is-invalid" : ""}`} />
+                    {errors.OwnerName && <div className="invalid-feedback">{errors.OwnerName}</div>}
+                  </div>
 
                   <div className="col-md-6">
-                  <label className="form-label">Institution Name</label>
-                  <input name="InstitutionName" value={formValues.InstitutionName} onChange={handleInputChange} className="form-control" />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Contact Number</label>
-                  <input name="ContactNumber" value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
-                  {errors.ContactNumber && <div className="invalid-feedback">{errors.ContactNumber}</div>}
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">WhatsApp Number</label>
-                  <input name="WhatsAppNumber" value={formValues.WhatsAppNumber} onChange={handleInputChange} className="form-control" />
-                </div>
-
-             
-                <div className="col-md-4">
-                  <label className="form-label">Center Code</label>
-                  <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
-                </div>
-
-
-
-                <div className="col-md-4">
-                  <label className="form-label">Date Of Birth</label>
-                  <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className="form-control" />
-                </div>
-
-
-                <div className="col-md-6">
-                  <label className="form-label">Type</label>
-                  {/* <option value=""></option> */}
-                  <input name="role" value={formValues.role} onChange={handleInputChange} className="form-control" />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Email</label>
-                  <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
-                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Password</label>
-                  <input name="password" value={formValues.password} onChange={handleInputChange} className={`form-control ${errors.password ? "is-invalid" : ""}`} />
-                  {errors.password && <div className="invalid-feedback">{errors.password}</div>}
-                </div>
-
-{/* 
-                <div className="col-md-6">
-                  <label className="form-label">Name</label>
-                  <input name="name" value={formValues.name} onChange={handleInputChange} className={`form-control ${errors.name ? "is-invalid" : ""}`} />
-                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
-                </div> */}
-
-
-
-
-
-
-
-
-
-             
-
-                <div className="col-md-4">
-                  <label className="form-label">City</label>
-                  <input name="city" value={formValues.city} onChange={handleInputChange} className="form-control" />
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">State</label>
-                  <input name="state" value={formValues.state} onChange={handleInputChange} className="form-control" />
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">Zip Code</label>
-                  <input name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className="form-control" />
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label">Address</label>
-                  <textarea name="address" value={formValues.address} onChange={handleInputChange} className="form-control" />
-                </div>
-
-
-
-
-                {/* Bank details */}
-                {/* <div className="">
-                  <label className="form-label">Accounted Details</label>
-                  <input name="accountedDetails" value={formValues.accountedDetails} onChange={handleInputChange} className="form-control" />
-                </div> */}
-                {/* <div className="col-md-4">
-                  <label className="form-label">IFSC</label>
-                  <input name="IFSC" value={formValues.IFSC} onChange={handleInputChange} className="form-control" />
-                </div> */}
-                {/* <div className="col-md-4">
-                  <label className="form-label">Bank Name</label>
-                  <input name="bankName" value={formValues.bankName} onChange={handleInputChange} className="form-control" />
-                </div> */}
-
-                {/* File uploads */}
-                {[ "FrontAadhar","BackAadhar", "OfficePhoto", "OwnerPhoto","VisitOffice","MOU", "PanCard", "Registration"].map((f) => (
-                  <div className="col-md-6" key={f}>
-                    <label className="form-label">{f}</label>
-                    <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, f)} className="form-control" />
-                    {uploads[f]?.preview && (
-                      <div className="mt-2">
-                        <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
-                        <div>Progress: {Math.round(uploads[f].progress)}%</div>
-                      </div>
-                    )}
+                    <label className="form-label">Owner Father's Name</label>
+                    <input name="OwnerFatherName" value={formValues.OwnerFatherName} onChange={handleInputChange} className="form-control" />
                   </div>
-                ))}
 
+                  <div className="col-md-6">
+                    <label className="form-label">Institution Name</label>
+                    <input name="InsitutionName" value={formValues.InsitutionName} onChange={handleInputChange} className="form-control" />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">Contact Number</label>
+                    <input name="ContactNumber" value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
+                    {errors.ContactNumber && <div className="invalid-feedback">{errors.ContactNumber}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">WhatsApp Number</label>
+                    <input name="WhatappNumber" value={formValues.WhatappNumber} onChange={handleInputChange} className="form-control" />
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label">Center Code</label>
+                    <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label">Date Of Birth</label>
+                    <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className="form-control" />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">Type</label>
+                    <select name="role" value={formValues.role} onChange={handleInputChange} className="form-control">
+                      <option value="partner">Partner</option>
+                      <option value="franchise">Franchise</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">Email</label>
+                    <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
+                    {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">Password</label>
+                    <input name="password" type="password" value={formValues.password} onChange={handleInputChange} className="form-control" placeholder={ele ? "Leave blank to keep current" : ""} />
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label">City</label>
+                    <input name="city" value={formValues.city} onChange={handleInputChange} className="form-control" />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">State</label>
+                    <input name="state" value={formValues.state} onChange={handleInputChange} className="form-control" />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Zip Code</label>
+                    <input name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className="form-control" />
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label">Address</label>
+                    <textarea name="address" value={formValues.address} onChange={handleInputChange} className="form-control" />
+                  </div>
+
+                  {fileFields.map((f) => (
+                    <div className="col-md-6" key={f}>
+                      <label className="form-label">{f}</label>
+                      <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, f)} className="form-control" />
+                      {uploads[f]?.preview && (
+                        <div className="mt-2">
+                          <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
+                          <div>Progress: {Math.round(uploads[f].progress)}%</div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                </div>
               </div>
-            </div>
 
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={handleClose}>Close</button>
-              <button type="button" className="btn btn-primary" onClick={handleSubmit}>
-                {ele && ele._id ? "Update Partner" : "Create Partner"}
-              </button>
-            </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={handleClose}>Close</button>
+                <button type="submit" className="btn btn-primary" disabled={anyUploading()}>
+                  {anyUploading() ? "Uploading..." : (ele && ele._id ? "Update Partner" : "Create Partner")}
+                </button>
+              </div>
+            </form>
+
           </div>
         </div>
       </div>
