@@ -9,7 +9,7 @@ export const createPartner = createAsyncThunk(
     try {
       console.log("Sending Webinar data:", partnerData);
 
-      const response = await fetch("http://localhost:3000/api/users", {
+      const response = await fetch("https://searchmystudy.com/api/users", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const deletePartner = createAsyncThunk(
   async (ids, { rejectWithValue }) => {
     console.log(ids);
     try {
-      const response = await axios.delete('http://localhost:3000/api/users/profile/delete', {
+      const response = await axios.delete('https://searchmystudy.com/api/users/profile/delete', {
         data: { ids },
       });
       return response.data;
@@ -84,7 +84,7 @@ export const updatePartner = createAsyncThunk(
     try {
       console.log(data,"--------------------");
       
-      const response = await axios.put(`http://localhost:3000/api/users/updateUser/${id}`,data);
+      const response = await axios.put(`https://searchmystudy.com/api/users/updateUser/${id}`,data);
       // fetchWebinar();     
       // console.log("Update response:", response.data);
       return response.data;
