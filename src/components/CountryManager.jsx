@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
 import { fetchCountry } from "../slice/CountrySlicr";
+import CreateCountryDocs from "../form/CreateCountryDocs";
 
 const CountryManager = () => {
   const dispatch = useDispatch();
@@ -119,7 +120,7 @@ const CountryManager = () => {
           </button>
 
           {showModal && (
-            <CreatePartner
+            <CreateCountryDocs
               fetchData={fetchData}
               ele={editingWebinar}
               handleClose={() => {
@@ -137,11 +138,11 @@ const CountryManager = () => {
       <tr>
         <th>Check</th>
         <th>Name</th>
-        <th>Email</th>
-        <th>Owner Name</th>
-        <th>Create At</th>
-        <th>Password</th>
-        {/* <th>Experience</th> */}
+        <th>Code</th>
+        <th>Faq</th>
+        <th>Flag URL</th>
+        <th>Why This Country</th>
+        <th>VFS</th>
         <th>Action</th>
       </tr>
     </thead>
@@ -161,11 +162,16 @@ const CountryManager = () => {
           </td>
 
           <td>{ele?.name}</td>
-          <td>{ele?.email}</td>
-          <td>{ele?.OwnerName}</td>
-          <td>{ele?.createdAt}</td>
+          <td>{ele?.code}</td>
           <td>
-           {ele.passwordTracker}
+            <a target="_blank" href={ele?.faq}>Link</a>
+          </td>
+          <td> 
+            <a target="_blank" href={ele?.falgURL}>Link</a>
+          </td>
+          <td>
+                <a target="_blank" href={ele?.whyThisCountry}>Link</a>
+
           </td>
 
           <td>

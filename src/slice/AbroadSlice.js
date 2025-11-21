@@ -20,6 +20,22 @@ export const fetchAbroadStudy = createAsyncThunk(
     }
 );
 
+
+export const allCountry = createAsyncThunk(
+  'abroad/allCountry',
+    async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("https://searchmystudy.com/api/admin/countries");
+      return response.data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+    }
+);
+
+
 export const deleteAbroadStudy = createAsyncThunk(
   'abroad/deleteAbroadStudy',
     async (ids, { rejectWithValue }) => {
@@ -93,6 +109,7 @@ export const abroadSlice = createSlice({
   name: 'abroad',
     initialState: {
         studyAbroad: [],
+        allCountries:[],
         loading: false,
         error: null,
     },
@@ -111,18 +128,18 @@ export const abroadSlice = createSlice({
             state.loading = false;
             state.error = action.payload || 'Failed to fetch abroad study data';
             })
-            // .addCase(deleteAbroadStudy.pending, (state) => {
-            // state.loading = true;
-            // state.error = null;
-            // })
-            // .addCase(deleteAbroadStudy.fulfilled, (state, action) => {
-            // state.studyAbroad = state.studyAbroad.filter(item => !action.payload.ids.includes(item._id));
-            // state.loading = false;
-            // })
-            // .addCase(deleteAbroadStudy.rejected, (state, action) => {
-            // state.loading = false;
-            // state.error = action.payload || 'Failed to delete abroad study data';
-            // })
+            .addCase(allCountry.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+            })
+            .addCase(allCountry.fulfilled, (state, action) => {
+            state.allCountries = action.payload
+            state.loading = false;
+            })
+            .addCase(allCountry.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || 'Failed to delete abroad study data';
+            })
             .addCase(createAbroadStudyThunk.pending, (state) => {
             state.loading = true;
             state.error = null;

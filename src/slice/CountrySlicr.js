@@ -34,6 +34,58 @@ export const createPartner = createAsyncThunk(
   }
 );
 
+// Create a second-country document
+export const createSecondCountry = createAsyncThunk(
+  'country/createSecondCountry',
+  async (countryData, thunkAPI) => {
+    try {
+      const response = await fetch('https://searchmystudy.com/api/users/secondcountry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(countryData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
+    }
+  }
+);
+
+// Update a second-country document by id
+export const updateSecondCountry = createAsyncThunk(
+  'country/updateSecondCountry',
+  async ({ id, data }, thunkAPI) => {
+    try {
+      const response = await fetch(`https://searchmystudy.com/api/users/secondcountry/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData);
+      }
+
+      const resData = await response.json();
+      return resData;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
+    }
+  }
+);
+
 
 
 export const fetchCountry = createAsyncThunk(
