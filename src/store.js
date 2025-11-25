@@ -19,6 +19,8 @@ import queryReducer from './slice/QuerySlice'
 import profileReducer from './slice/profileSlice'
 import partnerSliceReducer from './slice/PartnerSlice'
 import countrySliceReducer from './slice/CountrySlicr'
+import assessmentSliceReducer from './slice/AssessmentSlice'
+
 const store = configureStore({
   reducer: {
       blog: blogReducer,
@@ -40,7 +42,8 @@ const store = configureStore({
       query:queryReducer, 
       profile:profileReducer,
       partner:partnerSliceReducer,
-      country:countrySliceReducer  
+      country:countrySliceReducer  ,
+      assessment:assessmentSliceReducer
   },
  
 });
