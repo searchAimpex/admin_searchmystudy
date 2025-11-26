@@ -201,6 +201,7 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
         <div className="modal-dialog" style={{ maxWidth: 900 }}>
           <div className="modal-content p-20">
             <div className="modal-header">
+              
               <h5 className="modal-title">{ele ? "Edit Lead" : "Create Lead"}</h5>
               <button type="button" className="btn-close" onClick={handleClose}></button>
             </div>

@@ -87,11 +87,11 @@ const LeadManager = () => {
 
             const confirmed = window.confirm(
                 `Are you sure you want to delete ${selectedIds.length} webinar(s)?`
-            );
+            );  
             if (!confirmed) return;
             // console.log(selectedIds,"----------------------------------------");
            const a =  await dispatch(deleteLead(selectedIds));
-        //    console.log(a);
+           console.log(a,"================");
            
             // toast.success("Selected webinar(s) deleted successfully");
             setSelectedIds([]);
@@ -134,8 +134,8 @@ const LeadManager = () => {
                                 setShowModal(false);
                                 setEditingWebinar(null);
                             }}
-                        />
-                    )}
+                        />   
+                    )}    
                 </div>
             </div>
 

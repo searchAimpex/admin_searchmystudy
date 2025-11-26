@@ -56,23 +56,31 @@ export const createAssessment = createAsyncThunk(
 export const deleteLead = createAsyncThunk(
   "lead/deleteLead",
   async (ids, { rejectWithValue }) => {
-    
-    
-    console.log(ids,"|||||||||||||||||||||||||||||||||||||||||");
+
+    console.log(ids, "|||||||||||||||||||||||||||||||||||||||||");
+
     if (!ids || ids.length === 0) {
       return rejectWithValue({ message: "No IDs provided" });
     }
+
     try {
-      const response = await axios.delete("http://localhost:3000/api/admin/student", ids);
+      const response = await axios.delete(
+        "http://localhost:3000/api/admin/student",
+        {
+          data: { ids },   // 👈 DELETE can only send body like this
+        }
+      );
+
       // toast.success("Delete lead Successfully");
-      return response?.data;
+      return response.data;
+
     } catch (error) {
-      toast.error("Failed to delete lead")
-      return rejectWithValue(error);
+      toast.error("Failed to delete lead");
+      return rejectWithValue(error?.response?.data || error.message);
     }
   }
-
 );
+
 
 
 // export const deleteQuery = createAsyncThunk(
