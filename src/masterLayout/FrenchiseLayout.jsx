@@ -229,6 +229,19 @@ const navigate = useNavigate();
                 <span>Lead Management</span>
               </NavLink>
             </li>
+
+            <li>
+              <NavLink
+                to='/student-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Student Management</span>
+              </NavLink>
+            </li>
             {/* <li>
               <NavLink
                 to='/counselor-manager'

@@ -127,6 +127,7 @@ import PartnerManagement from "./pages/PartnerManagement";
 import FrechiseManagement from "./pages/FrechiseManagement";
 import CountryManagement from "./pages/CountryManagement";
 import LeadManagement from "./pages/LeadManagement";
+import StudentManagement from "./pages/StudentManagement";
 function App() {
 
    const navigate = useNavigate();
@@ -338,7 +339,7 @@ function App() {
           <Route exact path='/country-management' element={<CountryManagement/>} />
           <Route exact path='/frenchise-management' element={<FrechiseManagement/>} />
           <Route exact path='/lead-management' element={<LeadManagement/>} />
-
+          <Route exact path='/student-management' element={<StudentManagement/>} />
         <Route exact path='*' element={<ErrorPage />} />
       </Routes>
     </>
