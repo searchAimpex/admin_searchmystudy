@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createPartner, updatePartner } from "../slice/PartnerSlice";
-import { createAssessment } from "../slice/AssessmentSlice";
+import { createAssessment, updateAssessment } from "../slice/AssessmentSlice";
 import { allCountry } from "../slice/AbroadSlice";
 import { useSelector } from "react-redux";
 
@@ -14,7 +14,7 @@ const storage = getStorage(app);
 const CreateLead = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
   const { allCountries } = useSelector(state => state.abroadStudy);
-  // console.log(allCountries,"???????????????????????????????????");
+  console.log(ele,"???????????????????????????????????");
 
   const fetchAllCountries = async () => {
     const res = await dispatch(allCountry())
@@ -41,9 +41,9 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
     // document fields (files)
     resume: ele?.resume || "",
     englishTestScorecard: ele?.englishTestScorecard || "",
-    acadmics: ele?.PanCard || "",
-    englishTestDoc: ele?.ProfilePhoto || "",
-    workExperienceDoc: ele?.OwnerPhoto || ""
+    acadmics: ele?.acadmics || "",
+    englishTestDoc: ele?.englishTestDoc || "",
+    workExperienceDoc: ele?.workExperienceDoc || ""
   };
 
   const [formValues, setFormValues] = useState(initial);
@@ -166,7 +166,7 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
       if (ele && ele._id && !payload.password) delete payload.password;
 
       if (ele && ele._id) {
-        const res = await dispatch(updatePartner({ id: ele._id, data: payload }));
+        const res = await dispatch(updateAssessment({ id: ele._id, data: payload }));
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner updated");
           fetchData?.();
@@ -176,7 +176,6 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
           toast.error(msg);
         }
       } else {
-        // console.log(payload, "::::::::::::::::::::::::::::::");
 
         const res = await dispatch(createAssessment(payload));
         if (res?.meta?.requestStatus === "fulfilled") {
@@ -206,11 +205,8 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className="modal-body">
+              <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                 <div className="row g-3">
-
-
-
                   {/* Personal / assessment fields */}
                   <div className="col-md-4">
                     <label className="form-label">First Name</label>
@@ -259,7 +255,7 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                       <option value="">Select Country</option>
                       {
                         allCountries.map((e) => (
-                          <option key={e._id} value={e.name}>{e.name}</option>
+                          <option key={e._id} value={e._id}>{e.name}</option>
                         ))
                       }
                     </select>
@@ -302,12 +298,12 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                     <label className="form-label">English Test</label>
                     <select name="englishTest" value={formValues.englishTest} onChange={handleInputChange} className="form-control">
                       <option value="">Select Test Type</option>
-                      <option value="IELTS">IELTS</option>
-                      <option value="TOEFL">TOEFL</option>
-                      <option value="PTE">PTE</option>
+                      <option value="WITH IELTS">WITH IELTS</option>
+                      <option value="WITHOUT IELTS">WITHOUT IELTS</option>
+                      {/* <option value="PTE">PTE</option>
                       <option value="CAE">CAE</option>
                       <option value="FCE">FCE</option>
-                      <option value="Duolingo">Duolingo</option>
+                      <option value="Duolingo">Duolingo</option> */}
                     </select>
                   </div>
 
@@ -316,8 +312,12 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                     <textarea name="remarks" value={formValues.remarks} onChange={handleInputChange} className="form-control" />
                   </div>
 
-
-
+                  {/* Documents Section */}
+                  <div className="col-12">
+                    <h6 className="mb-3 mt-3" style={{ fontWeight: 'bold', borderBottom: '1px solid #ddd', paddingBottom: '10px' }}>
+                      Upload Documents
+                    </h6>
+                  </div>
 
                   {/* Render file inputs with per-field labels/accept and proper preview handling */}
                   {fileFields.map((f) => {
@@ -325,7 +325,7 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                       resume: { label: 'Resume', accept: 'application/pdf' },
                       englishTestScorecard: { label: 'English Test Scorecard', accept: 'application/pdf' },
                       acadmics: { label: 'Academics (marksheet)', accept: 'image/*,application/pdf' },
-                      englishTestDoc: { label: 'English Test Document', accept: 'application/pdf' },
+                      englishTestDoc: { label: 'English Test Document', accept: 'application/pdf' },        
                       workExperienceDoc: { label: 'Work Experience Document', accept: 'application/pdf' },
                     }[f] || { label: f, accept: 'image/*,application/pdf' };
 
@@ -340,11 +340,13 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                         {preview && (
                           <div className="mt-2">
                             {isPdf ? (
-                              <a href={preview} target="_blank" rel="noreferrer">Open PDF</a>
+                              <a href={preview} style={{color:"red"}} target="_blank" rel="noreferrer">Open PDF</a>
                             ) : (
                               <img src={preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
                             )}
-                            <div>Progress: {Math.round(uploads[f].progress)}</div>
+                            <div>
+                              {isPdf ? `Progress: ${Math.round(uploads[f].progress)}%` : ""}
+                            </div>
                           </div>
                         )}
                       </div>

@@ -3,12 +3,12 @@ import axios from 'axios';
 import { createSlice } from '@reduxjs/toolkit';
 import { toast } from 'react-toastify';
 
-export const FetchAssessment = createAsyncThunk(
-  'lead/FetchAssessment',
+export const FetchStudent = createAsyncThunk(
+  'student/FetchStudent',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("https://searchmystudy.com/api/admin/profile");
-      console.log(response);
+      const response = await axios.get("https://searchmystudy.com/api/admin/student");
+      // console.log(response);
 
       return response.data; // returned data will be available in fulfilled reducer
 
@@ -24,14 +24,14 @@ export const FetchAssessment = createAsyncThunk(
 
 export const updateAssessment = createAsyncThunk(
   'blogs/updateAssessment',
-  async ({id, data}, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue }) => {
     if (!id) {
       return rejectWithValue({ message: "No Webinar ID provided" });
     }
     try {
-      console.log(data,"--------------------");
-      
-      const response = await axios.put(`http://searchmystudy.com/api/admin/profile/update/${id}`,data);
+      console.log(data, "--------------------");
+
+      const response = await axios.put(`http://searchmystudy.com/api/admin/profile/update/${id}`, data);
       // fetchWebinar();     
       // console.log("Update response:", response.data);
       return response.data;
@@ -57,6 +57,24 @@ export const createAssessment = createAsyncThunk(
   }
 )
 
+export const deleteStudent = createAsyncThunk(
+  'studnet/deleteStudent',
+  async (ids, { rejectWithValue }) => {
+    console.log(ids);
+
+    if (!ids || ids.length === 0) {
+      return rejectWithValue({ message: "No abroad study IDs provided" });
+    }
+    try {
+      const response = await axios.delete(`http://searchmystudy.com/api/admin/student`, {
+        data: { ids }
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 
 
 // export const updateContactUsLead = createAsyncThunk(
@@ -72,33 +90,6 @@ export const createAssessment = createAsyncThunk(
 //         }
 //     }
 // );
-export const deleteLead = createAsyncThunk(
-  "lead/deleteLead",
-  async (ids, { rejectWithValue }) => {
-
-    console.log(ids, "|||||||||||||||||||||||||||||||||||||||||");
-
-    if (!ids || ids.length === 0) {
-      return rejectWithValue({ message: "No IDs provided" });
-    }
-
-    try {
-      const response = await axios.delete(
-        "http://searchmystudy.com/api/admin/profile",
-        {
-          data: { ids }   // 👈 IMPORTANT!
-        }
-      );
-
-      // toast.success("Delete lead Successfully");
-      return response?.data;
-
-    } catch (error) {
-      toast.error("Failed to delete lead");
-      return rejectWithValue(error.response?.data || error.message);
-    }
-  }
-);
 
 
 // export const deleteQuery = createAsyncThunk(
@@ -117,26 +108,34 @@ export const deleteLead = createAsyncThunk(
 //     }
 //     }
 // );
-const AssessmentSlice = createSlice({
-  name: "Assessment",
+const StudentSlice = createSlice({
+  name: "Student",
   initialState: {
-    assessment: [],
+    student: [],
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(FetchAssessment.pending, (state) => {
+    builder.addCase(FetchStudent.pending, (state) => {
       state.loading = true;
       state.error = null;
     })
-      .addCase(FetchAssessment.fulfilled, (state, action) => {
+      .addCase(FetchStudent.fulfilled, (state, action) => {
         state.loading = false;
-        state.assessment = action.payload;
+        state.student = action.payload;
       })
-      .addCase(FetchAssessment.rejected, (state, action) => {
+      .addCase(FetchStudent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(deleteStudent.fulfilled, (state, action) => {
+        const deletedIds = action.payload.ids;   // array of deleted IDs
+        console.log(action.payload,"---------------------------------");
+        
+        state.student = state.student.filter(
+          (item) => !deletedIds.includes(item._id)
+        );
       })
 
 
@@ -145,4 +144,4 @@ const AssessmentSlice = createSlice({
   }
 })
 
-export default AssessmentSlice.reducer;
+export default StudentSlice.reducer;

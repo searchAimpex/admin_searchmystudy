@@ -12,20 +12,22 @@ import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
 import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
+import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
 
-const LeadManager = () => {
+const StudentManager = () => {
     const dispatch = useDispatch();
     //   const webinars  = useSelector((state) => state.partner.partner);
-    const { assessment } = useSelector(state => state.assessment)
-    // console.log(data,"|||||||||||||||||||||||");
+    // const { assessment } = useSelector(state => state.assessment)
+    const {student}  = useSelector(state => state.student || [])
+    
+    // console.log(student,"|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
 
     const fetchData = async () => {
-        const b = await dispatch(FetchAssessment());
-        // console.log(b,"||||||||||||||||||||||||||||")
+         await dispatch(FetchStudent())
     };
     //   console.log(webinars)
 
@@ -34,7 +36,7 @@ const LeadManager = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        if (assessment?.length > 0) {
+        if (student?.length > 0) {
             // Delay initialization to ensure DOM is ready
             setTimeout(() => {
                 try {
@@ -57,7 +59,7 @@ const LeadManager = () => {
                 }
             }, 100);
         }
-    }, [assessment]);
+    }, [student]);
 
     // ✅ Checkbox (single select/unselect)
     const handleCheckboxChange = (id) => {
@@ -71,7 +73,7 @@ const LeadManager = () => {
     // ✅ Master checkbox (select/unselect all)
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedIds(assessment?.map((w) => w._id) || []);
+            setSelectedIds(student?.map((w) => w._id) || []);
         } else {
             setSelectedIds([]);
         }
@@ -90,17 +92,17 @@ const LeadManager = () => {
             );
             if (!confirmed) return;
             // console.log(selectedIds,"----------------------------------------");
-           const a =  await dispatch(deleteLead(selectedIds));
-        //    console.log(a);
+           const a =  await dispatch(deleteStudent(selectedIds));
+           console.log(a);
            
-            toast.success("Selected webinar(s) deleted successfully");
+            toast.success("Selected student(s) deleted successfully");
             await dispatch(FetchAssessment());
-            window.location.reload()
+            fetchData()
             setSelectedIds([]);
 
         } catch (error) {
             console.log(error);
-            toast.error("Error deleting webinar(s)");
+            toast.error("Error deleting student(s)");
         }
     };
 
@@ -160,7 +162,7 @@ const LeadManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {assessment?.map((ele, ind) => (
+                        {student?.map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
                                     <div className="form-check style-check d-flex align-items-center">
@@ -208,4 +210,4 @@ const LeadManager = () => {
     );
 };
 
-export default LeadManager;
+export default StudentManager;
