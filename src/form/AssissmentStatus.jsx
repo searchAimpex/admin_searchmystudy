@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createPartner, updatePartner } from "../slice/PartnerSlice";
-import { createAssessment, updateAssessment } from "../slice/AssessmentSlice";
+import { createAssessment, statusAssesmment, updateAssessment } from "../slice/AssessmentSlice";
 import { allCountry } from "../slice/AbroadSlice";
 import { useSelector } from "react-redux";
 
@@ -14,53 +14,41 @@ const storage = getStorage(app);
 const AssissmentStatus = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
     const { allCountries } = useSelector(state => state.abroadStudy);
-    console.log(ele, "???????????????????????????????????");
-
+    
     const fetchAllCountries = async () => {
         const res = await dispatch(allCountry())
         console.log(res);
     }
     // align keys with your Mongoose schema (accept common variants from older code)
-    const initial = {
-        // User: ele?.User || "", // Don't include User - it should be set by backend/auth
-        firstName: ele?.firstName || "",
-        middleName: ele?.middleName || "",
-        lastName: ele?.lastName || "",
-        passportNumber: ele?.passportNumber || "",
-        dob: ele?.dob || "",
-        lastEdu: ele?.lastEdu || "",
-        yearOfPassing: ele?.yearOfPassing || "",
-        gradesInLastYear: ele?.gradesInLastYear || "",
-        english12Grade: ele?.english12Grade || "",
-        englishTest: ele?.englishTest || "",
-        remarks: ele?.remarks || "",
-        mobileNumber: ele?.mobileNumber || "",
-        emailID: ele?.emailID || "",
-        Country: ele?.Country || "",
-        Course: ele?.Course || "",
-        // document fields (files)
-        resume: ele?.resume || "",
-        englishTestScorecard: ele?.englishTestScorecard || "",
-        acadmics: ele?.acadmics || "",
-        englishTestDoc: ele?.englishTestDoc || "",
+    const initial = {   
         status:ele?.status || "",
-        workExperienceDoc: ele?.workExperienceDoc || ""
     };
-
+    
     const [formValues, setFormValues] = useState(initial);
-
-
-
+    
+    
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
+            const payload = { ...formValues };
+
         try {
-            const data = await dispatch(updateAssessment())
+            const data = await dispatch(statusAssesmment({ id: ele._id, data: payload }))
+            console.log(data,">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            if(data?.meta?.requestStatus === "fulfilled"){
+                toast.success("Status Updated Successfully");
+                handleClose();
+                fetchData();
+            }else{
+                toast.error(data?.payload?.message || "Failed to update status");
+            }
         } catch (error) {
             console.log(error)
         }
-     
+        
     };
-
+    
+    // console.log(formValues, "???????????????????????????????????");
     return (
         <>
             <ToastContainer />
@@ -75,11 +63,12 @@ const AssissmentStatus = ({ ele, handleClose, fetchData }) => {
                         <form onSubmit={handleSubmit}>
 
                             <div className="m-4">
-                                <label className="form-label">Status</label>
-                                <select name="Country" value={formValues.status} 
-                                // onChange={handleInputChange}
+                                <label className="form-label">Edit Status</label>
+                                <select name="Country" 
+                                // value={formValues.status} 
+                                onChange={(e)=>{setFormValues({...formValues,status:e.target.value})}}
                                  className="form-control">
-                                    <option value="">Status</option>
+                                    <option value="" disabled>Status</option>
                                    <option value="pending">Pending</option>
                                    <option value="shared">Shared</option>
                                    <option value="eligible">Eligible</option>

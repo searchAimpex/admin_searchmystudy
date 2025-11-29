@@ -21,19 +21,19 @@ export const fetchAbroadStudy = createAsyncThunk(
 );
 
 
-export const allCountry = createAsyncThunk(
-  'abroad/allCountry',
-    async (_, { rejectWithValue }) => {
-    try {
-      const response = await axios.get("https://searchmystudy.com/api/admin/countries");
-      return response.data
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || 'Something went wrong'
-      );
-    }
-    }
-);
+    export const allCountry = createAsyncThunk(
+      'abroad/allCountry',
+        async (_, { rejectWithValue }) => {
+        try {
+          const response = await axios.get("https://searchmystudy.com/api/admin/countries");
+          return response.data
+        } catch (error) {
+          return rejectWithValue(
+            error.response?.data?.message || 'Something went wrong'
+          );
+        }
+        }
+    );
 
 
 export const deleteAbroadStudy = createAsyncThunk(
