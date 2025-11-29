@@ -145,7 +145,7 @@ const LeadManager = () => {
                             fetchData={fetchData}
                             ele={editingWebinar}
                             handleClose={() => {
-                                setShowModal(false);
+                                setShowStatusModal(false);
                                 setEditingWebinar(null);
                             }}
                         />

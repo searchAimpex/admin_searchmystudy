@@ -13,21 +13,23 @@ import CreatePartner from "../form/CreatePartner";
 import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
 import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
+import StudentStatus from "../form/StudentStatus";
 
 const StudentManager = () => {
     const dispatch = useDispatch();
     //   const webinars  = useSelector((state) => state.partner.partner);
     // const { assessment } = useSelector(state => state.assessment)
-    const {student}  = useSelector(state => state.student || [])
-    
+    const { student } = useSelector(state => state.student || [])
+
     // console.log(student,"|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [showStatusModal, setShowStatusModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
 
     const fetchData = async () => {
-         await dispatch(FetchStudent())
+        await dispatch(FetchStudent())
     };
     //   console.log(webinars)
 
@@ -92,9 +94,9 @@ const StudentManager = () => {
             );
             if (!confirmed) return;
             // console.log(selectedIds,"----------------------------------------");
-           const a =  await dispatch(deleteStudent(selectedIds));
-           console.log(a);
-           
+            const a = await dispatch(deleteStudent(selectedIds));
+            console.log(a);
+
             toast.success("Selected student(s) deleted successfully");
             await dispatch(FetchAssessment());
             fetchData()
@@ -135,6 +137,16 @@ const StudentManager = () => {
                             ele={editingWebinar}
                             handleClose={() => {
                                 setShowModal(false);
+                                setEditingWebinar(null);
+                            }}
+                        />
+                    )}
+                    {showStatusModal && (
+                        <StudentStatus
+                            fetchData={fetchData}
+                            ele={editingWebinar}
+                            handleClose={() => {
+                                setShowStatusModal(false);
                                 setEditingWebinar(null);
                             }}
                         />
@@ -186,13 +198,25 @@ const StudentManager = () => {
                                 <td>{ele.dob}</td>
 
                                 <td>{ele?.createdAt}</td>
-                            
+
 
                                 <td>
                                     <Link
                                         onClick={() => {
                                             setEditingWebinar(ele);
                                             setShowModal(true);
+                                        }}
+                                        to="#"
+                                        className="btn btn-sm btn-success"
+                                    >
+                                        <Icon icon="lucide:edit" />
+                                    </Link>
+
+
+                                    <Link
+                                        onClick={() => {
+                                            setEditingWebinar(ele);
+                                            setShowStatusModal(true);
                                         }}
                                         to="#"
                                         className="btn btn-sm btn-success"

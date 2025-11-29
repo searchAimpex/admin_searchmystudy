@@ -63,8 +63,22 @@ export const statusAssesmment = createAsyncThunk(
     "lead/statusAssesmment",
     async({id,data},rejectWithValue)=>{
         try {
-            const response = await axios.put(`http://localhost:3000/api/admin/profile/status/${id}`,data);
+            const response = await axios.put(`https://searchmystudy.com/api/admin/profile/status/${id}`,data);
             toast.success("Update Lead Successfully")
+            return response?.data
+        } catch (error) {
+            toast.error("Failed to update lead")   
+         return rejectWithValue(error)
+        }
+    }
+);
+
+export const statusStudent = createAsyncThunk(
+    "student/statusStudent",
+    async({id,data},rejectWithValue)=>{
+        try {
+            const response = await axios.put(`https://searchmystudy.com/api/admin/student/status/${id}`,data);
+            // toast.success("Update Lead Successfully")
             return response?.data
         } catch (error) {
             toast.error("Failed to update lead")   
