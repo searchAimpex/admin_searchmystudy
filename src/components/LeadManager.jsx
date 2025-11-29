@@ -12,6 +12,7 @@ import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
 import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
+import AssissmentStatus from "../form/AssissmentStatus";
 
 const LeadManager = () => {
     const dispatch = useDispatch();
@@ -21,6 +22,7 @@ const LeadManager = () => {
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [showStatusModal, setShowStatusModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
 
     const fetchData = async () => {
@@ -137,6 +139,17 @@ const LeadManager = () => {
                             }}
                         />
                     )}
+
+                     {showStatusModal && (
+                        <AssissmentStatus
+                            fetchData={fetchData}
+                            ele={editingWebinar}
+                            handleClose={() => {
+                                setShowModal(false);
+                                setEditingWebinar(null);
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -194,6 +207,16 @@ const LeadManager = () => {
                                         }}
                                         to="#"
                                         className="btn btn-sm btn-success"
+                                    >
+                                        <Icon icon="lucide:edit" />
+                                    </Link>
+                                      <Link
+                                        onClick={() => {
+                                            setEditingWebinar(ele);
+                                            setShowStatusModal(true);
+                                        }}
+                                        to="#"
+                                        className="mx-4 btn btn-sm btn-primary"
                                     >
                                         <Icon icon="lucide:edit" />
                                     </Link>
