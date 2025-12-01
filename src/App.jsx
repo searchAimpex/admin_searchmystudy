@@ -128,6 +128,7 @@ import FrechiseManagement from "./pages/FrechiseManagement";
 import CountryManagement from "./pages/CountryManagement";
 import LeadManagement from "./pages/LeadManagement";
 import StudentManagement from "./pages/StudentManagement";
+import FileManagement from "./pages/FileManagement";
 function App() {
 
    const navigate = useNavigate();
@@ -340,6 +341,7 @@ function App() {
           <Route exact path='/frenchise-management' element={<FrechiseManagement/>} />
           <Route exact path='/lead-management' element={<LeadManagement/>} />
           <Route exact path='/student-management' element={<StudentManagement/>} />
+           <Route exact path='/file-management' element={<FileManagement/>} />
         <Route exact path='*' element={<ErrorPage />} />
       </Routes>
     </>

@@ -89,7 +89,7 @@ export const updateSecondCountry = createAsyncThunk(
 
 
 export const fetchCountry = createAsyncThunk(
-  'webinar/fetchCountry',
+  'country/fetchCountry',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('https://searchmystudy.com/api/users/secondcountry');
@@ -105,11 +105,55 @@ export const fetchCountry = createAsyncThunk(
 );
 
 
+export const fetchFile = createAsyncThunk(
+  'file/fetchFile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get('https://searchmystudy.com/api/admin/file');
+    //   console.log(response.data,"++++++++++++++++");
+      
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+  }
+);
+
+
+export const createFile = createAsyncThunk(
+  'country/createFile',
+  async (Data, thunkAPI) => {
+    try {
+      const response = await fetch('https://searchmystudy.com/api/admin/file', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
+    }
+  }
+);
+
+
 
 const countrySlice = createSlice({
   name: 'country',
   initialState: {
     country: null,
+    file:null,
     loading: false,
     error: null,
   },
@@ -125,6 +169,19 @@ const countrySlice = createSlice({
         state.country = action.payload;
       })
       .addCase(fetchCountry.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+       .addCase(fetchFile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.file = action.payload;
+      })
+      .addCase(fetchFile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
