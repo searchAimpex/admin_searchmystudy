@@ -159,16 +159,17 @@ const LeadManager = () => {
                         <tr>
                             <th>Check</th>
                             <th>Tracking ID</th>
+                            <th>Punched By</th>
+                            <th>Center Type</th>
+                            <th>Center Code</th>
                             <th>Name</th>
                             <th>Email ID</th>
                             <th>DOB</th>
-                            <th>Number</th>
-                            <th>PSPT No.</th>
+                            <th>Mobile Number</th>
+                            <th>Passport No.</th>
                             <th>Status</th>
-                            <th>DOB</th>
-                            {/* <th>Resume</th> */}
-                            <th>Create At</th>
-                            {/* <th>Experience</th> */}
+                            <th>Resume</th>
+                            <th>Created At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -188,15 +189,25 @@ const LeadManager = () => {
                                 </td>
 
                                 <td>{ele?.trackingId}</td>
+                                <td>{ele?.User?.OwnerName || "Null"}</td>
+                                <td>{ele?.User?.role || "Null"}</td>
+                                <td>{ele?.User?.CenterCode || "Null"}</td>
                                 <td>{ele?.firstName} {ele.middleName} {ele.lastName}</td>
                                 <td>{ele?.emailID}</td>
                                 <td>{ele.dob}</td>
                                 <td>{ele.mobileNumber}</td>
                                 <td>{ele.passportNumber}</td>
                                 <td>{ele.status}</td>
-                                <td>{ele.dob}</td>
-
-                                <td>{ele?.createdAt}</td>
+                                <td>
+                                    {ele?.resume ? (
+                                        <a href={ele.resume} target="_blank" rel="noreferrer" className="btn btn-sm btn-info">
+                                            <Icon icon="lucide:download" />
+                                        </a>
+                                    ) : (
+                                        <span className="text-muted">—</span>
+                                    )}
+                                </td>
+                                <td>{ele?.createdAt ? new Date(ele.createdAt).toLocaleDateString() : "—"}</td>
                             
 
                                 <td>

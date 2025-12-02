@@ -226,7 +226,7 @@ const navigate = useNavigate();
                   icon='material-symbols:map-outline'
                   className='menu-icon'
                 />
-                <span>Lead Management</span>
+                <span>Assessment Management</span>
               </NavLink>
             </li>
 

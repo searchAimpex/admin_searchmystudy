@@ -20,34 +20,34 @@ const StudentStatus = ({ ele, handleClose, fetchData }) => {
         console.log(res);
     }
     // align keys with your Mongoose schema (accept common variants from older code)
-    const initial = {   
-        status:ele?.status || "",
+    const initial = {
+        status: ele?.status || "",
     };
-    
+
     const [formValues, setFormValues] = useState(initial);
-    
-    
-    
+
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-            const payload = { ...formValues };
+        const payload = { ...formValues };
 
         try {
             const data = await dispatch(statusStudent({ id: ele._id, data: payload }))
-            console.log(data,">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-            if(data?.meta?.requestStatus === "fulfilled"){
+            // console.log(data,">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            if (data?.meta?.requestStatus === "fulfilled") {
                 toast.success("Status Updated Successfully");
                 handleClose();
                 fetchData();
-            }else{
+            } else {
                 toast.error(data?.payload?.message || "Failed to update status");
             }
         } catch (error) {
             console.log(error)
         }
-        
+
     };
-    
+
     // console.log(formValues, "???????????????????????????????????");
     return (
         <>
@@ -64,19 +64,21 @@ const StudentStatus = ({ ele, handleClose, fetchData }) => {
 
                             <div className="m-4">
                                 <label className="form-label">Edit Status</label>
-                                <select name="Country" 
-                                // value={formValues.status} 
-                                onChange={(e)=>{setFormValues({...formValues,status:e.target.value})}}
-                                 className="form-control">
+                                <select name="Country"
+                                    // value={formValues.status} 
+                                    onChange={(e) => { setFormValues({ ...formValues, status: e.target.value }) }}
+                                    className="form-control">
                                     <option value="" disabled>Status</option>
-                                   <option value="Inquiry">Inquiry</option>
-                                   <option value="Assessment">Assessment</option>
-                                   <option value="Offer Letter">Offer Letter</option>
-                                   <option value="Fees Paid">Fees Paid</option>
-                                   <option value="VFS date booked">VFS date booked</option>
+                                    <option value="Inquiry">Inquiry</option>
+                                    <option value="Assessment">Assessment</option>
+                                    <option value="Offer Letter">Offer Letter</option>
+                                    <option value="Fees Paid">Fees Paid</option>
+                                    <option value="VFS date booked">VFS date booked</option>
                                     <option value="Acceptance Letter">Acceptance Letter</option>
                                     <option value="File Submitted">File Submitted</option>
                                     <option value="Visa Approved">Visa Approved </option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Canceled">Canceled</option>
                                 </select>
                             </div>
                             <div className="modal-footer">
