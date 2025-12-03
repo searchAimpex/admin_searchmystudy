@@ -147,8 +147,46 @@ export const createFile = createAsyncThunk(
   }
 );
 
+export const deleteFiles = createAsyncThunk(
+  'file/deleteFiles',
+  async (ids, { rejectWithValue }) => {
+    if (!ids || ids.length === 0) {
+      return rejectWithValue({ message: "No file IDs provided" });
+    }
+    try {
+      const response = await axios.delete("https://searchmystudy.com/api/admin/file", {
+        data: { ids },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+export const updateFile = createAsyncThunk(
+  'file/updateFile',
+  async ({ id, data }, thunkAPI) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/admin/file/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData);
+      }
 
+      const resData = await response.json();
+      return resData;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
+    }
+  }
+);
 const countrySlice = createSlice({
   name: 'country',
   initialState: {

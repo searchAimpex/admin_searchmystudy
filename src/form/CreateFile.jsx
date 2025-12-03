@@ -8,29 +8,29 @@ import { createPartner, updatePartner } from "../slice/PartnerSlice";
 import { createAssessment, updateAssessment } from "../slice/AssessmentSlice";
 import { allCountry } from "../slice/AbroadSlice";
 import { useSelector } from "react-redux";
-import { createFile } from "../slice/CountrySlicr";
+import { createFile, fetchCountry, updateFile } from "../slice/CountrySlicr";
 
 const storage = getStorage(app);
 
 const CreateFile = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
-    const { allCountries } = useSelector(state => state.abroadStudy);
-    console.log(ele, "???????????????????????????????????");
+    const  {country}  = useSelector(state => state?.country);
+    // console.log( country, "???????????????????????????????????");
 
     const fetchAllCountries = async () => {
-        const res = await dispatch(allCountry())
-        console.log(res);
+        const res = await dispatch(fetchCountry())
+        // console.log(res,"-----------------------------");
     }
     // align keys with your Mongoose schema (accept common variants from older code)
     const initial = {
-        SecondCountry: ele?.SecondCountry || "",
+            SecondCountry: ele?.SecondCountry?._id || ele?.SecondCountry || "",
         type: ele?.type || "",
         name: ele?.name || "",
         template: ele?.template || ""
     };
 
     const [formValues, setFormValues] = useState(initial);
-
+    // console.log(formValues)
     useEffect(() => {
         setFormValues(prev => ({ ...prev, ...(ele || {}) }));
         // populate upload previews from ele if available
@@ -126,36 +126,39 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
 
         try {
             const payload = { ...formValues };
-
+            
             // Remove empty User field or fields that are empty strings
             if (!payload.User || payload.User.trim() === "") {
                 delete payload.User;
             }
-
+            
             // Remove empty dob if not set
             if (!payload.dob) {
                 delete payload.dob;
             }
-
+            
             if (payload.DateOfBirth) {
                 payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
             }
-
+            
             // don't overwrite password with empty value on update
             if (ele && ele._id && !payload.password) delete payload.password;
 
             if (ele && ele._id) {
-                const res = await dispatch(updateAssessment({ id: ele._id, data: payload }));
+                const res = await dispatch(updateFile({ id: ele._id, data: payload }));
+                // console.log(payload,"::::::::::::::::::::::::::::::::::::::::::::");
+                // console.log(res);
+                
+                toast.success("File updated");
                 if (res?.meta?.requestStatus === "fulfilled") {
-                    toast.success("File updated");
                     fetchData?.();
-                    handleClose?.();
+                    // handleClose?.();
                 } else {
                     const msg = res?.payload?.message || res?.error?.message || "Update failed";
                     toast.error(msg);
                 }
             } else {
-                console.log(payload);
+                // console.log(payload);
                 
                 const res = await dispatch(createFile(payload));
                 // console.log(res,"|||||||||||||||||||||||||||||||");
@@ -196,7 +199,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label">Type</label>
-                                        <select name="type" onChange={handleInputChange} className="form-control">
+                                        <select name="type" value={formValues?.type} onChange={handleInputChange} className="form-control">
                                             <option value="">Select Type</option>
                                             <option value="TEMPLATE">TEMPLATE</option>
                                             <option value="BROUCHER">BROUCHER</option>
@@ -205,10 +208,10 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Country</label>
-                                        <select name="SecondCountry" value={formValues.SecondCountry} onChange={handleInputChange} className="form-control">
+                                        <select name="SecondCountry" value={formValues?.SecondCountry || ""} onChange={handleInputChange} className="form-control">
                                             <option value="">Select Country</option>
                                             {
-                                                allCountries.map((e) => (
+                                                country.map((e) => (
                                                     <option key={e._id} value={e._id}>{e.name}</option>
                                                 ))
                                             }

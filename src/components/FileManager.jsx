@@ -14,7 +14,7 @@ import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
 import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
 import StudentStatus from "../form/StudentStatus";
-import { fetchCountry, fetchFile } from "../slice/CountrySlicr";
+import { deleteFiles, fetchCountry, fetchFile } from "../slice/CountrySlicr";
 import CreateFile from "../form/CreateFile";
 
 const FileManager = () => {
@@ -23,7 +23,7 @@ const FileManager = () => {
     // const { assessment } = useSelector(state => state.assessment)
     // const { student } = useSelector(state => state.student || [])
     const {file} = useSelector(state => state.country || [])
-    console.log(file,"|||||||||||||||||||||||");
+    // console.log(file,"|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -95,15 +95,14 @@ const FileManager = () => {
             }
 
             const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} webinar(s)?`
+                `Are you sure you want to delete ${selectedIds.length} file(s)?`
             );
             if (!confirmed) return;
             // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteStudent(selectedIds));
-            console.log(a);
+            const a = await dispatch(deleteFiles(selectedIds));
+            // console.log(a);
 
             toast.success("Selected file(s) deleted successfully");
-            await dispatch(FetchAssessment());
             fetchData()
             setSelectedIds([]);
 
