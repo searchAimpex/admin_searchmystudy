@@ -167,7 +167,7 @@ export const updateFile = createAsyncThunk(
   'file/updateFile',
   async ({ id, data }, thunkAPI) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/file/${id}`, {
+      const response = await fetch(`https://searchmystudy.com/api/admin/file/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
