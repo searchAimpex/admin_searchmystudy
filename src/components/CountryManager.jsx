@@ -167,11 +167,19 @@ const CountryManager = () => {
             <a target="_blank" href={ele?.faq}>Link</a>
           </td>
           <td> 
-            <a target="_blank" href={ele?.falgURL}>Link</a>
+            <a target="_blank" href={ele?.flagURL}>Link</a>
           </td>
           <td>
                 <a target="_blank" href={ele?.whyThisCountry}>Link</a>
+          </td>
 
+          <td>
+            {/* VFS column - ensure there's a cell for the VFS header (avoid DataTables unknown parameter error) */}
+            {ele?.vfs ? (
+              <a target="_blank" rel="noopener noreferrer" href={ele.vfs}>VFS</a>
+            ) : (
+              <span>—</span>
+            )}
           </td>
 
           <td>

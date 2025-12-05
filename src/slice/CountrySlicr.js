@@ -109,7 +109,7 @@ export const deleteSecondCountry = createAsyncThunk(
 
 
 export const fetchCountry = createAsyncThunk(
-  'webinar/fetchCountry',
+  'country/fetchCountry',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('https://searchmystudy.com/api/users/secondcountry');
@@ -125,10 +125,93 @@ export const fetchCountry = createAsyncThunk(
 );
 
 
+export const fetchFile = createAsyncThunk(
+  'file/fetchFile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get('https://searchmystudy.com/api/admin/file');
+    //   console.log(response.data,"++++++++++++++++");
+      
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+  }
+);
+
+
+export const createFile = createAsyncThunk(
+  'country/createFile',
+  async (Data, thunkAPI) => {
+    try {
+      const response = await fetch('https://searchmystudy.com/api/admin/file', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
+    }
+  }
+);
+
+export const deleteFiles = createAsyncThunk(
+  'file/deleteFiles',
+  async (ids, { rejectWithValue }) => {
+    if (!ids || ids.length === 0) {
+      return rejectWithValue({ message: "No file IDs provided" });
+    }
+    try {
+      const response = await axios.delete("https://searchmystudy.com/api/admin/file", {
+        data: { ids },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+export const updateFile = createAsyncThunk(
+  'file/updateFile',
+  async ({ id, data }, thunkAPI) => {
+    try {
+      const response = await fetch(`https://searchmystudy.com/api/admin/file/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData);
+      }
+
+      const resData = await response.json();
+      return resData;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
+    }
+  }
+);
 const countrySlice = createSlice({
   name: 'country',
   initialState: {
-    country: [],   // make it array because list is stored here
+    country: null,
+    file:null,
     loading: false,
     error: null,
   },
@@ -152,24 +235,15 @@ const countrySlice = createSlice({
         state.error = action.payload;
       })
 
-
-      // ===========================
-      // 📌 DELETE MULTIPLE COUNTRIES
-      // ===========================
-      .addCase(deleteSecondCountry.pending, (state) => {
+       .addCase(fetchFile.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-      .addCase(deleteSecondCountry.fulfilled, (state, action) => {
+      .addCase(fetchFile.fulfilled, (state, action) => {
         state.loading = false;
-        console.log(action.payload,"------------------in slice");
-        const deletedIds = action.payload.deletedIds || action.payload;
-
-        // remove the deleted countries from store
-        state.country = state.country.filter(
-          (item) => !deletedIds.includes(item._id)
-        );
+        state.file = action.payload;
       })
-      .addCase(deleteSecondCountry.rejected, (state, action) => {
+      .addCase(fetchFile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

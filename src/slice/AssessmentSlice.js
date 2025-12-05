@@ -31,7 +31,7 @@ export const updateAssessment = createAsyncThunk(
     try {
       console.log(data,"--------------------");
       
-      const response = await axios.put(`http://searchmystudy.com/api/admin/profile/update/${id}`,data);
+      const response = await axios.put(`https://searchmystudy.com/api/admin/profile/update/${id}`,data);
       // fetchWebinar();     
       // console.log("Update response:", response.data);
       return response.data;
@@ -59,19 +59,33 @@ export const createAssessment = createAsyncThunk(
 
 
 
-// export const updateContactUsLead = createAsyncThunk(
-//     "lead/updateContactUsLead",
-//     async({id,data},rejectWithValue)=>{
-//         try {
-//             const response = await axios.put(`https://searchmystudy.com/api/admin/contactlead/${id}`,data);
-//             toast.success("Update Lead Successfully")
-//             return response?.data
-//         } catch (error) {
-//             toast.error("Failed to update lead")   
-//          return rejectWithValue(error)
-//         }
-//     }
-// );
+export const statusAssesmment = createAsyncThunk(
+    "lead/statusAssesmment",
+    async({id,data},rejectWithValue)=>{
+        try {
+            const response = await axios.put(`https://searchmystudy.com/api/admin/profile/status/${id}`,data);
+            toast.success("Update Lead Successfully")
+            return response?.data
+        } catch (error) {
+            toast.error("Failed to update lead")   
+         return rejectWithValue(error)
+        }
+    }
+);
+
+export const statusStudent = createAsyncThunk(
+    "student/statusStudent",
+    async({id,data},rejectWithValue)=>{
+        try {
+            const response = await axios.put(`https://searchmystudy.com/api/admin/student/status/${id}`,data);
+            // toast.success("Update Lead Successfully")
+            return response?.data
+        } catch (error) {
+            toast.error("Failed to update lead")   
+         return rejectWithValue(error)
+        }
+    }
+);
 export const deleteLead = createAsyncThunk(
   "lead/deleteLead",
   async (ids, { rejectWithValue }) => {

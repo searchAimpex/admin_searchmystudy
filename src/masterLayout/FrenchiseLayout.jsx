@@ -226,7 +226,7 @@ const navigate = useNavigate();
                   icon='material-symbols:map-outline'
                   className='menu-icon'
                 />
-                <span>Lead Management</span>
+                <span>Assessment Management</span>
               </NavLink>
             </li>
 
@@ -240,6 +240,18 @@ const navigate = useNavigate();
                   className='menu-icon'
                 />
                 <span>Student Management</span>
+              </NavLink>
+            </li>
+             <li>
+              <NavLink
+                to='/file-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>File/Template Management</span>
               </NavLink>
             </li>
             {/* <li>

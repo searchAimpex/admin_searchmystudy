@@ -13,30 +13,74 @@ import CreatePartner from "../form/CreatePartner";
 import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
 import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
+import StudentStatus from "../form/StudentStatus";
 
 const StudentManager = () => {
     const dispatch = useDispatch();
     //   const webinars  = useSelector((state) => state.partner.partner);
     // const { assessment } = useSelector(state => state.assessment)
-    const {student}  = useSelector(state => state.student || [])
-    
-    // console.log(student,"|||||||||||||||||||||||");
+    const { student } = useSelector(state => state.student || [])
+
+    console.log(student,"|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [showStatusModal, setShowStatusModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
+    
+    // Filter state
+    const [filters, setFilters] = useState({
+        trackingId: "",
+        ownerName: "",
+        role: "",
+        centerCode: "",
+        createdAt: ""
+    });
 
     const fetchData = async () => {
-         const a = await dispatch(FetchStudent())
-         console.log(a,"+++++++++++++++++++++++++++");};
+        await dispatch(FetchStudent())
+    };
     //   console.log(webinars)
+
+    // ✅ Filter handler
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    // ✅ Clear filters
+    const clearFilters = () => {
+        setFilters({
+            trackingId: "",
+            ownerName: "",
+            role: "",
+            centerCode: "",
+            createdAt: ""
+        });
+    };
+
+    // ✅ Filter student data (MUST be before useEffect that depends on it)
+    const filteredStudent = student?.filter(ele => {
+        const trackingMatch = ele?.trackingId?.toLowerCase().includes(filters.trackingId.toLowerCase());
+        const ownerMatch = (ele?.User?.OwnerName || "").toLowerCase().includes(filters.ownerName.toLowerCase());
+        const roleMatch = (ele?.User?.role || "").toLowerCase().includes(filters.role.toLowerCase());
+        const codeMatch = (ele?.User?.CenterCode || "").toLowerCase().includes(filters.centerCode.toLowerCase());
+        
+        let dateMatch = true;
+        if (filters.createdAt) {
+            const createdDate = ele?.createdAt ? new Date(ele.createdAt).toLocaleDateString() : "";
+            dateMatch = createdDate.includes(filters.createdAt);
+        }
+        
+        return trackingMatch && ownerMatch && roleMatch && codeMatch && dateMatch;
+    }) || [];
 
     useEffect(() => {
         fetchData();
     }, [dispatch]);
 
     useEffect(() => {
-        if (student?.length > 0) {
+        if (filteredStudent?.length > 0) {
             // Delay initialization to ensure DOM is ready
             setTimeout(() => {
                 try {
@@ -50,7 +94,7 @@ const StudentManager = () => {
                         pageLength: 5,
                         lengthMenu: [5, 10, 20, 50],
                         columnDefs: [
-                            { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
+                            { targets: [1, 2], searchable: true },
                             { targets: "_all", searchable: false },
                         ],
                     });
@@ -59,7 +103,7 @@ const StudentManager = () => {
                 }
             }, 100);
         }
-    }, [student]);
+    }, [filteredStudent]);
 
     // ✅ Checkbox (single select/unselect)
     const handleCheckboxChange = (id) => {
@@ -92,9 +136,9 @@ const StudentManager = () => {
             );
             if (!confirmed) return;
             // console.log(selectedIds,"----------------------------------------");
-           const a =  await dispatch(deleteStudent(selectedIds));
-           console.log(a);
-           
+            const a = await dispatch(deleteStudent(selectedIds));
+            console.log(a);
+
             toast.success("Selected student(s) deleted successfully");
             // await dispatch(FetchAssessment());
             fetchData()
@@ -139,30 +183,108 @@ const StudentManager = () => {
                             }}
                         />
                     )}
+                    {showStatusModal && (
+                        <StudentStatus
+                            fetchData={fetchData}
+                            ele={editingWebinar}
+                            handleClose={() => {
+                                setShowStatusModal(false);
+                                setEditingWebinar(null);
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 
             <div className="card-body overflow-x-auto">
+                {/* Filter Section */}
+                <div className="mb-4 p-3" style={{ backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                    <h6 className="mb-3" style={{ fontWeight: 'bold' }}>Filter Students</h6>
+                    <div className="row g-2">
+                        <div className="col-md-2">
+                            <input
+                                type="text"
+                                name="trackingId"
+                                placeholder="Tracking ID"
+                                value={filters.trackingId}
+                                onChange={handleFilterChange}
+                                className="form-control form-control-sm"
+                            />
+                        </div>
+                        <div className="col-md-2">
+                            <input
+                                type="text"
+                                name="ownerName"
+                                placeholder="Punched By"
+                                value={filters.ownerName}
+                                onChange={handleFilterChange}
+                                className="form-control form-control-sm"
+                            />
+                        </div>
+                        <div className="col-md-2">
+                            <input
+                                type="text"
+                                name="role"
+                                placeholder="Center Type"
+                                value={filters.role}
+                                onChange={handleFilterChange}
+                                className="form-control form-control-sm"
+                            />
+                        </div>
+                        <div className="col-md-2">
+                            <input
+                                type="text"
+                                name="centerCode"
+                                placeholder="Center Code"
+                                value={filters.centerCode}
+                                onChange={handleFilterChange}
+                                className="form-control form-control-sm"
+                            />
+                        </div>
+                        <div className="col-md-2">
+                            <input
+                                type="text"
+                                name="createdAt"
+                                placeholder="Created Date"
+                                value={filters.createdAt}
+                                onChange={handleFilterChange}
+                                className="form-control form-control-sm"
+                            />
+                        </div>
+                        <div className="col-md-2">
+                            <button
+                                type="button"
+                                onClick={clearFilters}
+                                className="btn btn-sm btn-outline-secondary w-100"
+                            >
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                    <p className="text-muted small mt-2">Results: {filteredStudent?.length || 0} / {student?.length || 0}</p>
+                </div>
+
+                {/* Table */}
                 <table id="dataTable" className="table bordered-table mb-0">
                     <thead>
                         <tr>
                             <th>Check</th>
                             <th>Tracking ID</th>
+                            <th>Punched By</th>
+                            <th>Center Type</th>
+                            <th>Center Code</th>
                             <th>Name</th>
                             <th>Email ID</th>
                             <th>DOB</th>
-                            <th>Number</th>
-                            <th>PSPT No.</th>
+                            <th>Mobile Number</th>
+                            <th>Passport No.</th>
                             <th>Status</th>
-                            <th>DOB</th>
-                            {/* <th>Resume</th> */}
-                            <th>Create At</th>
-                            {/* <th>Experience</th> */}
+                            <th>Created At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {student?.map((ele, ind) => (
+                        {filteredStudent?.map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
                                     <div className="form-check style-check d-flex align-items-center">
@@ -177,16 +299,17 @@ const StudentManager = () => {
                                 </td>
 
                                 <td>{ele?.trackingId}</td>
+                                <td>{ele?.User?.OwnerName || "—"}</td>
+                                <td>{ele?.User?.role || "—"}</td>
+                                <td>{ele?.User?.CenterCode || "—"}</td>
                                 <td>{ele?.firstName} {ele.middleName} {ele.lastName}</td>
                                 <td>{ele?.emailID}</td>
                                 <td>{ele.dob}</td>
                                 <td>{ele.mobileNumber}</td>
                                 <td>{ele.passportNumber}</td>
                                 <td>{ele.status}</td>
-                                <td>{ele.dob}</td>
+                                <td>{ele?.createdAt ? new Date(ele.createdAt).toLocaleDateString() : "—"}</td>
 
-                                <td>{ele?.createdAt}</td>
-                            
 
                                 <td>
                                     <Link
@@ -201,15 +324,15 @@ const StudentManager = () => {
                                     </Link>
 
 
-                                     <Link
+                                    <Link
                                         onClick={() => {
                                             setEditingWebinar(ele);
-                                            setShowModal(true);
+                                            setShowStatusModal(true);
                                         }}
                                         to="#"
-                                        className="mx-2 btn btn-sm btn-primary"
+                                        className="btn btn-sm mx-8 btn-primary"
                                     >
-                                        <Icon icon="lucide:pencil" />
+                                        <Icon icon="lucide:edit" />
                                     </Link>
                                 </td>
                                  

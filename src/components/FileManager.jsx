@@ -12,13 +12,18 @@ import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
 import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
-import AssissmentStatus from "../form/AssissmentStatus";
+import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
+import StudentStatus from "../form/StudentStatus";
+import { deleteFiles, fetchCountry, fetchFile } from "../slice/CountrySlicr";
+import CreateFile from "../form/CreateFile";
 
-const LeadManager = () => {
+const FileManager = () => {
     const dispatch = useDispatch();
     //   const webinars  = useSelector((state) => state.partner.partner);
-    const { assessment } = useSelector(state => state.assessment)
-    // console.log(data,"|||||||||||||||||||||||");
+    // const { assessment } = useSelector(state => state.assessment)
+    // const { student } = useSelector(state => state.student || [])
+    const {file} = useSelector(state => state.country || [])
+    // console.log(file,"|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -26,8 +31,10 @@ const LeadManager = () => {
     const [editingWebinar, setEditingWebinar] = useState(null);
 
     const fetchData = async () => {
-        const b = await dispatch(FetchAssessment());
-        // console.log(b,"||||||||||||||||||||||||||||")
+        await dispatch(fetchCountry())
+        const a = await dispatch(fetchFile())
+        console.log(a,"::::::::::::::::::::::::::::");
+        
     };
     //   console.log(webinars)
 
@@ -36,7 +43,7 @@ const LeadManager = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        if (assessment?.length > 0) {
+        if (file?.length > 0) {
             // Delay initialization to ensure DOM is ready
             setTimeout(() => {
                 try {
@@ -59,7 +66,7 @@ const LeadManager = () => {
                 }
             }, 100);
         }
-    }, [assessment]);
+    }, [file]);
 
     // ✅ Checkbox (single select/unselect)
     const handleCheckboxChange = (id) => {
@@ -73,7 +80,7 @@ const LeadManager = () => {
     // ✅ Master checkbox (select/unselect all)
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedIds(assessment?.map((w) => w._id) || []);
+            setSelectedIds(file?.map((w) => w._id) || []);
         } else {
             setSelectedIds([]);
         }
@@ -88,21 +95,20 @@ const LeadManager = () => {
             }
 
             const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} webinar(s)?`
-            );  
+                `Are you sure you want to delete ${selectedIds.length} file(s)?`
+            );
             if (!confirmed) return;
             // console.log(selectedIds,"----------------------------------------");
-           const a =  await dispatch(deleteLead(selectedIds));
-           console.log(a,"================");
-           
-            toast.success("Selected webinar(s) deleted successfully");
-            await dispatch(FetchAssessment());
-            window.location.reload()
+            const a = await dispatch(deleteFiles(selectedIds));
+            // console.log(a);
+
+            toast.success("Selected file(s) deleted successfully");
+            fetchData()
             setSelectedIds([]);
 
         } catch (error) {
             console.log(error);
-            toast.error("Error deleting webinar(s)");
+            toast.error("Error deleting file(s)");
         }
     };
 
@@ -130,7 +136,7 @@ const LeadManager = () => {
                     </button>
 
                     {showModal && (
-                        <CreateLead
+                        <CreateFile
                             fetchData={fetchData}
                             ele={editingWebinar}
                             handleClose={() => {
@@ -139,17 +145,7 @@ const LeadManager = () => {
                             }}
                         />
                     )}
-
-                     {showStatusModal && (
-                        <AssissmentStatus
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowStatusModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
+                 
                 </div>
             </div>
 
@@ -158,23 +154,16 @@ const LeadManager = () => {
                     <thead>
                         <tr>
                             <th>Check</th>
-                            <th>Tracking ID</th>
-                            <th>Punched By</th>
-                            <th>Center Type</th>
-                            <th>Center Code</th>
+                            <th>Country</th>
                             <th>Name</th>
-                            <th>Email ID</th>
-                            <th>DOB</th>
-                            <th>Mobile Number</th>
-                            <th>Passport No.</th>
-                            <th>Status</th>
-                            <th>Resume</th>
-                            <th>Created At</th>
+                            <th>Type</th>
+                             <th>File</th>
+                            <th>Create At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {assessment?.map((ele, ind) => (
+                        {file?.map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
                                     <div className="form-check style-check d-flex align-items-center">
@@ -188,27 +177,16 @@ const LeadManager = () => {
                                     </div>
                                 </td>
 
-                                <td>{ele?.trackingId}</td>
-                                <td>{ele?.User?.OwnerName || "Null"}</td>
-                                <td>{ele?.User?.role || "Null"}</td>
-                                <td>{ele?.User?.CenterCode || "Null"}</td>
-                                <td>{ele?.firstName} {ele.middleName} {ele.lastName}</td>
-                                <td>{ele?.emailID}</td>
-                                <td>{ele.dob}</td>
-                                <td>{ele.mobileNumber}</td>
-                                <td>{ele.passportNumber}</td>
-                                <td>{ele.status}</td>
-                                <td>
-                                    {ele?.resume ? (
-                                        <a href={ele.resume} target="_blank" rel="noreferrer" className="btn btn-sm btn-info">
-                                            <Icon icon="lucide:download" />
-                                        </a>
-                                    ) : (
-                                        <span className="text-muted">—</span>
-                                    )}
-                                </td>
-                                <td>{ele?.createdAt ? new Date(ele.createdAt).toLocaleDateString() : "—"}</td>
-                            
+                                <td>{ele?.SecondCountry?.name}</td>
+                                <td>{ele?.name}</td>
+                                <td>{ele?.type}</td>
+                                 <td>
+                                    <a href={ele?.template} target="_blank">Link</a>
+                                 </td>
+                               
+
+                                <td>{ele?.createdAt}</td>
+
 
                                 <td>
                                     <Link
@@ -221,16 +199,18 @@ const LeadManager = () => {
                                     >
                                         <Icon icon="lucide:edit" />
                                     </Link>
-                                      <Link
+
+
+                                    {/* <Link
                                         onClick={() => {
                                             setEditingWebinar(ele);
                                             setShowStatusModal(true);
                                         }}
                                         to="#"
-                                        className="mx-4 btn btn-sm btn-primary"
+                                        className="btn mx-10 btn-sm btn-primary"
                                     >
                                         <Icon icon="lucide:edit" />
-                                    </Link>
+                                    </Link> */}
                                 </td>
                             </tr>
                         ))}
@@ -242,4 +222,4 @@ const LeadManager = () => {
     );
 };
 
-export default LeadManager;
+export default FileManager;
