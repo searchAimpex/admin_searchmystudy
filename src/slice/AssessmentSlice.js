@@ -84,7 +84,7 @@ export const deleteLead = createAsyncThunk(
 
     try {
       const response = await axios.delete(
-        "http://searchmystudy.com/api/admin/profile",
+        "https://searchmystudy.com/api/admin/profile",
         {
           data: { ids }   // 👈 IMPORTANT!
         }

@@ -10,7 +10,7 @@ import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
 import { fetchPartner } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
-import { fetchCountry } from "../slice/CountrySlicr";
+import { deleteSecondCountry, fetchCountry } from "../slice/CountrySlicr";
 import CreateCountryDocs from "../form/CreateCountryDocs";
 
 const CountryManager = () => {
@@ -82,14 +82,14 @@ const CountryManager = () => {
         `Are you sure you want to delete ${selectedIds.length} webinar(s)?`
       );
       if (!confirmed) return;
-
       // Send array of IDs to API
-      await dispatch(deleteWebinar(selectedIds));
+      const res = await dispatch(deleteSecondCountry(selectedIds));
+      console.log(res,"-------------------------")
 
-      toast.success("Selected webinar(s) deleted successfully");
+      toast.success("Selected Country(s) deleted successfully");
       setSelectedIds([]);
+      await dispatch(fetchCountry());
       fetchData()
-      dispatch(fetchWebinar());
     } catch (error) {
       console.log(error);
       toast.error("Error deleting webinar(s)");

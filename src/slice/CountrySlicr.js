@@ -87,6 +87,26 @@ export const updateSecondCountry = createAsyncThunk(
 );
 
 
+export const deleteSecondCountry = createAsyncThunk(
+  'blogs/deleteSecondCountry',
+  async (ids, { rejectWithValue }) => {
+    if (!ids || ids.length === 0) {
+      return rejectWithValue({ message: "No blog IDs provided" });
+    }
+    try {
+      const response = await axios.delete("https://searchmystudy.com/api/users/secondcountry", {
+        data: { ids },
+      });
+
+      // 🔥 Attach the deleted ids manually to the payload
+      return { ...response.data, deletedIds: ids };
+
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 
 export const fetchCountry = createAsyncThunk(
   'webinar/fetchCountry',
@@ -105,26 +125,51 @@ export const fetchCountry = createAsyncThunk(
 );
 
 
-
 const countrySlice = createSlice({
   name: 'country',
   initialState: {
-    country: null,
+    country: [],   // make it array because list is stored here
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
+      
+      // ===========================
+      // 📌 FETCH COUNTRY
+      // ===========================
       .addCase(fetchCountry.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchCountry.fulfilled, (state, action) => {
         state.loading = false;
-        state.country = action.payload;
+        state.country = action.payload; // array of countries
       })
       .addCase(fetchCountry.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+
+      // ===========================
+      // 📌 DELETE MULTIPLE COUNTRIES
+      // ===========================
+      .addCase(deleteSecondCountry.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteSecondCountry.fulfilled, (state, action) => {
+        state.loading = false;
+        console.log(action.payload,"------------------in slice");
+        const deletedIds = action.payload.deletedIds || action.payload;
+
+        // remove the deleted countries from store
+        state.country = state.country.filter(
+          (item) => !deletedIds.includes(item._id)
+        );
+      })
+      .addCase(deleteSecondCountry.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
