@@ -29,7 +29,7 @@ export const deleteLoanLead = createAsyncThunk(
       return rejectWithValue({ message: "No blog IDs provided" });
     }
     try {
-      const response = await axios.delete("http://localhost:3000/api/admin/loan", {
+      const response = await axios.delete("https://searchmystudy.com/api/admin/loan", {
         data: { ids },
       });
       return response.data;
