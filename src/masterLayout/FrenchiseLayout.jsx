@@ -254,6 +254,18 @@ const navigate = useNavigate();
                 <span>File/Template Management</span>
               </NavLink>
             </li>
+               <li>
+              <NavLink
+                to='/loan-lead-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Loan Leads</span>
+              </NavLink>
+            </li>
             {/* <li>
               <NavLink
                 to='/counselor-manager'
