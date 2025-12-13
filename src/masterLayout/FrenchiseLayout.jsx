@@ -266,6 +266,19 @@ const navigate = useNavigate();
                 <span>Loan Leads</span>
               </NavLink>
             </li>
+             <li>
+              <NavLink
+                to='/commission-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Commission Management</span>
+              </NavLink>
+            </li>
+            
             {/* <li>
               <NavLink
                 to='/counselor-manager'

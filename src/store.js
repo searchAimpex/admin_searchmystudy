@@ -22,6 +22,7 @@ import countrySliceReducer from './slice/CountrySlicr'
 import assessmentSliceReducer from './slice/AssessmentSlice'
 import studentSliceReducer from './slice/StudentSlice'
 import loanLeadSliceReducer from './slice/loanLead'
+import ComissionSliceReducer from './slice/comission'
 const store = configureStore({
   reducer: {
       blog: blogReducer,
@@ -46,7 +47,8 @@ const store = configureStore({
       country:countrySliceReducer  ,
       assessment:assessmentSliceReducer,
       student:studentSliceReducer,
-      loan:loanLeadSliceReducer
+      loan:loanLeadSliceReducer,
+      comission:ComissionSliceReducer,
   },
  
 });

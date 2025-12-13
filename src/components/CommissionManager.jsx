@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import $ from "jquery";
 import "datatables.net-dt";
 
@@ -16,14 +16,17 @@ import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
 import StudentStatus from "../form/StudentStatus";
 import { deleteFiles, fetchCountry, fetchFile } from "../slice/CountrySlicr";
 import CreateFile from "../form/CreateFile";
+import { deleteLoanLead, fetchLoanLead } from "../slice/loanLead";
+import CreateLoanLead from "../form/CreateLoanLead";
+import { fetchComission } from "../slice/comission";
+import CreateCommission from "../form/CreateCommission";
 
-const FileManager = () => {
+const CommissionManager = () => {
     const dispatch = useDispatch();
-    //   const webinars  = useSelector((state) => state.partner.partner);
-    // const { assessment } = useSelector(state => state.assessment)
-    // const { student } = useSelector(state => state.student || [])
-    const file = useSelector(state => state.country?.file?.data || [])
-    // console.log(file,"|||||||||||||||||||||||");
+    // const { loan } = useSelector((state) => state?.loan);
+
+    const { comission } = useSelector((state) => state?.comission);
+    console.log(comission, "|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -32,17 +35,16 @@ const FileManager = () => {
 
     const fetchData = async () => {
         await dispatch(fetchCountry())
-        const res = await dispatch(fetchFile())
-        // console.log(res, "::::::::::::::::::::::::::::");
-
+        const a = await dispatch(fetchComission())
+        // console.log(a,"++++++++++++++++++++++++++++++++++++")
     };
-    useEffect(() => {
 
-        fetchData()
+    useEffect(() => {
+        fetchData();
     }, [dispatch]);
 
     useEffect(() => {
-        if (file?.length > 0) {
+        if (comission?.length > 0) {
             // Delay initialization to ensure DOM is ready
             setTimeout(() => {
                 try {
@@ -65,7 +67,7 @@ const FileManager = () => {
                 }
             }, 100);
         }
-    }, [file]);
+    }, [comission]);
 
     // ✅ Checkbox (single select/unselect)
     const handleCheckboxChange = (id) => {
@@ -79,7 +81,7 @@ const FileManager = () => {
     // ✅ Master checkbox (select/unselect all)
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedIds(file?.map((w) => w._id) || []);
+            setSelectedIds(comission?.map((w) => w._id) || []);
         } else {
             setSelectedIds([]);
         }
@@ -89,25 +91,25 @@ const FileManager = () => {
     const handleDelete = async () => {
         try {
             if (selectedIds.length === 0) {
-                toast.warning("Please select at least one webinar to delete.");
+                toast.warning("Please select at least one lead to delete.");
                 return;
             }
 
             const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} file(s)?`
+                `Are you sure you want to delete ${selectedIds.length} lead(s)?`
             );
             if (!confirmed) return;
             // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteFiles(selectedIds));
-            // console.log(a);
+            const a = await dispatch(deleteLoanLead(selectedIds));
+            console.log(a, "+++++++++++++++++++++++++++");
 
-            toast.success("Selected file(s) deleted successfully");
+            toast.success("Selected lead(s) deleted successfully");
             fetchData()
             setSelectedIds([]);
 
         } catch (error) {
             console.log(error);
-            toast.error("Error deleting file(s)");
+            toast.error("Error deleting lead(s)");
         }
     };
 
@@ -135,7 +137,7 @@ const FileManager = () => {
                     </button>
 
                     {showModal && (
-                        <CreateFile
+                        <CreateCommission
                             fetchData={fetchData}
                             ele={editingWebinar}
                             handleClose={() => {
@@ -153,19 +155,22 @@ const FileManager = () => {
                     <thead>
                         <tr>
                             <th>Check</th>
-                            <th>Country</th>
+                            <th>Target</th>
                             <th>Name</th>
-                            <th>Type</th>
                             <th>File</th>
+                            <th>Country</th>
+                            {/* <th>File</th> */}
                             <th>Create At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {file?.map((ele, ind) => (
+                        {comission?.map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
-                                    <div className="form-check style-check d-flex align-items-center">
+                                    <div 
+                                    className="form-check style-check d-flex align-items-center"
+                                    >
                                         <input
                                             type="checkbox"
                                             className="form-check-input"
@@ -175,13 +180,13 @@ const FileManager = () => {
                                         <label className="form-check-label">{ind + 1}</label>
                                     </div>
                                 </td>
+                                <td>{ele?.target}</td>
+                                <td>{ele?.title || "---------"}</td>
 
-                                <td>{ele?.SecondCountry?.name}</td>
-                                <td>{ele?.name}</td>
-                                <td>{ele?.type}</td>
                                 <td>
-                                    <a href={ele?.template} target="_blank">Link</a>
+                                    <a href={ele?.fileURL} target="_blank">Link</a>
                                 </td>
+                                <td>{ele?.SecondCountry?.name || "---------"}</td>
 
 
                                 <td>{ele?.createdAt}</td>
@@ -221,4 +226,4 @@ const FileManager = () => {
     );
 };
 
-export default FileManager;
+export default CommissionManager;

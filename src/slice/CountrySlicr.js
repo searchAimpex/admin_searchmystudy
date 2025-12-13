@@ -129,8 +129,8 @@ export const fetchFile = createAsyncThunk(
   'file/fetchFile',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('https://searchmystudy.com/api/admin/file');
-    //   console.log(response.data,"++++++++++++++++");
+      const response = await axios.get('http://localhost:3000/api/admin/files');
+      console.log(response.data,"++++++++++++++++");
       
       return response.data;
     } catch (error) {
