@@ -289,6 +289,18 @@ const navigate = useNavigate();
                 />
                 <span>Nav Management</span>
               </NavLink>
+             </li>
+             <li>
+              <NavLink
+                to='/promotional-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Promotional Management</span>
+              </NavLink>
             </li>
             
             {/* <li>

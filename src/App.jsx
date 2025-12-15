@@ -132,6 +132,7 @@ import FileManagement from "./pages/FileManagement";
 import LoanLeadManagement from "./pages/LoanLeadManagement";
 import CommissionManagement from "./pages/CommissionManagement";
 import NavManagement from "./pages/NavManagement";
+import PromotionalManagement from "./pages/PromotionalManagement";
 function App() {
 
    const navigate = useNavigate();
@@ -348,6 +349,7 @@ function App() {
           <Route exact path='/loan-lead-management' element={<LoanLeadManagement/>} />
             <Route exact path='/commission-management' element={<CommissionManagement/>} />
               <Route exact path='/nav-management' element={<NavManagement/>} />
+                            <Route exact path='/promotional-management' element={<PromotionalManagement/>} />
         <Route exact path='*' element={<ErrorPage />} />
       </Routes>
     </>

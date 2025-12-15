@@ -24,6 +24,7 @@ import studentSliceReducer from './slice/StudentSlice'
 import loanLeadSliceReducer from './slice/loanLead'
 import ComissionSliceReducer from './slice/comission'
 import NavSliceReducer from './slice/nav'
+import PromotionalSliceReducer from './slice/promotional'
 import { Nav } from 'react-bootstrap';
 const store = configureStore({
   reducer: {
@@ -52,6 +53,7 @@ const store = configureStore({
       loan:loanLeadSliceReducer,
       comission:ComissionSliceReducer,
       nav:NavSliceReducer,
+      promotional:PromotionalSliceReducer,
   },
  
 });
