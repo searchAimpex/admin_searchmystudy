@@ -4,6 +4,22 @@ import axios from 'axios';
 
 
 
+export const statusLoanLead = createAsyncThunk(
+    "loan/statusLoanLead",
+    async({id,data},rejectWithValue)=>{
+        try {
+            const response = await axios.put(`https://searchmystudy.com/api/admin/loan/status/${id}`,data);
+            toast.success("Update Lead Successfully")
+            return response?.data
+        } catch (error) {
+            toast.error("Failed to update lead")   
+         return rejectWithValue(error)
+        }
+    }
+);
+
+
+
 export const fetchLoanLead = createAsyncThunk(
   'loan/fetchLoanLead',
   async (_, { rejectWithValue }) => {

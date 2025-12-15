@@ -5,25 +5,15 @@ import "datatables.net-dt";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
-import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
-import CreatePartner from "../form/CreatePartner";
-import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
-import CreateLead from "../form/CreateLead";
-import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
-import StudentStatus from "../form/StudentStatus";
-import { deleteFiles, fetchCountry, fetchFile } from "../slice/CountrySlicr";
-import CreateFile from "../form/CreateFile";
 import { deleteLoanLead, fetchLoanLead } from "../slice/loanLead";
 import CreateLoanLead from "../form/CreateLoanLead";
+import { fetchCountry } from "../slice/CountrySlicr";
 
 const LoanLeadManager = () => {
     const dispatch = useDispatch();
     const { loan } = useSelector((state) => state?.loan);
 
-    console.log(loan, "|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -33,7 +23,7 @@ const LoanLeadManager = () => {
     const fetchData = async () => {
         await dispatch(fetchCountry())
         const a = await dispatch(fetchLoanLead())
-        // console.log(a)
+        console.log(a)
     };
 
     useEffect(() => {
@@ -118,13 +108,7 @@ const LoanLeadManager = () => {
             >
                 <h5 className="card-title mb-0">Partner Table</h5>
                 <div>
-                    <button
-                        type="button"
-                        className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
-                        onClick={() => setShowModal(true)}
-                    >
-                        Create Lead
-                    </button>
+                 
 
                     <button
                         className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"

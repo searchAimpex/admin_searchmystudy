@@ -21,7 +21,7 @@ const PartnerManager = () => {
 
   const fetchData = async () => {
     const a = await dispatch(fetchPartner());
-    // console.log(a)
+    console.log(a)
   };
   console.log(webinars)
 

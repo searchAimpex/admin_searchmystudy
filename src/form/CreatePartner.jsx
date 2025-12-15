@@ -10,10 +10,10 @@ const storage = getStorage(app);
 
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
-
-  // align keys with your Mongoose schema (accept common variants from older code)
+  console.log(ele,"-----------------------");
+  
   const initial = {
-    name: ele?.name || ele?.OwnerName || "",
+    name: ele?.name || ele?.OwnerName || "demo",
     email: ele?.email || "",
     password: "",
     passwordTracker: ele?.passwordTracker || "",
@@ -121,6 +121,9 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     if (!formValues.OwnerName?.trim()) newErrors.OwnerName = "Owner name is required";
     if (!formValues.email?.trim()) newErrors.email = "Email is required";
     if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = "Contact number is required";
+    if (formValues.zipCode && !/^\d+$/.test(String(formValues.zipCode).trim())) {
+      newErrors.zipCode = "Zip code must contain only digits";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -155,6 +158,13 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     try {
       const payload = { ...formValues };
 
+      // coerce zipCode to number if present and numeric (backend expects Number)
+      if (payload.zipCode !== undefined && payload.zipCode !== "" ) {
+        const z = String(payload.zipCode).trim();
+        if (/^\d+$/.test(z)) payload.zipCode = Number(z);
+        else delete payload.zipCode; // should not happen because validateForm blocks non-numeric
+      }
+
       if (payload.DateOfBirth) {
         payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
       }
@@ -173,6 +183,8 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
           toast.error(msg);
         }
       } else {
+        console.log(payload,"-------------+++++++++---------------------");
+        
         const res = await dispatch(createPartner(payload));
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner created");

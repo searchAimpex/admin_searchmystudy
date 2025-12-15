@@ -1,42 +1,27 @@
-import React, { use, useEffect, useState } from "react";
+import React, {  useEffect, useState } from "react";
 import $ from "jquery";
 import "datatables.net-dt";
 
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
-import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
-import CreatePartner from "../form/CreatePartner";
-import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
-import CreateLead from "../form/CreateLead";
-import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
-import StudentStatus from "../form/StudentStatus";
-import { deleteFiles, fetchCountry, fetchFile } from "../slice/CountrySlicr";
-import CreateFile from "../form/CreateFile";
-import { deleteLoanLead, fetchLoanLead } from "../slice/loanLead";
-import CreateLoanLead from "../form/CreateLoanLead";
-import { fetchComission } from "../slice/comission";
+import {  fetchCountry } from "../slice/CountrySlicr";
+import { deleteLoanLead } from "../slice/loanLead";
+import { deleteCmission, fetchComission } from "../slice/comission";
 import CreateCommission from "../form/CreateCommission";
 
 const CommissionManager = () => {
     const dispatch = useDispatch();
-    // const { loan } = useSelector((state) => state?.loan);
-
     const { comission } = useSelector((state) => state?.comission);
-    console.log(comission, "|||||||||||||||||||||||");
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
 
     const fetchData = async () => {
         await dispatch(fetchCountry())
         const a = await dispatch(fetchComission())
-        // console.log(a,"++++++++++++++++++++++++++++++++++++")
     };
 
     useEffect(() => {
@@ -45,7 +30,6 @@ const CommissionManager = () => {
 
     useEffect(() => {
         if (comission?.length > 0) {
-            // Delay initialization to ensure DOM is ready
             setTimeout(() => {
                 try {
                     if ($.fn.DataTable.isDataTable("#dataTable")) {
@@ -99,10 +83,7 @@ const CommissionManager = () => {
                 `Are you sure you want to delete ${selectedIds.length} lead(s)?`
             );
             if (!confirmed) return;
-            // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteLoanLead(selectedIds));
-            console.log(a, "+++++++++++++++++++++++++++");
-
+            const a = await dispatch(deleteCmission(selectedIds));
             toast.success("Selected lead(s) deleted successfully");
             fetchData()
             setSelectedIds([]);

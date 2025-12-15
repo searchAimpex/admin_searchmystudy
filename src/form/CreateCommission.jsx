@@ -4,8 +4,6 @@ import { app } from "../firebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createPartner, updatePartner } from "../slice/PartnerSlice";
-import { createAssessment, updateAssessment } from "../slice/AssessmentSlice";
 import { allCountry } from "../slice/AbroadSlice";
 import { useSelector } from "react-redux";
 import { createFile, fetchCountry, updateFile } from "../slice/CountrySlicr";
@@ -21,29 +19,33 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
         const res = await dispatch(fetchCountry())
     }
     const initial = {
-        // accept both object or id/name from different callers; default to empty strings to avoid uncontrolled inputs
-        SecondCountry: ele?.SecondCountry?._id || ele?.SecondCountry?.name || ele?.SecondCountry || "",
-        title: ele?.title ,
+        SecondCountry: ele?.SecondCountry?.name || "",
+        title: ele?.title ?? "",
         fileURL: ele?.fileURL,
-        target: ele?.target ,
+        target: ele?.target ?? "",
     };
-
+    
     const [formValues, setFormValues] = useState(initial);
+    // initialize form values when the editing element changes (don't depend on country)
     useEffect(() => {
-        // merge ele over initial and normalize SecondCountry to an ID when possible
         const merged = { ...initial, ...(ele || {}) };
+        // ensure title/target are strings (avoid NaN or unexpected types)
+        merged.title = merged.title ?? "";
+        merged.target = merged.target == null ? "" : String(merged.target);
         let sc = merged.SecondCountry;
-        // if it's an object, prefer its _id
         if (sc && typeof sc === 'object') sc = sc._id || sc.name || '';
-        // if it's a name or id string and we have countries, try to find matching country and use its _id
         if (sc && Array.isArray(country) && country.length) {
             const found = country.find(c => c._id === sc || c.name === sc);
             if (found) sc = found._id;
         }
         merged.SecondCountry = sc || "";
         setFormValues(merged);
+    }, [ele]);
+    
+    // fetch countries once on mount
+    useEffect(() => {
         fetchAllCountries();
-    }, [ele, country]);
+    }, [dispatch]);
 
     const [uploads, setUploads] = useState({
         // only fileURL preview is needed for this component
@@ -137,8 +139,8 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
                 }
             }
             
-            // coerce target to number if present
-            if (payload.target !== undefined && payload.target !== "") payload.target = Number(payload.target);
+            // keep target as string (options are "franchise" / "partner")
+            if (payload.target == null) payload.target = "";
 
             // Remove empty User field or fields that are empty strings
             if (!payload.User || payload.User.trim() === "") {
@@ -159,23 +161,17 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
 
             if (ele && ele._id) {
                 const res = await dispatch(updateFile({ id: ele._id, data: payload }));
-                // console.log(payload,"::::::::::::::::::::::::::::::::::::::::::::");
-                // console.log(res);
                 
                 toast.success("File updated");
                 if (res?.meta?.requestStatus === "fulfilled") {
-                    fetchData?.();
+                    fetchData();
                     // handleClose?.();
                 } else {
                     const msg = res?.payload?.message || res?.error?.message || "Update failed";
                     toast.error(msg);
                 }
             } else {
-                // console.log(payload);
-                
-                console.log(payload,"|||||||||||||||||||||||||||||||");
-                const res = await dispatch(createCommission(payload));
-                
+               const res = await dispatch(createCommission(payload)); 
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Commission created");
                     fetchData?.();
@@ -209,7 +205,7 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
                                         <label className="form-label">Country</label>
                                         <select name="SecondCountry" value={formValues?.SecondCountry} onChange={handleInputChange} className="form-control">
                                             <option value="">Select Country</option>
-                                            {country.map((c) => (
+                                            {(country || []).map((c) => (
                                                 <option key={c._id} value={c._id}>{c.name}</option>
                                             ))}
                                         </select>
@@ -237,7 +233,11 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
 
                                     <div className="col-md-6">
                                         <label className="form-label">Target</label>
-                                        <input name="target" type="number" value={formValues?.target || ""} onChange={handleInputChange} className="form-control" />
+                                        <select name="target" id="target" value={formValues?.target || ""} onChange={handleInputChange} className="form-control">
+                                            <option value="">Select Target</option>
+                                            <option value="franchise">Franchise</option>
+                                            <option value="partner">Partner</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>

@@ -22,14 +22,14 @@ export const fetchComission = createAsyncThunk(
 
 
 
-export const deleteLoanLead = createAsyncThunk(
-  'loan/deleteLoanLead',
+export const deleteCmission = createAsyncThunk(
+  'comisison/deleteCmission',
   async (ids, { rejectWithValue }) => {
     if (!ids || ids.length === 0) {
       return rejectWithValue({ message: "No blog IDs provided" });
     }
     try {
-      const response = await axios.delete("https://searchmystudy.com/api/admin/loan", {
+      const response = await axios.delete("http://localhost:3000/api/admin/commission", {
         data: { ids },
       });
       return response.data;
