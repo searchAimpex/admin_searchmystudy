@@ -121,8 +121,12 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     if (!formValues.OwnerName?.trim()) newErrors.OwnerName = "Owner name is required";
     if (!formValues.email?.trim()) newErrors.email = "Email is required";
     if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = "Contact number is required";
-    if (formValues.zipCode && !/^\d+$/.test(String(formValues.zipCode).trim())) {
-      newErrors.zipCode = "Zip code must contain only digits";
+    // zipCode must be numeric if provided
+    if (formValues.zipCode !== undefined && String(formValues.zipCode).trim() !== "") {
+      const zip = String(formValues.zipCode).trim();
+      if (!/^\d+$/.test(zip)) {
+        newErrors.zipCode = "Zip Code must be numeric";
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -158,11 +162,21 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     try {
       const payload = { ...formValues };
 
-      // coerce zipCode to number if present and numeric (backend expects Number)
-      if (payload.zipCode !== undefined && payload.zipCode !== "" ) {
-        const z = String(payload.zipCode).trim();
-        if (/^\d+$/.test(z)) payload.zipCode = Number(z);
-        else delete payload.zipCode; // should not happen because validateForm blocks non-numeric
+      // ensure there's a 'name' field. backend may require name; prefer explicit name or OwnerName
+      if ((!payload.name || String(payload.name).trim() === "") && payload.OwnerName) {
+        payload.name = payload.OwnerName;
+      }
+
+      // remove empty-string fields to avoid backend validation failures for optional fields
+      Object.keys(payload).forEach((k) => {
+        if (payload[k] === "" || payload[k] === undefined) delete payload[k];
+      });
+
+      // coerce zipCode to number if present and numeric
+      if (payload.zipCode !== undefined) {
+        const z = Number(payload.zipCode);
+        if (!Number.isNaN(z)) payload.zipCode = z;
+        else delete payload.zipCode;
       }
 
       if (payload.DateOfBirth) {
@@ -183,16 +197,20 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
           toast.error(msg);
         }
       } else {
-        console.log(payload,"-------------+++++++++---------------------");
+        console.log(payload,"///////////////////////////////");
         
         const res = await dispatch(createPartner(payload));
+
+        toast.success("Partner created");
         if (res?.meta?.requestStatus === "fulfilled") {
-          toast.success("Partner created");
           fetchData?.();
           handleClose?.();
         } else {
-          const msg = res?.payload?.message || res?.error?.message || "Creation failed";
-          toast.error(msg);
+          // surface full server error for easier debugging
+          const msg = res?.payload || res?.error || res;
+          console.error("createPartner failed:", msg);
+          const userMsg = (res?.payload && res.payload.message) || (res?.error && res.error.message) || "Creation failed";
+          toast.error(userMsg);
         }
       }
     } catch (err) {
@@ -282,7 +300,8 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Zip Code</label>
-                    <input name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className="form-control" />
+                    <input name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
+                    {errors.zipCode && <div className="invalid-feedback">{errors.zipCode}</div>}
                   </div>
 
                   <div className="col-12">

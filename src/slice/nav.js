@@ -1,17 +1,19 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { Nav } from 'react-bootstrap';
 
 
 
 
-export const fetchComission = createAsyncThunk(
-  'comission/fetchComission',
+export const fetchNav = createAsyncThunk(
+  'nav/fetchNav',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('https://searchmystudy.com/api/admin/commission');
+      const response = await axios.get('https://searchmystudy.com/api/admin/nav');
     //   console.log(response.data,"++++++++++++++++");
       
-      return response.data;
+      return response.data.navItems
+  ;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Something went wrong'
@@ -22,14 +24,14 @@ export const fetchComission = createAsyncThunk(
 
 
 
-export const deleteCmission = createAsyncThunk(
-  'comisison/deleteCmission',
+export const deleteNav = createAsyncThunk(
+  'nav/deleteNav',
   async (ids, { rejectWithValue }) => {
     if (!ids || ids.length === 0) {
-      return rejectWithValue({ message: "No blog IDs provided" });
+      return rejectWithValue({ message: "No data provided" });
     }
     try {
-      const response = await axios.delete("https://searchmystudy.com/api/admin/commission", {
+      const response = await axios.delete("https://searchmystudy.com/api/admin/nav", {
         data: { ids },
       });
       return response.data;
@@ -40,11 +42,12 @@ export const deleteCmission = createAsyncThunk(
 );
 
 
-export const updateLoanLead = createAsyncThunk(
-  'loan/updateLoanLead',
+export const updateNav = createAsyncThunk(
+  'nav/updateNav',
   async ({ id, data }, thunkAPI) => {
     try {
-      const response = await fetch(`https://searchmystudy.com/api/admin/file/${id}`, {
+      console.log(data,"-------------------")
+      const response = await fetch(`https://searchmystudy.com/api/admin/nav/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -64,12 +67,12 @@ export const updateLoanLead = createAsyncThunk(
     }
   }
 );
-export const createCommission = createAsyncThunk(
-  'comission/createCommission',
+export const createNav = createAsyncThunk(
+  'nav/createNav',
   async (blogData, thunkAPI) => {
     try {
 
-      const response = await fetch("https://searchmystudy.com/api/admin/commission", {
+      const response = await fetch("https://searchmystudy.com/api/admin/nav", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,10 +98,10 @@ export const createCommission = createAsyncThunk(
     }
   }
 );
-const ComissionSlice = createSlice({
-  name: 'comission',
+const NavSlice = createSlice({
+  name: 'nav',
   initialState: {
-    comission: null,
+    nav: null,
     loading: false,
     error: null,
   },
@@ -109,15 +112,15 @@ const ComissionSlice = createSlice({
       // ===========================
       // 📌 FETCH COUNTRY
       // ===========================
-      .addCase(fetchComission.pending, (state) => {
+      .addCase(fetchNav.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchComission.fulfilled, (state, action) => {
+      .addCase(fetchNav.fulfilled, (state, action) => {
         state.loading = false;
-        state.comission = action.payload; // array of countries
+        state.nav = action.payload; // array of countries
       })
-      .addCase(fetchComission.rejected, (state, action) => {
+      .addCase(fetchNav.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -126,4 +129,4 @@ const ComissionSlice = createSlice({
   },
 });
 
-export default ComissionSlice.reducer;
+export default NavSlice.reducer;

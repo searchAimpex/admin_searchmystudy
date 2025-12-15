@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import $ from "jquery";
 import "datatables.net-dt";
 
@@ -6,24 +6,24 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { deleteLoanLead, fetchLoanLead } from "../slice/loanLead";
-import CreateLoanLead from "../form/CreateLoanLead";
-import { fetchCountry } from "../slice/CountrySlicr";
+import { deleteLoanLead } from "../slice/loanLead";
+import { fetchComission } from "../slice/comission";
+import CreateCommission from "../form/CreateCommission";
+import { deleteNav, fetchNav } from "../slice/nav";
+import CreateNav from "../form/CreateNav";
 
-const LoanLeadManager = () => {
+const NavManager = () => {
     const dispatch = useDispatch();
-    const { loan } = useSelector((state) => state?.loan);
-
+    // const {  } = useSelector((state) => state?.comission);
+    const comission  = useSelector((state) => state?.nav?.nav);
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchData = async () => {
-        await dispatch(fetchCountry())
-        const a = await dispatch(fetchLoanLead())
-        console.log(a)
+        const a = await dispatch(fetchNav())
     };
 
     useEffect(() => {
@@ -31,14 +31,13 @@ const LoanLeadManager = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        if (loan?.length > 0) {
+        if (comission?.length > 0) {
             // Delay initialization to ensure DOM is ready
             setTimeout(() => {
                 try {
                     if ($.fn.DataTable.isDataTable("#dataTable")) {
                         $("#dataTable").DataTable().destroy();
                     }
-
                     $("#dataTable").DataTable({
                         paging: true,
                         searching: true,
@@ -54,9 +53,8 @@ const LoanLeadManager = () => {
                 }
             }, 100);
         }
-    }, [loan]);
+    }, [comission]);
 
-    // ✅ Checkbox (single select/unselect)
     const handleCheckboxChange = (id) => {
         setSelectedIds((prevSelected) =>
             prevSelected.includes(id)
@@ -68,7 +66,7 @@ const LoanLeadManager = () => {
     // ✅ Master checkbox (select/unselect all)
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedIds(loan?.map((w) => w._id) || []);
+            setSelectedIds(comission?.map((w) => w._id) || []);
         } else {
             setSelectedIds([]);
         }
@@ -76,27 +74,37 @@ const LoanLeadManager = () => {
 
     // ✅ Delete selected webinars
     const handleDelete = async () => {
+        if (selectedIds.length === 0) {
+            toast.warning("Please select at least one nav to delete.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Are you sure you want to delete ${selectedIds.length} nav(s)?`
+        );
+        if (!confirmed) return;
+
+        setIsDeleting(true);
         try {
-            if (selectedIds.length === 0) {
-                toast.warning("Please select at least one lead to delete.");
-                return;
+            // dispatch delete and wait for it to finish
+            const res = await dispatch(deleteNav(selectedIds));
+
+            // optionally check result status
+            if (res?.meta?.requestStatus === "fulfilled") {
+                // refetch list and wait for update so DataTable re-inits via effect
+                await fetchData();
+
+                toast.success("Selected nav(s) deleted successfully");
+                setSelectedIds([]);
+            } else {
+                const msg = res?.payload?.message || res?.error?.message || "Delete failed";
+                toast.error(msg);
             }
-
-            const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} lead(s)?`
-            );
-            if (!confirmed) return;
-            // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteLoanLead(selectedIds));
-            console.log(a, "+++++++++++++++++++++++++++");
-
-            toast.success("Selected lead(s) deleted successfully");
-            fetchData()
-            setSelectedIds([]);
-
         } catch (error) {
-            console.log(error);
-            toast.error("Error deleting lead(s)");
+            console.error(error);
+            toast.error("Error deleting nav(s)");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -108,7 +116,13 @@ const LoanLeadManager = () => {
             >
                 <h5 className="card-title mb-0">Partner Table</h5>
                 <div>
-
+                    <button
+                        type="button"
+                        className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
+                        onClick={() => setShowModal(true)}
+                    >
+                        Create Lead
+                    </button>
 
                     <button
                         className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
@@ -118,7 +132,7 @@ const LoanLeadManager = () => {
                     </button>
 
                     {showModal && (
-                        <CreateLoanLead
+                        <CreateNav
                             fetchData={fetchData}
                             ele={editingWebinar}
                             handleClose={() => {
@@ -136,21 +150,19 @@ const LoanLeadManager = () => {
                     <thead>
                         <tr>
                             <th>Check</th>
-                            <th>Tracking ID</th>
                             <th>Name</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>File</th>
-                            <th>Status</th>
+                            <th>URL</th>
                             <th>Create At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {loan?.map((ele, ind) => (
+                        {comission?.map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
-                                    <div className="form-check style-check d-flex align-items-center">
+                                    <div 
+                                    className="form-check style-check d-flex align-items-center"
+                                    >
                                         <input
                                             type="checkbox"
                                             className="form-check-input"
@@ -160,34 +172,12 @@ const LoanLeadManager = () => {
                                         <label className="form-check-label">{ind + 1}</label>
                                     </div>
                                 </td>
-                                <td>{ele?.trackingId}</td>
-                                <td>{ele?.firstName}</td>
-                                <td>{ele?.middleName}</td>
-                                <td>{ele?.lastName}</td>
+                              
+
+                                <td>{ele?.name || "---------"}</td>
                                 <td>
-                                    <a href={ele?.offerLetter} target="_blank">Link</a>
+                                    <a href={ele?.url} target="_blank">Link</a>
                                 </td>
-                                <td
-
-                                >
-                                    <p
-                                        style={{
-                                            paddingLeft:"10px",
-                                            color: "white",
-                                            backgroundColor:
-                                                ele?.status === 'approved'
-                                                    ? 'green'
-                                                    : ele?.status === 'rejected'
-                                                        ? 'red'
-                                                        : ele?.status === 'processing'
-                                                            ? 'blue'
-                                                            : 'orange' // pending or default
-
-                                        }}>
-                                        {ele?.status}
-                                    </p>
-                                </td>
-
                                 <td>{ele?.createdAt}</td>
 
 
@@ -225,4 +215,4 @@ const LoanLeadManager = () => {
     );
 };
 
-export default LoanLeadManager;
+export default NavManager;

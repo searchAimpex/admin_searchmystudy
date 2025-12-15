@@ -4,29 +4,44 @@ import { app } from "../firebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createPartner, updatePartner } from "../slice/PartnerSlice";
-import { createAssessment, updateAssessment } from "../slice/AssessmentSlice";
-import { allCountry } from "../slice/AbroadSlice";
-import { useSelector } from "react-redux";
-import { createFile, fetchCountry, updateFile } from "../slice/CountrySlicr";
+
 import { statusLoanLead } from "../slice/loanLead";
 
 const storage = getStorage(app);
 
 const CreateLoanLead = ({ ele, handleClose, fetchData }) => {
+
     const dispatch = useDispatch();
     const initial = {
-        firstName: ele?.firstName || "",
+        status: ele?.status || "",
     };
 
     const [formValues, setFormValues] = useState(initial);
 
+    // keep formValues in sync when editing element changes
+    useEffect(() => {
+      setFormValues({ status: ele?.status || "" });
+    }, [ele]);
+    
+    const handleInputChange = (e) => {
+      const { name, value } = e.target;
+      setFormValues(prev => ({ ...prev, [name]: value }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
       try {
-        const data = await dispatch(statusLoanLead(ele._id, formValues));
-        console.log(data,'======================');
+        // console.log(ele?._id, formValues,'======================');
+        if (!ele?._id) {
+          toast.error("No record selected");
+          return;
+        }
+        
+        // send a single object - createAsyncThunk receives one payload argument
+        const result = await dispatch(statusLoanLead({ id: ele._id, data: formValues }));
+        console.log(result, 'dispatch result');
+          handleClose();
+      fetchLoanLead();
         
       } catch (error) {
         console.log(error)
@@ -35,7 +50,7 @@ const CreateLoanLead = ({ ele, handleClose, fetchData }) => {
 
     return (
         <>
-            <ToastContainer />
+            {/* <ToastContainer /> */}
             <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
                 <div className="modal-dialog" style={{ maxWidth: 900 }}>
                     <div className="modal-content p-20">
@@ -49,14 +64,21 @@ const CreateLoanLead = ({ ele, handleClose, fetchData }) => {
                                 <div className="row g-3">
                                     {/* Personal fields mapped to initial */}
                                     <div className="col-md-4">
-                                        <label className="form-label">First Name</label>
-                                        <select name="" id="">
+                                        <label className="form-label">Status</label>
+                                        <select
+                                          name="status"
+                                          id="status"
+                                          value={formValues?.status || ""}
+                                          onChange={handleInputChange}
+                                          className="form-control"
+                                        >
+                                            <option value="">Select Status</option>
                                             <option value="pending">Pending</option>
                                             <option value="processing">Processing</option>
                                             <option value="approved">Approved</option>
                                             <option value="rejected">Rejected</option>
                                         </select>
-                                    </div>
+                                     </div>
 
 
 
@@ -67,8 +89,8 @@ const CreateLoanLead = ({ ele, handleClose, fetchData }) => {
 
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={handleClose}>Close</button>
-                                <button type="submit" className="btn btn-primary" disabled={anyUploading()}>
-                                    {anyUploading() ? "Uploading..." : (ele && ele._id ? "Update Partner" : "Create Partner")}
+                                <button type="submit" className="btn btn-primary">
+                                    Create Partner
                                 </button>
                             </div>
                         </form>

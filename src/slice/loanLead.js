@@ -5,17 +5,21 @@ import axios from 'axios';
 
 
 export const statusLoanLead = createAsyncThunk(
-    "loan/statusLoanLead",
-    async({id,data},rejectWithValue)=>{
-        try {
-            const response = await axios.put(`https://searchmystudy.com/api/admin/loan/status/${id}`,data);
-            toast.success("Update Lead Successfully")
-            return response?.data
-        } catch (error) {
-            toast.error("Failed to update lead")   
-         return rejectWithValue(error)
-        }
+  "loan/statusLoanLead",
+  async (payload, { rejectWithValue }) => {
+    try {
+        const { id, data } = payload || {};
+      console.log('statusLoanLead payload:', { id, data });
+      const response = await axios.put(`https://searchmystudy.com/api/admin/loan/status/${id}`, data);
+      return response?.data;
+    
+    } catch (error) {
+      // return serializable error info (server message / status) to rejectWithValue
+      const server = error?.response?.data || error?.message || 'Unknown error';
+      console.error('statusLoanLead error:', server);
+      return rejectWithValue(server);
     }
+  }
 );
 
 

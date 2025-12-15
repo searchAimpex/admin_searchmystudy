@@ -278,6 +278,18 @@ const navigate = useNavigate();
                 <span>Commission Management</span>
               </NavLink>
             </li>
+                <li>
+              <NavLink
+                to='/nav-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Nav Management</span>
+              </NavLink>
+            </li>
             
             {/* <li>
               <NavLink
