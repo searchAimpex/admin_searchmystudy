@@ -133,9 +133,11 @@ import LoanLeadManagement from "./pages/LoanLeadManagement";
 import CommissionManagement from "./pages/CommissionManagement";
 import NavManagement from "./pages/NavManagement";
 import PromotionalManagement from "./pages/PromotionalManagement";
+import ContactManagement from "./pages/ContactManagement";
+import PopupManagements from "./pages/PopupManagements";
 function App() {
 
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const location = useLocation(); // ✅ get current path
   const token = Cookies.get("token");
 
@@ -146,13 +148,13 @@ function App() {
     "/password-reset",
     "/change-password/:id"
   ];
-// console.log(location.pathname,"::::::::::::::::::::::::::;;");
+  // console.log(location.pathname,"::::::::::::::::::::::::::;;");
 
   useEffect(() => {
-    if(location.pathname === "/sign-in" && token){
+    if (location.pathname === "/sign-in" && token) {
       navigate("/dashboard")
     }
-    if(!token && location.pathname === "/sign-in" ){
+    if (!token && location.pathname === "/sign-in") {
       navigate("/sign-in")
     }
 
@@ -161,7 +163,7 @@ function App() {
     // }     
 
     // Run redirect only if token exists AND current path is NOT in exclude list
-       if (token && !excludeRedirect.includes(location.pathname)) {
+    if (token && !excludeRedirect.includes(location.pathname)) {
       navigate("/dashboard");
     }
   }, [token, navigate, location.pathname]);
@@ -170,7 +172,7 @@ function App() {
 
     <>
       <RouteScrollToTop />
-          <ToastContainer
+      <ToastContainer
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}
@@ -190,10 +192,10 @@ function App() {
         <Route exact path='/index-3' element={<HomePageThree />} />
         <Route exact path='/index-4' element={<HomePageFour />} />
         <Route exact path='/index-5' element={<HomePageFive />} /> */}
-       
+
         <Route exact path='/dashboard' element={<HomePageSix />} />
         <Route exact path='/frenchise-dashboard' element={<HomePageSeven />} />
-       
+
         {/* <Route exact path='/index-7' element={<HomePageSeven />} />
         <Route exact path='/index-8' element={<HomePageEight />} />
         <Route exact path='/index-9' element={<HomePageNine />} />
@@ -309,7 +311,7 @@ function App() {
         <Route exact path='/blog-manager' element={<AddBlogPage />} />
         <Route exact path='/webinar-manager' element={<WebinarPage />} />
         <Route exact path='/service-manager' element={<ServicePage />} />
-        <Route exact path='/testemonials-manager' element={<CounselorManagerPage/>} />
+        <Route exact path='/testemonials-manager' element={<CounselorManagerPage />} />
         <Route exact path='/video-manager' element={<VideoManagerPage />} />
         <Route exact path='/media-manager' element={<MediaManagerPage />} />
         <Route exact path='/abroad-country' element={<AbroadStudyPage />} />
@@ -320,18 +322,16 @@ function App() {
         <Route exact path='/abroad-university' element={<AbroadUniversityPage />} />
         <Route exact path='/abroad-course-manager' element={<AbroadCoursePage />} />
         <Route exact path='/website-leads' element={<ContactUsLeadPage />} />
-         <Route exact path='/counsellor-lead/:id' element={<CounselorSingleLeadManager />} />
+        <Route exact path='/counsellor-lead/:id' element={<CounselorSingleLeadManager />} />
         <Route exact path='/counsellor-lead' element={<CounsellorLeadPage />} />
         <Route exact path='/website-details' element={<WebsiteDetailsPage />} />
         <Route exact path='/query' element={<QueryPage />} />
-        <Route exact path='/counselor-manager' element={<CounsellorPage  />} />
-        <Route exact path='/popup' element={<PopupPage  />} />
-        <Route exact path='/webinar-lead' element={<WebinarPage  />} />
-        <Route exact path='/password-reset' element={<PasswordResetPage  />} />
-        <Route exact path='/change-password/:id' element={<ChangePassword/>} />
-        <Route exact path='/login-in' element={<FrenchiseLogin/>} />
-
-         
+        <Route exact path='/counselor-manager' element={<CounsellorPage />} />
+        <Route exact path='/popup' element={<PopupPage />} />
+        <Route exact path='/webinar-lead' element={<WebinarPage />} />
+        <Route exact path='/password-reset' element={<PasswordResetPage />} />
+        <Route exact path='/change-password/:id' element={<ChangePassword />} />
+        <Route exact path='/login-in' element={<FrenchiseLogin />} />
 
 
 
@@ -340,16 +340,21 @@ function App() {
 
 
 
-          <Route exact path='/partener-management' element={<PartnerManagement/>} />
-          <Route exact path='/country-management' element={<CountryManagement/>} />
-          <Route exact path='/frenchise-management' element={<FrechiseManagement/>} />
-          <Route exact path='/lead-management' element={<LeadManagement/>} />
-          <Route exact path='/student-management' element={<StudentManagement/>} />
-           <Route exact path='/file-management' element={<FileManagement/>} />
-          <Route exact path='/loan-lead-management' element={<LoanLeadManagement/>} />
-            <Route exact path='/commission-management' element={<CommissionManagement/>} />
-              <Route exact path='/nav-management' element={<NavManagement/>} />
-                            <Route exact path='/promotional-management' element={<PromotionalManagement/>} />
+
+
+        <Route exact path='/partener-management' element={<PartnerManagement />} />
+        <Route exact path='/country-management' element={<CountryManagement />} />
+        <Route exact path='/frenchise-management' element={<FrechiseManagement />} />
+        <Route exact path='/lead-management' element={<LeadManagement />} />
+        <Route exact path='/student-management' element={<StudentManagement />} />
+        <Route exact path='/file-management' element={<FileManagement />} />
+        <Route exact path='/loan-lead-management' element={<LoanLeadManagement />} />
+        <Route exact path='/commission-management' element={<CommissionManagement />} />
+        <Route exact path='/nav-management' element={<NavManagement />} />
+        <Route exact path='/promotional-management' element={<PromotionalManagement />} />
+        <Route exact path='/contact-management' element={<ContactManagement />} />
+        <Route exact path='/popup-management' element={<PopupManagements />} />
+
         <Route exact path='*' element={<ErrorPage />} />
       </Routes>
     </>

@@ -17,6 +17,21 @@ export const fetchAbroadUniversity = createAsyncThunk(
         }
     }
 );
+export const fetchAllUni = createAsyncThunk(
+    'all/fetchAllUni',
+    async(__,{rejectWithValue})=>{
+        try {
+            const response = await axios.get("https://searchmystudy.com/api/admin/university");
+            return Array.isArray(response.data)
+            ? response.data.filter(item => item?.Country?.mbbsAbroad === false)
+            : [];
+        } catch (error) {
+            return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+        }
+    }
+);
 
 export const createAbroadUniversity = createAsyncThunk(
     'abroad/createAbroadUniversity',
@@ -89,6 +104,7 @@ export const createAbroadUniversity = createAsyncThunk(
     name:'abroadProvince',
     initialState:{
         abroadUniversity:[],
+        AllUniversity:[],
         loading:false,
         error:false,
     },
@@ -103,6 +119,18 @@ export const createAbroadUniversity = createAsyncThunk(
             state.loading = false;
         })
         .addCase(fetchAbroadUniversity.rejected,(state,action)=>{
+            state.loading = false;
+            state.error = action.payload;
+        })
+        .addCase(fetchAllUni.pending,(state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchAllUni.fulfilled,(state,action)=>{
+            state.AllUniversity = action.payload;
+            state.loading = false;
+        })
+        .addCase(fetchAllUni.rejected,(state,action)=>{
             state.loading = false;
             state.error = action.payload;
         })

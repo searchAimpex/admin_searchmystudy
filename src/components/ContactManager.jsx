@@ -5,69 +5,68 @@ import "datatables.net-dt";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
-import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
-import CreatePartner from "../form/CreatePartner";
-import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
-import CreateLead from "../form/CreateLead";
-import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
-import StudentStatus from "../form/StudentStatus";
-import { deleteFiles, fetchCountry, fetchFile } from "../slice/CountrySlicr";
-import CreateFile from "../form/CreateFile";
+import { deletePromotional, fetchPromotional } from "../slice/promotional";
+// import CreatePromotional from "../form/CreatePromotional";
+import CreateContact from "../form/CreateContact";
+import { deleteContact, fetchContact } from "../slice/contact";
 
-const FileManager = () => {
+const ContactManager = () => {
     const dispatch = useDispatch();
-    //   const webinars  = useSelector((state) => state.partner.partner);
-    // const { assessment } = useSelector(state => state.assessment)
-    // const { student } = useSelector(state => state.student || [])
-    const file = useSelector(state => state.country?.file?.data || [])
-    // console.log(file,"|||||||||||||||||||||||");
+    // contact slice returns an array (or maybe an object). normalize to array to avoid destructuring/null errors
+    const navItems = useSelector((state) => {
+        const c = state?.contact?.contact;
+        // if slice returns an array, return it; if it returns an object with navItems, pick it; otherwise default to []
+        if (Array.isArray(c)) return c;
+        if (c?.navItems && Array.isArray(c.navItems)) return c.navItems;
+        if (c?.data && Array.isArray(c.data)) return c.data;
+        return [];
+    });
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [items, setItems] = useState([]);
 
     const fetchData = async () => {
-        await dispatch(fetchCountry())
-        const res = await dispatch(fetchFile())
-        // console.log(res, "::::::::::::::::::::::::::::");
-
+        const a = await dispatch(fetchPromotional())
+        const b  = await dispatch(fetchContact())
+        // console.log(b,"-------------------------------");
+        
     };
-    useEffect(() => {
 
-        fetchData()
+    useEffect(() => {
+        fetchData();
     }, [dispatch]);
 
     useEffect(() => {
-        if (file?.length > 0) {
-            // Delay initialization to ensure DOM is ready
-            setTimeout(() => {
-                try {
-                    if ($.fn.DataTable.isDataTable("#dataTable")) {
-                        $("#dataTable").DataTable().destroy();
-                    }
+        // sync local items with store so we can update UI optimistically
+        setItems(Array.isArray(navItems) ? navItems : []);
+        if (navItems && navItems.length > 0) {
+             // Delay initialization to ensure DOM is ready
+             setTimeout(() => {
+                 try {
+                     if ($.fn.DataTable.isDataTable("#dataTable")) {
+                         $("#dataTable").DataTable().destroy();
+                     }
+                     $("#dataTable").DataTable({
+                         paging: true,
+                         searching: true,
+                         pageLength: 5,
+                         lengthMenu: [5, 10, 20, 50],
+                         columnDefs: [
+                             { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
+                             { targets: "_all", searchable: false },
+                         ],
+                     });
+                 } catch (error) {
+                     console.error("DataTable initialization error:", error);
+                 }
+             }, 100);
+         }
+    }, [navItems]); // re-init table when store data changes
 
-                    $("#dataTable").DataTable({
-                        paging: true,
-                        searching: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10, 20, 50],
-                        columnDefs: [
-                            { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
-                            { targets: "_all", searchable: false },
-                        ],
-                    });
-                } catch (error) {
-                    console.error("DataTable initialization error:", error);
-                }
-            }, 100);
-        }
-    }, [file]);
-
-    // ✅ Checkbox (single select/unselect)
     const handleCheckboxChange = (id) => {
         setSelectedIds((prevSelected) =>
             prevSelected.includes(id)
@@ -79,7 +78,7 @@ const FileManager = () => {
     // ✅ Master checkbox (select/unselect all)
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedIds(file?.map((w) => w._id) || []);
+            setSelectedIds((Array.isArray(navItems) ? navItems.map((w) => w._id) : []));
         } else {
             setSelectedIds([]);
         }
@@ -87,27 +86,42 @@ const FileManager = () => {
 
     // ✅ Delete selected webinars
     const handleDelete = async () => {
+        if (selectedIds.length === 0) {
+            toast.warning("Please select at least one nav to delete.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Are you sure you want to delete ${selectedIds.length} nav(s)?`
+        );
+        if (!confirmed) return;
+
+        setIsDeleting(true);
+        // optimistic UI: remove rows immediately
+        const previousItems = items;
+        setItems(prev => prev.filter(item => !selectedIds.includes(item._id)));
+        const idsToDelete = [...selectedIds];
+        setSelectedIds([]);
+
         try {
-            if (selectedIds.length === 0) {
-                toast.warning("Please select at least one webinar to delete.");
-                return;
+            const res = await dispatch(deleteContact(idsToDelete));
+            if (res?.meta?.requestStatus === "fulfilled") {
+                // optional: re-sync from server to ensure consistent state
+                await fetchData();
+                toast.success("Selected nav(s) deleted successfully");
+            } else {
+                // revert optimistic change
+                setItems(previousItems);
+                const msg = res?.payload?.message || res?.error?.message || "Delete failed";
+                toast.error(msg);
             }
-
-            const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} file(s)?`
-            );
-            if (!confirmed) return;
-            // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteFiles(selectedIds));
-            // console.log(a);
-
-            toast.success("Selected file(s) deleted successfully");
-            fetchData()
-            setSelectedIds([]);
-
         } catch (error) {
-            console.log(error);
-            toast.error("Error deleting file(s)");
+            console.error(error);
+            // revert optimistic change
+            setItems(previousItems);
+            toast.error("Error deleting nav(s)");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -135,7 +149,7 @@ const FileManager = () => {
                     </button>
 
                     {showModal && (
-                        <CreateFile
+                        <CreateContact
                             fetchData={fetchData}
                             ele={editingWebinar}
                             handleClose={() => {
@@ -153,20 +167,21 @@ const FileManager = () => {
                     <thead>
                         <tr>
                             <th>Check</th>
-                            <th>Country</th>
-                            <th>University</th>
                             <th>Name</th>
-                            <th>Type</th>
-                            <th>File</th>
+                            <th>Designation</th>
+                            <th>Number</th>
+                            <th>Profile</th>
                             <th>Create At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {file?.map((ele, ind) => (
+                        {(Array.isArray(items) ? items : []).map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
-                                    <div className="form-check style-check d-flex align-items-center">
+                                    <div 
+                                    className="form-check style-check d-flex align-items-center"
+                                    >
                                         <input
                                             type="checkbox"
                                             className="form-check-input"
@@ -176,15 +191,14 @@ const FileManager = () => {
                                         <label className="form-check-label">{ind + 1}</label>
                                     </div>
                                 </td>
+                              
 
-                                <td>{ele?.SecondCountry?.name}</td>
-                                 <td>{ele?.university?.name}</td>
-                                <td>{ele?.name}</td>
-                                <td>{ele?.type}</td>
+                                <td>{ele?.name || "---------"}</td>
+                                 <td>{ele?.designation || "---------"}</td>
                                 <td>
-                                    <a href={ele?.template} target="_blank">Link</a>
+                                    <a href={ele?.profileImg} target="_blank">Link</a>
                                 </td>
-
+                                 <td>{ele?.phone || "---------"}</td>
 
                                 <td>{ele?.createdAt}</td>
 
@@ -223,4 +237,4 @@ const FileManager = () => {
     );
 };
 
-export default FileManager;
+export default ContactManager;

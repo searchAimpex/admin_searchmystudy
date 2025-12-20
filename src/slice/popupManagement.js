@@ -9,7 +9,7 @@ export const createPopup = createAsyncThunk(
     try {
       console.log("Sending Webinar data:", blogData);
 
-      const response = await fetch("https://searchmystudy.com/api/admin/webinar", {
+      const response = await fetch("https://searchmystudy.com/api/admin/popup", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

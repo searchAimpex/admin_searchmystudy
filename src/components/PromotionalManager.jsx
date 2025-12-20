@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { deletePromotional, fetchPromotional } from "../slice/promotional";
 import CreatePromotional from "../form/CreatePromotional";
+import CreateContact from "../form/CreateContact";
 
 const PromotionalManager = () => {
     const dispatch = useDispatch();

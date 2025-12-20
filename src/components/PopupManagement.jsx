@@ -23,7 +23,7 @@ const PopupManagement = () => {
   // Fetch Counsellor
   const loadCounsellors = async () => {
     const res = await dispatch(fetchPopup());
-    console.log(res, "-----------------------------------");
+    // console.log(res, "-----------------------------------");
     if (res?.meta?.requestStatus === "fulfilled") {
       setCounsellor(res.payload);
     }
@@ -145,6 +145,7 @@ const PopupManagement = () => {
                 </th>
                 <th scope="col">Title</th>
                 <th scope="col">Target</th>
+
                 <th scope="col">Image</th>
                 <th scope="col">Action</th>
               </tr>

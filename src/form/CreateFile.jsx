@@ -2,31 +2,34 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { app } from "../firebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createPartner, updatePartner } from "../slice/PartnerSlice";
 import { createAssessment, updateAssessment } from "../slice/AssessmentSlice";
 import { allCountry } from "../slice/AbroadSlice";
 import { useSelector } from "react-redux";
 import { createFile, fetchCountry, updateFile } from "../slice/CountrySlicr";
+import { fetchAllUni } from "../slice/AbroadUniversitySlice";
+import { toast, ToastContainer } from "react-toastify";
 
 const storage = getStorage(app);
 
 const CreateFile = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
     const  {country}  = useSelector(state => state?.country);
-    // console.log( country, "???????????????????????????????????");
-
+    const {AllUniversity}     = useSelector(state => state?.abroadUniversity)
+    console.log(AllUniversity,"++++++++++++++++++++++++++++++");
     const fetchAllCountries = async () => {
         const res = await dispatch(fetchCountry())
-        // console.log(res,"-----------------------------");
+        const res1 = await dispatch(fetchAllUni())
+        console.log(res1,"==================");
     }
     // align keys with your Mongoose schema (accept common variants from older code)
     const initial = {
             SecondCountry: ele?.SecondCountry?._id || ele?.SecondCountry || "",
         type: ele?.type || "",
         name: ele?.name || "",
-        template: ele?.template || ""
+        template: ele?.template || "",
+        university:ele?.university || ""
     };
 
     const [formValues, setFormValues] = useState(initial);
@@ -145,20 +148,21 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
             if (ele && ele._id && !payload.password) delete payload.password;
 
             if (ele && ele._id) {
-                const res = await dispatch(updateFile({ id: ele._id, data: payload }));
                 // console.log(payload,"::::::::::::::::::::::::::::::::::::::::::::");
+                const res = await dispatch(updateFile({ id: ele._id, data: payload }));
                 // console.log(res);
                 
-                toast.success("File updated");
+                // toast.success("File updated");
                 if (res?.meta?.requestStatus === "fulfilled") {
                     fetchData?.();
-                    // handleClose?.();
+                    handleClose?.();
+                    toast.success("File updated");
                 } else {
                     const msg = res?.payload?.message || res?.error?.message || "Update failed";
                     toast.error(msg);
                 }
             } else {
-                // console.log(payload);
+                console.log(payload);
                 
                 const res = await dispatch(createFile(payload));
                 // console.log(res,"|||||||||||||||||||||||||||||||");
@@ -180,7 +184,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
 
     return (
         <>
-            <ToastContainer />
+            {/* <ToastContainer /> */}
             <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
                 <div className="modal-dialog" style={{ maxWidth: 900 }}>
                     <div className="modal-content p-20">
@@ -203,6 +207,18 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                             <option value="">Select Type</option>
                                             <option value="TEMPLATE">TEMPLATE</option>
                                             <option value="BROUCHER">BROUCHER</option>
+
+                                        </select>
+                                    </div>
+                                     <div className="col-md-4">
+                                        <label className="form-label">University</label>
+                                        <select name="university" value={formValues?.university?.name} onChange={handleInputChange} className="form-control">
+                                            <option value="">Select University</option>
+                                           {
+                                            AllUniversity.map((e)=>(
+                                                <option key={e._id} value={e._id}>{e.name}</option>
+                                            ))
+                                           }
 
                                         </select>
                                     </div>

@@ -151,7 +151,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
 
     console.log("Final formData to dispatch:", formData);
 
-    try {
+    try { 
         console.log( formData,"-------------------------");
       const res = await dispatch(createPopup(formData));
       console.log( res,"-------------------------");
@@ -238,7 +238,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
                   className={`form-select ${
                     errors.target ? "is-invalid" : ""
                   }`}
-                  value={ele.target}
+                  value={ele?.target}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, target: e.target.value }))
                   }

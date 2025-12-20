@@ -303,6 +303,30 @@ const navigate = useNavigate();
               </NavLink>
             </li>
             
+              <li>
+              <NavLink
+                to='/contact-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Contact Management</span>
+              </NavLink>
+            </li>
+              <li>
+              <NavLink
+                to='/popup-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Popup Management</span>
+              </NavLink>
+            </li>
             {/* <li>
               <NavLink
                 to='/counselor-manager'
