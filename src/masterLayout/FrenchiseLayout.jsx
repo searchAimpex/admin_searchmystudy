@@ -17,15 +17,15 @@ const FrenchiseLayout = ({ children }) => {
   const dispatch = useDispatch()
   const [counsellor, setCounsellor] = useState()
   const location = useLocation();
-const navigate = useNavigate();
+  const navigate = useNavigate();
   const token = Cookies.get("token");
 
-    useEffect(() => {
-      // if(!token){
-      //   navigate("/sign-in")
-      // }
-    
-    }, [token, navigate, location.pathname]);
+  useEffect(() => {
+    // if(!token){
+    //   navigate("/sign-in")
+    // }
+
+  }, [token, navigate, location.pathname]);
 
 
 
@@ -159,7 +159,7 @@ const navigate = useNavigate();
               className=' dark-logo w-[40px]'
             />
             <img
-               src={logo}
+              src={logo}
               alt='site logo'
               className='logo-icon w-[40px]'
             />
@@ -217,7 +217,7 @@ const navigate = useNavigate();
               </NavLink>
             </li>
 
-              <li>
+            <li>
               <NavLink
                 to='/lead-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -242,7 +242,7 @@ const navigate = useNavigate();
                 <span>Student Management</span>
               </NavLink>
             </li>
-             <li>
+            <li>
               <NavLink
                 to='/file-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -254,7 +254,7 @@ const navigate = useNavigate();
                 <span>File/Template Management</span>
               </NavLink>
             </li>
-               <li>
+            <li>
               <NavLink
                 to='/loan-lead-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -266,7 +266,7 @@ const navigate = useNavigate();
                 <span>Loan Leads</span>
               </NavLink>
             </li>
-             <li>
+            <li>
               <NavLink
                 to='/commission-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -278,7 +278,7 @@ const navigate = useNavigate();
                 <span>Commission Management</span>
               </NavLink>
             </li>
-                <li>
+            <li>
               <NavLink
                 to='/nav-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -289,8 +289,8 @@ const navigate = useNavigate();
                 />
                 <span>Nav Management</span>
               </NavLink>
-             </li>
-             <li>
+            </li>
+            <li>
               <NavLink
                 to='/promotional-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -302,8 +302,8 @@ const navigate = useNavigate();
                 <span>Promotional Management</span>
               </NavLink>
             </li>
-            
-              <li>
+
+            <li>
               <NavLink
                 to='/contact-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -315,7 +315,7 @@ const navigate = useNavigate();
                 <span>Contact Management</span>
               </NavLink>
             </li>
-              <li>
+            <li>
               <NavLink
                 to='/popup-management'
                 className={(navData) => (navData.isActive ? "active-page" : "")}
@@ -325,6 +325,32 @@ const navigate = useNavigate();
                   className='menu-icon'
                 />
                 <span>Popup Management</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to='/ticket-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Ticket</span>
+              </NavLink>
+            </li>
+
+
+            <li>
+              <NavLink
+                to='/transaction-management'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='material-symbols:map-outline'
+                  className='menu-icon'
+                />
+                <span>Transaction Management</span>
               </NavLink>
             </li>
             {/* <li>
@@ -380,7 +406,7 @@ const navigate = useNavigate();
             </li> */}
 
             {/* Abroad Study Dropdown */}
-{/*            
+            {/*            
             <li className='dropdown'>
               <Link to='#'>
                 <Icon icon='hugeicons:invoice-03' className='menu-icon' />
@@ -535,7 +561,7 @@ const navigate = useNavigate();
 
 
 
-  {/* <li className='dropdown'>
+            {/* <li className='dropdown'>
               <Link to='#'>
                 <Icon icon='hugeicons:invoice-03' className='menu-icon' />
                 <span>Others</span>
@@ -575,7 +601,7 @@ const navigate = useNavigate();
 
 
 
-          
+
           </ul>
         </div>
       </aside>
@@ -621,11 +647,11 @@ const navigate = useNavigate();
               <div className='d-flex flex-wrap align-items-center gap-3'>
                 {/* ThemeToggleButton */}
                 <ThemeToggleButton />
-              
+
                 {/* Language dropdown end */}
-             
+
                 {/* Message dropdown end */}
-              
+
                 {/* Notification dropdown end */}
                 <div className='dropdown'>
                   <button
@@ -643,7 +669,7 @@ const navigate = useNavigate();
                     <div className='py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2'>
                       <div>
                         <h6 className='text-lg text-primary-light fw-semibold mb-2'>
-                         www.searchmystudy.com
+                          www.searchmystudy.com
                         </h6>
                         <span className='text-secondary-light fw-medium text-sm'>
                           Admin
@@ -676,14 +702,14 @@ const navigate = useNavigate();
                           className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
                           to='/view-profile'
                         >
-                           <Icon icon='solar:lock-password-outline' />{" "}
-                               <button
-        onClick={handleProfileClick}
-        className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
-        style={{ background: "none", border: "none", width: "100%", textAlign: "left" }}
-      >
-         Logout
-      </button>
+                          <Icon icon='solar:lock-password-outline' />{" "}
+                          <button
+                            onClick={handleProfileClick}
+                            className="dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3"
+                            style={{ background: "none", border: "none", width: "100%", textAlign: "left" }}
+                          >
+                            Logout
+                          </button>
 
                         </Link>
                       </li>

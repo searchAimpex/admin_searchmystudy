@@ -26,6 +26,8 @@ import ComissionSliceReducer from './slice/comission'
 import NavSliceReducer from './slice/nav'
 import PromotionalSliceReducer from './slice/promotional'
 import ContactSliceReducer from './slice/contact'
+import TicketSliceReducer from './slice/ticket'
+import transactionReducer from './slice/transaction'
 import { Nav } from 'react-bootstrap';
 const store = configureStore({
   reducer: {
@@ -56,6 +58,8 @@ const store = configureStore({
       nav:NavSliceReducer,
       promotional:PromotionalSliceReducer,
       contact:ContactSliceReducer,
+      ticket:TicketSliceReducer,
+      transaction:transactionReducer
   },
  
 });
