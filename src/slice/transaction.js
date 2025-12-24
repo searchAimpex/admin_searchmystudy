@@ -16,7 +16,6 @@ export const FetchTransaction = createAsyncThunk(
     }
 )
 
-
 export const createTransaction = createAsyncThunk(
   "transaction/createTransaction",
   async (data)=>{

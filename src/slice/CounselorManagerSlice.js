@@ -17,6 +17,18 @@ export const createCounselor = createAsyncThunk(
 );
 
 
+export const fetchCoursefinderCounselor = createAsyncThunk(
+    "counsellor/fetchCoursefinderCounselor",
+    async (_,{rejectWithValue})=>{
+        try {
+            const data = await axios.get("https://searchmystudy.com/api/admin/extrauserall")
+            return data?.data
+        } catch (error) {
+            console.log(error)
+        }
+    }
+)
+
 
 export const fetchCounselor = createAsyncThunk(
     'counsellor/fetchCounsellor',
@@ -32,6 +44,22 @@ export const fetchCounselor = createAsyncThunk(
     }
 );
 
+export const deleteCounselorCoursefinder = createAsyncThunk(
+    'counsellor/deleteCounselorCoursefinder',
+    async(ids,{ rejectWithValue })=>{
+        if (!ids || ids.length === 0) {
+            return rejectWithValue({ message: "No blog IDs provided" });
+          }
+        try {
+            const response = await axios.delete(`https://searchmystudy.com/api/admin/deleteExtrauser`,{
+                data: { ids },
+            })
+            return response?.data;
+        } catch (error) {
+            return rejectWithValue(error?.response?.data || error.message)
+        }
+    }
+);
 
 export const deleteCounselor = createAsyncThunk(
     'counsellor/deleteCounsellor',
@@ -66,20 +94,36 @@ const counsellorSlice = createSlice({
     name:'counsellor',
     initialState:{
         counsellors:[],
+        courseFinderCounsellor:[],
         error:null,
         loading:null,
     },
     reducers:{},
     extraReducers: (builder)=>{
-        builder.addCase(fetchTestemonial.pending, (state)=>{
+        builder.addCase(fetchCounselor.pending, (state)=>{
             state.loading = true;
             state.error = null;
         })
-        .addCase(fetchTestemonial.fulfilled, (state,action)=>{
+        .addCase(fetchCounselor.fulfilled, (state,action)=>{
             state.loading = false;
             state.counsellors = action.payload;
         })
-        .addCase(fetchTestemonial.rejected,(state,action)=>{
+        .addCase(fetchCounselor.rejected,(state,action)=>{
+            state.loading = false;
+            state.error = action.payload;
+        });
+
+
+
+        builder.addCase(fetchCoursefinderCounselor.pending, (state)=>{
+            state.loading = true;
+            state.error = null;
+        })
+        .addCase(fetchCoursefinderCounselor.fulfilled, (state,action)=>{
+            state.loading = false;
+            state.courseFinderCounsellor = action.payload;
+        })
+        .addCase(fetchCoursefinderCounselor.rejected,(state,action)=>{
             state.loading = false;
             state.error = action.payload;
         });

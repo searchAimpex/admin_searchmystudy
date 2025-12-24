@@ -135,9 +135,10 @@ import NavManagement from "./pages/NavManagement";
 import PromotionalManagement from "./pages/PromotionalManagement";
 import ContactManagement from "./pages/ContactManagement";
 import PopupManagements from "./pages/PopupManagements";
-import CounselorManagements from "./pages/TicketManagements";
+// import CounselorManagements from "./pages/TicketManagements";
 import TicketManagements from "./pages/TicketManagements";
 import TransactionManagements from "./pages/TransactionManagements";
+import CounselorManagements from "./pages/CounselorManagements";
 function App() {
 
   const navigate = useNavigate();
@@ -358,8 +359,9 @@ function App() {
         <Route exact path='/contact-management' element={<ContactManagement />} />
         <Route exact path='/popup-management' element={<PopupManagements />} />
         <Route exact path='/ticket-management' element={<TicketManagements />} />
-           <Route exact path='/transaction-management' element={<TransactionManagements />} />
+        <Route exact path='/transaction-management' element={<TransactionManagements />} />
 
+        <Route exact path='/counselor-management' element={<CounselorManagements/>}/>
       
 
         <Route exact path='*' element={<ErrorPage />} />

@@ -9,7 +9,9 @@ import Cookies from "js-cookie";
 import { fetchTestemonial } from "../slice/testemonialsManagementSlice";
 import logo from "../assets/SearchMyStudy.png";
 import logo1 from "../assets/profile.png";
-
+const SectionTitle = ({ title }) => (
+  <li className="sidebar-section-title">{title}</li>
+);
 
 const FrenchiseLayout = ({ children }) => {
   let [sidebarActive, seSidebarActive] = useState(false);
@@ -165,442 +167,134 @@ const FrenchiseLayout = ({ children }) => {
             />
           </Link>
         </div>
-        <div className='sidebar-menu-area'>
-          <ul className='sidebar-menu' id='sidebar-menu'>
-            <li className='drodown bg-primary rounded ' >
-              <NavLink to='/dashboard'>
-                <Icon
-                  icon='solar:home-smile-angle-outline'
-                  className='menu-icon text-white'
-                />
+      <div className="sidebar-menu-area">
+          <ul className="sidebar-menu">
+
+            {/* ===== DASHBOARD ===== */}
+            <SectionTitle title="Dashboard" />
+            <li className="bg-primary rounded">
+              <NavLink to="/dashboard">
+                <Icon icon="solar:home-smile-angle-outline" className="menu-icon text-white" />
                 <span className="text-white">Dashboard</span>
               </NavLink>
-
             </li>
 
-            <p className="mt-12">User Management</p>
+            {/* ===== USER MANAGEMENT ===== */}
+            <SectionTitle title="User Management" />
 
             <li>
-              <NavLink
-                to='/partener-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
+              <NavLink to="/partener-management">
+                <Icon icon="mdi:account-group-outline" className="menu-icon" />
                 <span>Partner Management</span>
               </NavLink>
             </li>
+
             <li>
-              <NavLink
-                to='/frenchise-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Frenchise Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/country-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Country Management</span>
+              <NavLink to="/frenchise-management">
+                <Icon icon="mdi:store-outline" className="menu-icon" />
+                <span>Franchise Management</span>
               </NavLink>
             </li>
 
             <li>
-              <NavLink
-                to='/lead-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Assessment Management</span>
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to='/student-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Student Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/file-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>File/Template Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/loan-lead-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Loan Leads</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/commission-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Commission Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/nav-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Nav Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/promotional-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Promotional Management</span>
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to='/contact-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Contact Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/popup-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Popup Management</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to='/ticket-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Ticket</span>
-              </NavLink>
-            </li>
-
-
-            <li>
-              <NavLink
-                to='/transaction-management'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Transaction Management</span>
-              </NavLink>
-            </li>
-            {/* <li>
-              <NavLink
-                to='/counselor-manager'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
+              <NavLink to="/counselor-management">
+                <Icon icon="mdi:account-tie-outline" className="menu-icon" />
                 <span>Counselor Management</span>
               </NavLink>
             </li>
 
             <li>
-              <NavLink
-                to='/media-manager'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Media Management</span>
+              <NavLink to="/student-management">
+                <Icon icon="mdi:school-outline" className="menu-icon" />
+                <span>Student Management</span>
+              </NavLink>
+            </li>
+
+            {/* ===== CORE OPERATIONS ===== */}
+            <SectionTitle title="Core Operations" />
+
+            <li>
+              <NavLink to="/country-management">
+                <Icon icon="mdi:map-outline" className="menu-icon" />
+                <span>Country Management</span>
               </NavLink>
             </li>
 
             <li>
-              <NavLink
-                to='/video-manager'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Video Management</span>
-              </NavLink>
-            </li> */}
-
-            {/* <li>
-              <NavLink
-                to='/abroad-study-manager'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Abroad Study</span>
-              </NavLink>
-            </li> */}
-
-            {/* Abroad Study Dropdown */}
-            {/*            
-            <li className='dropdown'>
-              <Link to='#'>
-                <Icon icon='hugeicons:invoice-03' className='menu-icon' />
-                <span>MBBS Abroad Manager</span>
-              </Link>
-              <ul className='sidebar-submenu'>
-                <li>
-                  <NavLink
-                    to='/mbss-country'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-                    Country
-                  </NavLink>
-                </li>
-
-                <li>
-                  <NavLink
-                    to='/mbbs-university'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
-                    University
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to='/mbbs-course'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-danger-main w-auto' />{" "}
-                    Course
-                  </NavLink>
-                </li>
-              </ul>
-            </li>
-
-
-            <li className='dropdown'>
-              <Link to='#'>
-                <Icon icon='hugeicons:invoice-03' className='menu-icon' />
-                <span>Lead Management</span>
-              </Link>
-              <ul className='sidebar-submenu'>
-                <li>
-                  <NavLink
-                    to='/website-leads'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-                    Website Lead Management
-                  </NavLink>
-                </li>
-
-
-              
-                <li>
-                  <NavLink
-                    to='/webinar-lead'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-danger-main w-auto' />{" "}
-                    Webinar Lead Management
-                  </NavLink>
-                </li>
-
-                
-
-                
-              </ul>
-            </li>
-
-            
-            <li className='dropdown'>
-              <Link to='#'>
-                <i className="ri-phone-line w-auto" />
-                <span>Counselor Lead</span>
-              </Link>
-              <ul className='sidebar-submenu'>
-                <li>
-                  {
-                    counsellor?.map((ele) => {
-                      return (
-                        <NavLink
-                          to={`/counsellor-lead/${ele?._id}`}
-                          className={(navData) =>
-                            navData.isActive ? "active-page" : ""
-                          }>
-                          <i className="ri-customer-service-2-line  w-auto" />
-                          {ele?.name}
-                        </NavLink>
-                      )
-                    })
-                  }
-
-                </li>
-              </ul>
-            </li>  */}
-
-
-            {/* <li>
-              <NavLink
-                to='/contactus-lead'
-                className={(navData) =>
-                  navData.isActive ? "active-page" : ""
-                }
-              >
-                <i className="ri-phone-line w-auto" />
-                Contact Us Lead
-              </NavLink>
-            </li>*/}
-
-
-
-            {/* <li>
-              <NavLink
-                to='/testemonials-manager'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Testemonials Management</span>
+              <NavLink to="/file-management">
+                <Icon icon="mdi:file-document-multiple-outline" className="menu-icon" />
+                <span>File / Template</span>
               </NavLink>
             </li>
 
-
-            
             <li>
-              <NavLink
-                to='/study-in-india'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='material-symbols:map-outline'
-                  className='menu-icon'
-                />
-                <span>Study India Management</span>
+              <NavLink to="/nav-management">
+                <Icon icon="mdi:view-dashboard-outline" className="menu-icon" />
+                <span>Navigation</span>
               </NavLink>
-            </li> */}
+            </li>
 
+            <li>
+              <NavLink to="/popup-management">
+                <Icon icon="mdi:popup" className="menu-icon" />
+                <span>Popup Management</span>
+              </NavLink>
+            </li>
 
+            {/* ===== LEADS & FINANCE ===== */}
+            <SectionTitle title="Leads & Finance" />
 
-            {/* <li className='dropdown'>
-              <Link to='#'>
-                <Icon icon='hugeicons:invoice-03' className='menu-icon' />
-                <span>Others</span>
-              </Link>
-              <ul className='sidebar-submenu'>
-                <li>
-                  <NavLink
-                    to='/popup'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-                    Popup Management
-                  </NavLink>
-                </li>
+            <li>
+              <NavLink to="/lead-management">
+                <Icon icon="mdi:clipboard-text-outline" className="menu-icon" />
+                <span>Assessment Leads</span>
+              </NavLink>
+            </li>
 
+            <li>
+              <NavLink to="/loan-lead-management">
+                <Icon icon="mdi:bank-outline" className="menu-icon" />
+                <span>Loan Leads</span>
+              </NavLink>
+            </li>
 
-              
-                <li>
-                  <NavLink
-                    to='/website-details'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-danger-main w-auto' />{" "}
-                    Website Details
-                  </NavLink>
-                </li>
+            <li>
+              <NavLink to="/commission-management">
+                <Icon icon="mdi:percent-outline" className="menu-icon" />
+                <span>Commission</span>
+              </NavLink>
+            </li>
 
-                
+            <li>
+              <NavLink to="/transaction-management">
+                <Icon icon="mdi:cash-multiple" className="menu-icon" />
+                <span>Transactions</span>
+              </NavLink>
+            </li>
 
-                
-              </ul>
-            </li> */}
+            {/* ===== COMMUNICATION ===== */}
+            <SectionTitle title="Communication" />
 
+            <li>
+              <NavLink to="/promotional-management">
+                <Icon icon="mdi:bullhorn-outline" className="menu-icon" />
+                <span>Promotions</span>
+              </NavLink>
+            </li>
 
+            <li>
+              <NavLink to="/contact-management">
+                <Icon icon="mdi:phone-outline" className="menu-icon" />
+                <span>Contact Queries</span>
+              </NavLink>
+            </li>
 
+            <li>
+              <NavLink to="/ticket-management">
+                <Icon icon="mdi:ticket-outline" className="menu-icon" />
+                <span>Support Tickets</span>
+              </NavLink>
+            </li>
 
           </ul>
         </div>
