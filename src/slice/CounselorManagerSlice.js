@@ -18,16 +18,32 @@ export const createCounselor = createAsyncThunk(
 
 
 export const fetchCoursefinderCounselor = createAsyncThunk(
-    "counsellor/fetchCoursefinderCounselor",
-    async (_,{rejectWithValue})=>{
-        try {
-            const data = await axios.get("https://searchmystudy.com/api/admin/extrauserall")
-            return data?.data
-        } catch (error) {
-            console.log(error)
-        }
+  "counsellor/fetchCoursefinderCounselor",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3000/api/admin/extrauserall"
+      );
+      console.log(response);
+      
+      // 👇 assuming API returns { data: [] }
+      const allUsers = response?.data || [];
+
+      // 👇 filter only counsellors
+      const counsellors = allUsers.filter(
+        (ele) => ele.role === "counsellor"
+      );
+
+      return counsellors;
+    } catch (error) {
+      console.error(error);
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch counsellors"
+      );
     }
-)
+  }
+);
+
 
 
 export const fetchCounselor = createAsyncThunk(

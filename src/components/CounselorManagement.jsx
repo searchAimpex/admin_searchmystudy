@@ -39,7 +39,7 @@ const CounselorManagement = () => {
   const courseFinderCounsellor = useSelector(
     (state) => state.counsellors?.courseFinderCounsellor || []
   );
-
+  console.log(courseFinderCounsellor)
   /* ================= STATE ================= */
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -48,7 +48,7 @@ const CounselorManagement = () => {
   /* ================= FILTER STATE ================= */
   const [filters, setFilters] = useState({
     counsellorCode: "",
-    centerCode: "",
+
     role: "",
   });
 
@@ -69,16 +69,10 @@ const CounselorManagement = () => {
         ?.toLowerCase()
         .includes(filters.counsellorCode.toLowerCase());
 
-    const matchCenterCode =
-      !filters.centerCode ||
-      ele?.CenterCode
-        ?.toLowerCase()
-        .includes(filters.centerCode.toLowerCase());
-
     const matchRole =
-      !filters.role || ele?.role === filters.role;
+      !filters?.createdBy?.role || ele?.createdBy?.role === filters?.createdBy?.role;
 
-    return matchCounsellorCode && matchCenterCode && matchRole;
+    return matchCounsellorCode  && matchRole;
   });
 
   /* ================= CHECKBOX ================= */
@@ -166,20 +160,6 @@ const CounselorManagement = () => {
             />
           </div>
 
-          <div className="col-md-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search Center Code"
-              value={filters.centerCode}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  centerCode: e.target.value,
-                })
-              }
-            />
-          </div>
 
           <div className="col-md-3">
             <select
@@ -190,8 +170,8 @@ const CounselorManagement = () => {
               }
             >
               <option value="">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="counsellor">Counsellor</option>
+              {/* <option value="admin">Admin</option> */}
+              {/* <option value="counsellor" selected>Counsellor</option> */}
               <option value="partner">Partner</option>
               <option value="franchise">Franchise</option>
             </select>
@@ -226,21 +206,21 @@ const CounselorManagement = () => {
               </th>
               <th>#</th>
               <th>Owner</th>
-              <th>Institution</th>
+              {/* <th>Institution</th> */}
               <th>Name</th>
-              <th>DOB</th>
-              <th>Center</th>
-              <th>Role</th>
+              {/* <th>DOB</th> */}
+              {/* <th>Center</th> */}
+              <th>Created By</th>
               <th>Contact</th>
-              <th>Whatsapp</th>
+              {/* <th>Whatsapp</th> */}
               <th>Email</th>
               <th>Password</th>
               <th>Account</th>
               <th>Code</th>
-              <th>Back Aadhar</th>
+              {/* <th>Back Aadhar</th> */}
               <th>Logo</th>
               <th>Profile</th>
-              <th>Visit Office</th>
+              {/* <th>Visit Office</th> */}
               <th>Cancelled Check</th>
               <th>Created</th>
               <th>Action</th>
@@ -259,23 +239,23 @@ const CounselorManagement = () => {
                   />
                 </td>
                 <td>{ind + 1}</td>
-                <td>{renderValue(ele?.OwnerName)}</td>
-                <td>{renderValue(ele?.InsitutionName)}</td>
-                <td>{renderValue(ele?.name)}</td>
-                <td>{renderValue(ele?.DateOfBirth)}</td>
-                <td>{renderValue(ele?.CenterCode)}</td>
-                <td>{renderValue(ele?.role)}</td>
-                <td>{renderValue(ele?.ContactNumber)}</td>
-                <td>{renderValue(ele?.WhatappNumber)}</td>
+                <td>{renderValue(ele?.createdBy?.OwnerName)}</td>
+                {/* <td>{renderValue(ele?.createdBy?.InsitutionName)}</td> */}
+                <td>{renderValue(ele?.createdBy?.name)}</td>
+                {/* <td>{renderValue(ele?.DateOfBirth)}</td> */}
+                {/* <td>{renderValue(ele?.CenterCode)}</td> */}
+                <td>{renderValue(ele?.createdBy?.role)}</td>
+                <td>{renderValue(ele?.createdBy?.ContactNumber)}</td>
+                {/* <td>{renderValue(ele?.createdBy?.WhatappNumber)}</td> */}
                 <td>{renderValue(ele?.email)}</td>
                 <td>{renderValue(ele?.passwordTracker)}</td>
-                <td>{renderValue(ele?.accountedDetails)}</td>
+                <td>{renderValue(ele?.createdBy?.accountedDetails)}</td>
                 <td>{renderValue(ele?.CounsellorCOde)}</td>
-                <td>{renderLink(ele?.BackAdhar)}</td>
-                <td>{renderLink(ele?.Logo)}</td>
-                <td>{renderLink(ele?.ProfilePhoto)}</td>
-                <td>{renderLink(ele?.VistOffice)}</td>
-                <td>{renderLink(ele?.CancelledCheck)}</td>
+                {/* <td>{renderLink(ele?.BackAdhar)}</td> */}
+                <td>{renderLink(ele?.createdBy?.Logo)}</td>
+                <td>{renderLink(ele?.createdBy?.ProfilePhoto)}</td>
+                {/* <td>{renderLink(ele?.createdBy?.VistOffice)}</td> */}
+                <td>{renderLink(ele?.createdBy?.CancelledCheck)}</td>
                 <td>{renderValue(ele?.createdAt)}</td>
                 <td className="d-flex gap-2">
                   <button
