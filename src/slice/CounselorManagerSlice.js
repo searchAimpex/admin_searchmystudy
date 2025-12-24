@@ -22,7 +22,7 @@ export const fetchCoursefinderCounselor = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "http://localhost:3000/api/admin/extrauserall"
+        "https://searchmystudy.com/api/admin/extrauserall"
       );
       console.log(response);
       
