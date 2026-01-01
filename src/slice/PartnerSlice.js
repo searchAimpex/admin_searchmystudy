@@ -8,8 +8,7 @@ export const createPartner = createAsyncThunk(
   async (partnerData, thunkAPI) => {
     try {
       console.log("Sending Webinar data:", partnerData);
-
-      const response = await fetch("https://searchmystudy.com/api/users", {
+      const response = await fetch("http://localhost:3000/api/users", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,8 +81,6 @@ export const updatePartner = createAsyncThunk(
       return rejectWithValue({ message: "No Webinar ID provided" });
     }
     try {
-      console.log(data,"--------------------");
-      
       const response = await axios.put(`https://searchmystudy.com/api/users/updateUser/${id}`,data);
       // fetchWebinar();     
       // console.log("Update response:", response.data);
@@ -93,6 +90,27 @@ export const updatePartner = createAsyncThunk(
     }
   }
 );
+
+
+export const updateStatus = createAsyncThunk(
+  "partner/updateStatus",
+  async ({id,status},{rejectWithValue})=>{
+ if (!id) {
+      return rejectWithValue({ message: "No Webinar ID provided" });
+    }
+    try {
+      // console.log(id,status,"|||||||||||||||||||||||||");
+      
+      const response = await axios.put(`http://localhost:3000/api/users/statusUpdate/${id}`,status);
+      console.log(response)
+      // fetchWebinar();     
+      // console.log("Update response:", response.data);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+)
 const partnerSlice = createSlice({
   name: 'partners',
   initialState: {

@@ -7,14 +7,14 @@ import PartnerManager from "../components/PartnerManager";
 const PartnerManagement = () => {
   return (
     <>
-    {/* masterLayout */}
-    <FrenchiseLayout>
-    {/* BreadCrumb */}
-    <Breadcrumb title='Partner Details'/>   
+      {/* masterLayout */}
+      <FrenchiseLayout>
+        {/* BreadCrumb */}
+        <Breadcrumb title='Partner Details' />
 
-    {/* WebinarManager */}
-    <PartnerManager/>
-    </FrenchiseLayout>
+        {/* WebinarManager */}
+        <PartnerManager />
+      </FrenchiseLayout>
     </>
   );
 };

@@ -191,11 +191,11 @@ function App() {
 
       <Routes>
         <Route exact path='/' element={<HomePageOne />} />
-        {/* <Route exact path='/' element={<HomePageOne />} />
+        <Route exact path='/' element={<HomePageOne />} />
         <Route exact path='/index-2' element={<HomePageTwo />} />
         <Route exact path='/index-3' element={<HomePageThree />} />
         <Route exact path='/index-4' element={<HomePageFour />} />
-        <Route exact path='/index-5' element={<HomePageFive />} /> */}
+        <Route exact path='/index-5' element={<HomePageFive />} />
 
         <Route exact path='/dashboard' element={<HomePageSix />} />
         <Route exact path='/frenchise-dashboard' element={<HomePageSeven />} />

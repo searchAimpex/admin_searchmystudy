@@ -10,7 +10,7 @@ const storage = getStorage(app);
 
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
-  console.log(ele,"-----------------------");
+  // console.log(ele,"-----------------------");
   
   const initial = {
     name: ele?.name || ele?.OwnerName || "demo",
@@ -20,7 +20,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     role: ele?.role || "partner",
     OwnerName: ele?.OwnerName || ele?.name || "",
     OwnerFatherName: ele?.OwnerFatherName || "",
-    InsitutionName: ele?.InsitutionName || ele?.InstitutionName || "",
+    InsitutionName: ele?.InsitutionName || "",
     ContactNumber: ele?.ContactNumber || "",
     WhatappNumber: ele?.WhatappNumber || ele?.WhatsAppNumber || "",
     CenterCode: ele?.CenterCode || "",
@@ -155,6 +155,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     }
 
     if (!validateForm()) {
+      console.log(formValues)
       toast.error("Please fix validation errors.");
       return;
     }
@@ -187,6 +188,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       if (ele && ele._id && !payload.password) delete payload.password;
 
       if (ele && ele._id) {
+        console.log(payload,"-------------------------")
         const res = await dispatch(updatePartner({ id: ele._id, data: payload }));
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner updated");
@@ -195,16 +197,16 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
         } else {
           const msg = res?.payload?.message || res?.error?.message || "Update failed";
           toast.error(msg);
-        }
+        }       
       } else {
         console.log(payload,"///////////////////////////////");
         
         const res = await dispatch(createPartner(payload));
-
-        toast.success("Partner created");
+        console.log(res)
         if (res?.meta?.requestStatus === "fulfilled") {
+          toast.success("Partner created");
           fetchData?.();
-          handleClose?.();
+          // handleClose?.();
         } else {
           // surface full server error for easier debugging
           const msg = res?.payload || res?.error || res;
@@ -251,14 +253,14 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
 
                   <div className="col-md-6">
                     <label className="form-label">Contact Number</label>
-                    <input name="ContactNumber" value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
+                    <input name="ContactNumber"  maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
                     {errors.ContactNumber && <div className="invalid-feedback">{errors.ContactNumber}</div>}
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">WhatsApp Number</label>
-                    <input name="WhatappNumber" value={formValues.WhatappNumber} onChange={handleInputChange} className="form-control" />
-                  </div>
+                    <input   maxLength={10} name="WhatappNumber"  value={formValues.WhatappNumber} onChange={handleInputChange} className="form-control" />
+                  </div> 
 
                   <div className="col-md-4">
                     <label className="form-label">Center Code</label>
