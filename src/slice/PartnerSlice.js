@@ -8,7 +8,7 @@ export const createPartner = createAsyncThunk(
   async (partnerData, thunkAPI) => {
     try {
       console.log("Sending Webinar data:", partnerData);
-      const response = await fetch("http://localhost:3000/api/users", {
+      const response = await fetch("https://searchmystudy.com/api/users", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export const updateStatus = createAsyncThunk(
     try {
       // console.log(id,status,"|||||||||||||||||||||||||");
       
-      const response = await axios.put(`http://localhost:3000/api/users/statusUpdate/${id}`,status);
+      const response = await axios.put(`https://searchmystudy.com/api/users/statusUpdate/${id}`,status);
       console.log(response)
       // fetchWebinar();     
       // console.log("Update response:", response.data);
