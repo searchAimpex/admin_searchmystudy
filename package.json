@@ -33,7 +33,7 @@
     "axios": "^1.11.0",
     "bootstrap": "^5.3.3",
     "datatables.net": "^2.1.8",
-    "datatables.net-dt": "^2.1.8",
+    "datatables.net-dt": "^2.3.6",
     "file-saver": "^2.0.5",
     "firebase": "^12.1.0",
     "flatpickr": "^4.6.13",
