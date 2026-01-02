@@ -30,8 +30,6 @@ const PartnerManager = () => {
   // ================= FETCH DATA =================
   const fetchData = async () => {
     const a  =await dispatch(fetchPartner());
-    
-    console.log(a)
   };
 
   useEffect(() => {

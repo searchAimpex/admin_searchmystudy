@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
 import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { deletePartner, fetchFrenchise, fetchPartner } from "../slice/PartnerSlice";
+import { deletePartner, fetchFrenchise, fetchPartner, updateStatus } from "../slice/PartnerSlice";
 import CreatePartner from "../form/CreatePartner";
 import CreateFrenchise from "../form/CreateFrenchise";
 
@@ -98,6 +98,20 @@ const FrenchiseManager = () => {
     }
   };
 
+
+    const statusHandler = async (id, status) => {
+      try {
+        const a = await dispatch(updateStatus({ id, status }));
+        console.log(a,"-----------------")
+        toast.success("Status updated");
+        fetchData();
+      } catch (err) {
+        toast.error("Failed to update status");
+      }
+    };
+  
+
+
   return (
     <div className="card basic-data-table">
       <div
@@ -138,15 +152,17 @@ const FrenchiseManager = () => {
   <table id="dataTable" className="table bordered-table mb-0">
     <thead>
       <tr>
-        <th>Check</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Owner Name</th>
-        <th>Create At</th>
-        <th>Password</th>
-        {/* <th>Experience</th> */}
-        <th>Action</th>
-      </tr>
+                <th>Check</th>
+                <th>Center Name</th>
+                <th>Owner Name</th>
+                <th>Center Code</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Password</th>
+                <th>City</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
     </thead>
     <tbody>
       {webinars?.map((ele, ind) => (
@@ -163,14 +179,29 @@ const FrenchiseManager = () => {
             </div>
           </td>
 
-          <td>{ele?.name}</td>
-          <td>{ele?.email}</td>
-          <td>{ele?.OwnerName}</td>
-          <td>{ele?.createdAt}</td>
-          <td>
-           {ele.passwordTracker}
-          </td>
+         <td>{ele?.name}</td>
+                  <td>{ele?.OwnerName}</td>
+                  <td>{ele?.CenterCode}</td>
+                  <td>{ele?.email}</td>
 
+                  <td>
+                    <select
+                      value={String(ele?.status)}
+                      onChange={(e) =>
+                        statusHandler(ele._id, e.target.value === "true")
+                      }
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </td>
+
+                  <td>{ele?.passwordTracker || "Null"}</td>
+                  <td>{ele?.city}</td>
+
+                  <td>
+                    {new Date(ele?.createdAt).toLocaleDateString("en-IN")}
+                  </td>
           <td>
             <Link
               onClick={() => {
