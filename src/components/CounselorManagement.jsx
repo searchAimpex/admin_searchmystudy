@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import "datatables.net-dt/css/dataTables.dataTables.min.css";
 
 import { Icon } from "@iconify/react";
@@ -21,6 +21,9 @@ const renderValue = (value) => {
   }
   return value;
 };
+
+const normalize = (val) =>
+  val ? val.toString().toLowerCase().trim() : "";
 
 /* ================= COMPONENT ================= */
 const CounselorManagement = () => {
@@ -52,28 +55,28 @@ const CounselorManagement = () => {
     loadCounsellors();
   }, []);
 
-  /* ================= FILTER LOGIC ================= */
-  const filteredCounsellors = courseFinderCounsellor.filter((ele) => {
-    const matchCounsellorCode =
-      !filters.counsellorCode ||
-      ele?.CounsellorCOde
-        ?.toLowerCase()
-        .includes(filters.counsellorCode.toLowerCase());
+  /* ================= FILTER LOGIC (FULLY FIXED) ================= */
+  const filteredCounsellors = useMemo(() => {
+    return courseFinderCounsellor.filter((ele) => {
+      const counsellorCode = normalize(ele?.CounsellorCOde);
+      const role = normalize(ele?.createdBy?.role);
+      const centerCode = normalize(ele?.createdBy?.CenterCode);
 
-    const matchRole =
-      !filters.role ||
-      ele?.createdBy?.role
-        ?.toLowerCase()
-        .includes(filters.role.toLowerCase());
+      const fCounsellorCode = normalize(filters.counsellorCode);
+      const fRole = normalize(filters.role);
+      const fCenterCode = normalize(filters.centerCode);
 
-    const matchCenterCode =
-      !filters.centerCode ||
-      ele?.createdBy?.CounsellorCOde
-        ?.toLowerCase()
-        .includes(filters.centerCode.toLowerCase());
+      const matchCounsellorCode =
+        !fCounsellorCode || counsellorCode.includes(fCounsellorCode);
 
-    return matchCounsellorCode && matchRole && matchCenterCode;
-  });
+      const matchRole = !fRole || role === fRole;
+
+      const matchCenterCode =
+        !fCenterCode || centerCode.includes(fCenterCode);
+
+      return matchCounsellorCode && matchRole && matchCenterCode;
+    });
+  }, [courseFinderCounsellor, filters]);
 
   /* ================= CHECKBOX ================= */
   const handleCheckboxChange = (id) => {
@@ -83,11 +86,9 @@ const CounselorManagement = () => {
   };
 
   const handleSelectAll = (checked) => {
-    if (checked) {
-      setSelectedIds(filteredCounsellors.map((c) => c._id));
-    } else {
-      setSelectedIds([]);
-    }
+    setSelectedIds(
+      checked ? filteredCounsellors.map((c) => c._id) : []
+    );
   };
 
   /* ================= DELETE ================= */
@@ -99,13 +100,14 @@ const CounselorManagement = () => {
       return;
     }
 
-    const confirm = window.confirm(
-      idsToDelete.length > 1
-        ? `Delete ${idsToDelete.length} counselors?`
-        : "Delete this counselor?"
-    );
-
-    if (!confirm) return;
+    if (
+      !window.confirm(
+        idsToDelete.length > 1
+          ? `Delete ${idsToDelete.length} counselors?`
+          : "Delete this counselor?"
+      )
+    )
+      return;
 
     const res = await dispatch(deleteCounselorCoursefinder(idsToDelete));
 
@@ -128,7 +130,7 @@ const CounselorManagement = () => {
       Role: ele?.createdBy?.role || "",
       Email: ele?.email || "",
       Password: ele?.passwordTracker || "",
-      CenterCode: ele?.createdBy?.CounsellorCOde || "",
+      CenterCode: ele?.createdBy?.CenterCode || "",
       CenterName: ele?.createdBy?.name || "",
       CreatedAt: ele?.createdAt || "",
     }));
@@ -137,15 +139,18 @@ const CounselorManagement = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Counsellors");
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    const blob = new Blob([excelBuffer], {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+    const blob = new Blob(
+      [
+        XLSX.write(workbook, {
+          bookType: "xlsx",
+          type: "array",
+        }),
+      ],
+      {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }
+    );
 
     saveAs(blob, "Counsellor_List.xlsx");
   };
@@ -153,17 +158,8 @@ const CounselorManagement = () => {
   /* ================= UI ================= */
   return (
     <div className="card basic-data-table">
-      <style>{`
-        table input[type="checkbox"] {
-          display: inline-block !important;
-          opacity: 1 !important;
-          visibility: visible !important;
-        }
-      `}</style>
-
-      {/* HEADER */}
-      <div className="card-header d-flex justify-content-between align-items-center">
-        <h5 className="card-title mb-0">Counselor Management</h5>
+      <div className="card-header d-flex justify-content-between">
+        <h5>Counselor Management</h5>
 
         <div className="d-flex gap-2">
           <button className="btn btn-success btn-sm" onClick={downloadExcel}>
@@ -172,8 +168,8 @@ const CounselorManagement = () => {
 
           {selectedIds.length > 0 && (
             <button
-              onClick={() => handleDelete()}
               className="btn btn-danger btn-sm"
+              onClick={() => handleDelete()}
             >
               Delete Selected ({selectedIds.length})
             </button>
@@ -181,108 +177,102 @@ const CounselorManagement = () => {
         </div>
       </div>
 
-      <div className="card-body overflow-x-auto">
-        {/* ================= FILTER UI ================= */}
-        <div className="row mb-3">
-          <div className="col-md-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search Counsellor Code"
-              value={filters.counsellorCode}
-              onChange={(e) =>
-                setFilters({ ...filters, counsellorCode: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="col-md-3">
-            <select
-              className="form-select"
-              value={filters.role}
-              onChange={(e) =>
-                setFilters({ ...filters, role: e.target.value })
-              }
-            >
-              <option value="">All Roles</option>
-              <option value="partner">Partner</option>
-              <option value="franchise">Franchise</option>
-            </select>
-          </div>
-
-          <div className="col-md-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search Center Code"
-              value={filters.centerCode}
-              onChange={(e) =>
-                setFilters({ ...filters, centerCode: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="col-md-3">
-            <button
-              className="btn btn-secondary w-100"
-              onClick={() =>
-                setFilters({
-                  counsellorCode: "",
-                  role: "",
-                  centerCode: "",
-                })
-              }
-            >
-              Reset Filters
-            </button>
-          </div>
+      {/* FILTERS */}
+      <div className="row p-3 g-2">
+        <div className="col-md-3">
+          <input
+            className="form-control"
+            placeholder="Search Counsellor Code"
+            value={filters.counsellorCode}
+            onChange={(e) =>
+              setFilters({ ...filters, counsellorCode: e.target.value })
+            }
+          />
         </div>
 
-        {/* ================= TABLE ================= */}
-        <table className="table bordered-table mb-0">
+        <div className="col-md-3">
+          <select
+            className="form-select"
+            value={filters.role}
+            onChange={(e) =>
+              setFilters({ ...filters, role: e.target.value })
+            }
+          >
+            <option value="">All Roles</option>
+            <option value="partner">Partner</option>
+            <option value="franchise">Franchise</option>
+          </select>
+        </div>
+
+        <div className="col-md-3">
+          <input
+            className="form-control"
+            placeholder="Search Center Code"
+            value={filters.centerCode}
+            onChange={(e) =>
+              setFilters({ ...filters, centerCode: e.target.value })
+            }
+          />
+        </div>
+
+        <div className="col-md-3">
+          <button
+            className="btn btn-secondary w-100"
+            onClick={() =>
+              setFilters({ counsellorCode: "", role: "", centerCode: "" })
+            }
+          >
+            Reset Filters
+          </button>
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div className="card-body overflow-x-auto">
+        <table className="table bordered-table">
           <thead>
             <tr>
               <th>
                 <input
                   type="checkbox"
-                    className="form-check-input"
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </th>
               <th>#</th>
               <th>Owner</th>
-              <th>Counsellor Name</th>
-              <th>Counsellor Code</th>
+              <th>Name</th>
+              <th>Code</th>
               <th>Role</th>
               <th>Email</th>
               <th>Password</th>
-              <th>Center Code</th>
               <th>Center Name</th>
+              <th>Center Code</th>
+              <th>Contact</th>
               <th>Created</th>
               <th>Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredCounsellors.map((ele, ind) => (
+            {filteredCounsellors.map((ele, i) => (
               <tr key={ele._id}>
                 <td>
                   <input
                     type="checkbox"
-                      className="form-check-input"
                     checked={selectedIds.includes(ele._id)}
                     onChange={() => handleCheckboxChange(ele._id)}
                   />
                 </td>
-                <td>{ind + 1}</td>
+                <td>{i + 1}</td>
                 <td>{renderValue(ele?.createdBy?.OwnerName)}</td>
                 <td>{renderValue(ele?.name)}</td>
                 <td>{renderValue(ele?.CounsellorCOde)}</td>
                 <td>{renderValue(ele?.createdBy?.role)}</td>
                 <td>{renderValue(ele?.email)}</td>
                 <td>{renderValue(ele?.passwordTracker)}</td>
-                <td>{renderValue(ele?.createdBy?.CounsellorCOde)}</td>
                 <td>{renderValue(ele?.createdBy?.name)}</td>
+                <td>{renderValue(ele?.createdBy?.CenterCode)}</td>
+                <td>{renderValue(ele?.WhatappNumber)}</td>
                 <td>{renderValue(ele?.createdAt)}</td>
                 <td>
                   <button
@@ -301,7 +291,6 @@ const CounselorManagement = () => {
         </table>
       </div>
 
-      {/* MODAL */}
       {showModal && (
         <TicketStatus
           ele={editingCounsellor}
