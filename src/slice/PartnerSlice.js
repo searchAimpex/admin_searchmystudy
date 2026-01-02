@@ -91,26 +91,31 @@ export const updatePartner = createAsyncThunk(
   }
 );
 
-
 export const updateStatus = createAsyncThunk(
   "partner/updateStatus",
-  async ({id,status},{rejectWithValue})=>{
- if (!id) {
-      return rejectWithValue({ message: "No Webinar ID provided" });
+  async ({ id, status }, { rejectWithValue }) => {
+    if (!id) {
+      return rejectWithValue({ message: "No User ID provided" });
     }
+
     try {
-      // console.log(id,status,"|||||||||||||||||||||||||");
-      
-      const response = await axios.put(`https://searchmystudy.com/api/users/statusUpdate/${id}`,status);
-      console.log(response)
-      // fetchWebinar();     
-      // console.log("Update response:", response.data);
+      const response = await axios.put(
+        `https://searchmystudy.com/api/users/statusUpdate/${id}`,
+        { status }, // ✅ IMPORTANT
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
   }
-)
+);
+
 const partnerSlice = createSlice({
   name: 'partners',
   initialState: {

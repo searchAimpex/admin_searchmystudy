@@ -18,23 +18,49 @@ import CreatePartner from "../form/CreatePartner";
 const PartnerManager = () => {
   const dispatch = useDispatch();
   const partners = useSelector((state) => state.partner.partner);
-
+  console.log(partners,"///////////////////////////")
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
 
+  // 🔹 FILTER STATES
+  const [statusFilter, setStatusFilter] = useState("");
+  const [centerCodeFilter, setCenterCodeFilter] = useState("");
+
   // ================= FETCH DATA =================
   const fetchData = async () => {
-    await dispatch(fetchPartner());
+    const a  =await dispatch(fetchPartner());
+    
+    console.log(a)
   };
 
   useEffect(() => {
     fetchData();
   }, [dispatch]);
 
+  // ================= FILTER LOGIC =================
+  const filteredPartners = partners?.filter((ele) => {
+    const statusMatch =
+      statusFilter === ""
+        ? true
+        : String(ele.status) === statusFilter;
+
+    const centerCodeMatch =
+      centerCodeFilter === ""
+        ? true
+        : ele.CenterCode === centerCodeFilter;
+
+    return statusMatch && centerCodeMatch;
+  });
+
+  // ================= UNIQUE CENTER CODES =================
+  const uniqueCenterCodes = [
+    ...new Set(partners?.map((p) => p.CenterCode)),
+  ];
+
   // ================= DATATABLE =================
   useEffect(() => {
-    if (partners?.length > 0) {
+    if (filteredPartners?.length >= 0) {
       if ($.fn.DataTable.isDataTable("#dataTable")) {
         $("#dataTable").DataTable().destroy();
       }
@@ -46,7 +72,7 @@ const PartnerManager = () => {
         lengthMenu: [5, 10, 20, 50],
       });
     }
-  }, [partners]);
+  }, [filteredPartners]);
 
   // ================= CHECKBOX =================
   const handleCheckboxChange = (id) => {
@@ -78,12 +104,11 @@ const PartnerManager = () => {
   // ================= STATUS UPDATE =================
   const statusHandler = async (id, status) => {
     try {
-      const p = await dispatch(updateStatus({ id, status })).unwrap();
-      console.log(p,'++++++++++++++++++++++++++')     
+      const a = await dispatch(updateStatus({ id, status }));
+      console.log(a,"-----------------")
       toast.success("Status updated");
       fetchData();
     } catch (err) {
-      console.log(err);
       toast.error("Failed to update status");
     }
   };
@@ -114,76 +139,107 @@ const PartnerManager = () => {
         </div>
       </div>
 
-      {/* ================= TABLE ================= */}
-      <div className="card-body overflow-x-auto">
-        <table id="dataTable" className="table bordered-table mb-0">
-          <thead>
-            <tr>
-              <th>Check</th>
-              <th>Center Name</th>
-              <th>Owner Name</th>
-              <th>Center Code</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Password</th>
-              <th>City</th>
-              <th>Created At</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+      {/* ================= FILTERS ================= */}
+      <div className="card-body">
+        <div className="d-flex gap-3 mb-3">
+          {/* STATUS FILTER */}
+          <select
+            className="form-select w-auto"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
 
-          <tbody>
-            {partners?.map((ele, ind) => (
-              <tr key={ele._id}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(ele._id)}
-                    onChange={() => handleCheckboxChange(ele._id)}
-                  />
-                </td>
-
-                <td>{ele?.name}</td>
-                <td>{ele?.OwnerName}</td>
-                <td>{ele?.CenterCode}</td>
-                <td>{ele?.email}</td>
-
-                {/* ===== STATUS DROPDOWN ===== */}
-                <td>
-                  <select
-                    value={String(ele?.status)}
-                    onChange={(e) =>
-                      statusHandler(ele._id, e.target.value === "true")
-                    }
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
-                </td>
-
-                <td>{ele?.passwordTracker || "Null"}</td>
-                <td>{ele?.city}</td>
-
-                <td>
-                  {new Date(ele?.createdAt).toLocaleDateString("en-IN")}
-                </td>
-
-                <td>
-                  <Link
-                    to="#"
-                    className="btn btn-sm btn-success"
-                    onClick={() => {
-                      setEditingPartner(ele);
-                      setShowModal(true);
-                    }}
-                  >
-                    <Icon icon="lucide:edit" />
-                  </Link>
-                </td>
-              </tr>
+          {/* CENTER CODE FILTER */}
+          <select
+            className="form-select w-auto"
+            value={centerCodeFilter}
+            onChange={(e) => setCenterCodeFilter(e.target.value)}
+          >
+            <option value="">All Center Codes</option>
+            {uniqueCenterCodes?.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
             ))}
-          </tbody>
-        </table>
+          </select>    
+        </div>
+
+        {/* ================= TABLE ================= */}
+        <div className="overflow-x-auto">
+          <table 
+          // id="dataTable"
+           className="table bordered-table mb-0">
+            <thead>
+              <tr>
+                <th>Check</th>
+                <th>Center Name</th>
+                <th>Owner Name</th>
+                <th>Center Code</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Password</th>
+                <th>City</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {partners?.map((ele) => (
+                <tr key={ele._id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(ele._id)}
+                      onChange={() => handleCheckboxChange(ele._id)}
+                    />
+                  </td>
+
+                  <td>{ele?.name}</td>
+                  <td>{ele?.OwnerName}</td>
+                  <td>{ele?.CenterCode}</td>
+                  <td>{ele?.email}</td>
+
+                  <td>
+                    <select
+                      value={String(ele?.status)}
+                      onChange={(e) =>
+                        statusHandler(ele._id, e.target.value === "true")
+                      }
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </td>
+
+                  <td>{ele?.passwordTracker || "Null"}</td>
+                  <td>{ele?.city}</td>
+
+                  <td>
+                    {new Date(ele?.createdAt).toLocaleDateString("en-IN")}
+                  </td>
+
+                  <td>
+                    <Link
+                      to="#"
+                      className="btn btn-sm btn-success"
+                      onClick={() => {
+                        setEditingPartner(ele);
+                        setShowModal(true);
+                      }}
+                    >
+                      <Icon icon="lucide:edit" />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ================= MODAL ================= */}
