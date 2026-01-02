@@ -9,7 +9,6 @@ export const FetchStudent = createAsyncThunk(
     try {
       const response = await axios.get("https://searchmystudy.com/api/admin/student");
       // console.log(response);
-
       return response.data; // returned data will be available in fulfilled reducer
 
     } catch (error) {
