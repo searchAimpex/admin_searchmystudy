@@ -77,7 +77,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       });
       return next;
     });
-  }, [ele]);
+  }, [ele]);    
 
   const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
 

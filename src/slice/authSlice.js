@@ -30,8 +30,9 @@ export const verifyToken = createAsyncThunk(
   "auth/verifyToken",
   async (token, { rejectWithValue }) => {
     try {
+      // console.log()
       const response = await axios.put(
-        `https://searchmystudy.com/api/admin/verifyToken/${token}`,
+        `https://searchmystudy.com/api/admin/verifyToken/${token.token}`,
         {}, 
         {
           withCredentials: true, // important if you want cookies

@@ -11,7 +11,6 @@ const PartnerManagement = () => {
       <FrenchiseLayout>
         {/* BreadCrumb */}
         <Breadcrumb title='Partner Details' />
-
         {/* WebinarManager */}
         <PartnerManager />
       </FrenchiseLayout>

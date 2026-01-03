@@ -334,7 +334,7 @@ function App() {
         <Route exact path='/popup' element={<PopupPage />} />
         <Route exact path='/webinar-lead' element={<WebinarPage />} />
         <Route exact path='/password-reset' element={<PasswordResetPage />} />
-        <Route exact path='/change-password/:id' element={<ChangePassword />} />
+        <Route exact path='/change-password/:email/:token' element={<ChangePassword />} />
         <Route exact path='/login-in' element={<FrenchiseLogin />} />
 
 

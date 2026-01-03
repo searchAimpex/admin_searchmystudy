@@ -16,10 +16,10 @@ const Schema = yup.object({
 const ChangePassword = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { id: token } = useParams();
+    const {token,email } = useParams();
     const { loading, error } = useSelector((state) => state.auth);
     const state = useSelector((state) => state?.profile?.profile);
-    // console.log(state,"=========================");
+    // console.log(token,email,"=========================");
     
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -29,16 +29,17 @@ const ChangePassword = () => {
     useEffect(() => {
         const checkToken = async () => {
             try {
-                const res = await dispatch(verifyToken(token));
-                console.log(res,":::::::::::::::::::::::::");
+                // console.log(token,email)
+                const res = await dispatch(verifyToken({token}));
+                console.log(res.payload.success,":::::::::::::::::::::::::");
                 
-                const res1 = await dispatch(fetchProfile());
-                
-                if (res.meta.requestStatus !== 'fulfilled') {
+
+                if (res.payload.success) {
                     setInvalidToken(true);
                 }
             } catch (err) {
-                setInvalidToken(true);
+                // setInvalidToken(true);
+                console.log(err)
             }
         };
         checkToken();
@@ -52,12 +53,14 @@ const ChangePassword = () => {
 
                 if (values.oldPassword === values.newPassword) {
                     // console.log({password:values.oldPassword,email:state.email})
-                    const res = await dispatch(changePwd( {password:values.oldPassword,email:state.email} ));
-                    // console.log(res,"+++++++++++++++++++++++++++++++++");
+                    // console.log(values);
+                    
+                    const res = await dispatch(changePwd( {password:values.newPassword,email:email} ));
+                    console.log(res,"+++++++++++++++++++++++++++++++++");
                     
                     if (res.meta?.requestStatus === "fulfilled") {
                         toast.success('Password reset successful');
-                        navigate('/sign-in');
+                        navigate('/https://coursefinder.co.in');
                     }
                 } else {
                     toast.error("Password do not match!");
@@ -72,7 +75,7 @@ const ChangePassword = () => {
 
     const { errors, touched, values, handleChange, handleSubmit } = formik;
 
-    if (invalidToken) {
+    if (!invalidToken) {
         return (
             <div className='d-flex justify-content-center align-items-center' style={{ minHeight: '100vh' }}>
                 <h2>Page does not exist or token has expired</h2>
@@ -80,7 +83,7 @@ const ChangePassword = () => {
         );
     }
 
-    if(!invalidToken){
+    if(invalidToken){
  return (
         <section className='d-flex flex-column justify-content-center align-items-center auth bg-base' style={{ minHeight: "100vh" }}>
             <div style={{

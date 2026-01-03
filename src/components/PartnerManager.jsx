@@ -192,6 +192,7 @@ const PartnerManager = () => {
                   <td>
                     <input
                       type="checkbox"
+                       className="form-check-input"
                       checked={selectedIds.includes(ele._id)}
                       onChange={() => handleCheckboxChange(ele._id)}
                     />
