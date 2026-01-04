@@ -243,6 +243,7 @@ const FrenchiseManager = () => {
               <th>Center Code</th>
               <th>Email</th>
               <th>Status</th>
+              <th>Contact Number</th>
               <th>Password</th>
               <th>City</th>
               <th>Created At</th>
@@ -284,6 +285,7 @@ const FrenchiseManager = () => {
                     <option value="false">Inactive</option>
                   </select>
                 </td>
+                <td>{ele?.ContactNumber}</td>
 
                 <td>{ele?.passwordTracker || "Null"}</td>
                 <td>{ele?.city}</td>

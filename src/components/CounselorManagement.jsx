@@ -16,6 +16,7 @@ import {
 import CreateCounselor from "../form/CreateCounselor";
 import Createtestemonial from "../form/CreateTestemonials";
 import CreateCounsellorCoursefinder from "../form/CreateCounsellorCoursefinder";
+import { render } from "@testing-library/react";
 
 /* ================= HELPERS ================= */
 const renderValue = (value) => {
@@ -81,6 +82,7 @@ const CounselorManagement = () => {
     });
   }, [courseFinderCounsellor, filters]);
 
+  console.log(filteredCounsellors)
   /* ================= CHECKBOX ================= */
   const handleCheckboxChange = (id) => {
     setSelectedIds((prev) =>
@@ -246,6 +248,7 @@ const CounselorManagement = () => {
               <th>Name</th>
               <th>Code</th>
               <th>Role</th>
+              <th>Contact Number</th>
               <th>Email</th>
               <th>Password</th>
               <th>Center Name</th>
@@ -272,6 +275,7 @@ const CounselorManagement = () => {
                 <td>{renderValue(ele?.name)}</td>
                 <td>{renderValue(ele?.CounsellorCOde)}</td>
                 <td>{renderValue(ele?.createdBy?.role)}</td>
+                <td>{renderValue(ele?.WhatappNumber)}</td>
                 <td>{renderValue(ele?.email)}</td>
                 <td>{renderValue(ele?.passwordTracker)}</td>
                 <td>{renderValue(ele?.createdBy?.name)}</td>

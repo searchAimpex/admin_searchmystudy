@@ -186,6 +186,7 @@ const PartnerManager = () => {
                 <th>Center Code</th>
                 <th>Email</th>
                 <th>Status</th>
+                <th>Contact Number</th>
                 <th>Password</th>
                 <th>City</th>
                 <th>Created</th>
@@ -230,6 +231,9 @@ const PartnerManager = () => {
                       <option value="true">Active</option>
                       <option value="false">Inactive</option>
                     </select>
+                  </td>
+                  <td>
+                    {ele?.ContactNumber}
                   </td>
 
                   <td>{ele.passwordTracker || "Null"}</td>
