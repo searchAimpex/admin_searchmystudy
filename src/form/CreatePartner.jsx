@@ -252,23 +252,23 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Contact Number</label>
+                    <label className="form-label">Contact Number <span style={{color:"red"}}>*</span></label>
                     <input name="ContactNumber"  maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
                     {errors.ContactNumber && <div className="invalid-feedback">{errors.ContactNumber}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">WhatsApp Number</label>
+                    <label className="form-label">WhatsApp Number <span style={{color:"red"}}>*</span></label>
                     <input   maxLength={10} name="WhatappNumber"  value={formValues.WhatappNumber} onChange={handleInputChange} className="form-control" />
                   </div> 
 
                   <div className="col-md-4">
-                    <label className="form-label">Center Code</label>
+                    <label className="form-label">Center Code <span style={{color:"red"}}>*</span></label>
                     <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
                   </div>
 
                   <div className="col-md-4">
-                    <label className="form-label">Date Of Birth</label>
+                    <label className="form-label">Date Of Birth <span style={{color:"red"}}>*</span></label>
                     <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className="form-control" />
                   </div>
 
@@ -277,19 +277,19 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                     <select name="role" value={formValues.role} onChange={handleInputChange} className="form-control">
                       <option value="partner">Partner</option>
                       <option value="franchise">Franchise</option>
-                      <option value="admin">Admin</option>
+                      {/* <option value="admin">Admin</option> */}
                     </select>
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Email</label>
+                    <label className="form-label">Email <span style={{color:"red"}}>*</span></label>
                     <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
                     {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Password</label>
-                    <input name="password" type="password" value={formValues.password} onChange={handleInputChange} className="form-control" placeholder={ele ? "Leave blank to keep current" : ""} />
+                    <label className="form-label">Password <span style={{color:"red"}}>*</span></label>
+                    <input name="password" type="password" value={formValues.password}  className="form-control" placeholder={ele ? "Leave blank to keep current" : ""} />
                   </div>
 
                   <div className="col-md-4">
@@ -321,7 +321,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                           <div>Progress: {Math.round(uploads[f].progress)}%</div>
                         </div>
                       )}
-                    </div>
+                    </div> 
                   ))}
 
                 </div>

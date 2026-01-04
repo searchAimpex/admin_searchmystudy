@@ -161,7 +161,8 @@ const StudentManager = () => {
     );
     if (!confirmed) return;
 
-    await dispatch(deleteStudent(selectedIds));
+    const res = await dispatch(deleteStudent(selectedIds));
+    console.log(res,"++++++++++++++++++++")
     toast.success("Student(s) deleted successfully");
     setSelectedIds([]);
     fetchData();
@@ -266,8 +267,10 @@ const StudentManager = () => {
               </th>
               <th>Tracking ID</th>
               <th>Student Name</th>
+              <th>Punched By</th>
               <th>Father Name</th>
               <th>Country</th>
+              <th>Course Name</th>
               <th>State</th>
               <th>Email</th>
               <th>Phone</th>
@@ -284,6 +287,7 @@ const StudentManager = () => {
                 <td>
                   <input
                     type="checkbox"
+                     className="form-check-input"
                     checked={selectedIds.includes(ele._id)}
                     onChange={() => handleCheckboxChange(ele._id)}
                   />
@@ -294,7 +298,9 @@ const StudentManager = () => {
                   {ele.firstName} {ele.middleName} {ele.lastName}
                 </td>
                 <td>{ele.fatherName || "—"}</td>
+                <td>asd</td>
                 <td>{ele?.Country?.name || "—"}</td>
+                <td>Course</td>
                 <td>{ele.state || "—"}</td>
                 <td>{ele.emailID}</td>
                 <td>{ele.mobileNumber}</td>

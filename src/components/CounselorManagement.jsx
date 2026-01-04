@@ -13,6 +13,9 @@ import {
   deleteCounselorCoursefinder,
   fetchCoursefinderCounselor,
 } from "../slice/CounselorManagerSlice";
+import CreateCounselor from "../form/CreateCounselor";
+import Createtestemonial from "../form/CreateTestemonials";
+import CreateCounsellorCoursefinder from "../form/CreateCounsellorCoursefinder";
 
 /* ================= HELPERS ================= */
 const renderValue = (value) => {
@@ -259,6 +262,7 @@ const CounselorManagement = () => {
                 <td>
                   <input
                     type="checkbox"
+                      className="form-check-input"
                     checked={selectedIds.includes(ele._id)}
                     onChange={() => handleCheckboxChange(ele._id)}
                   />
@@ -292,7 +296,7 @@ const CounselorManagement = () => {
       </div>
 
       {showModal && (
-        <TicketStatus
+        <CreateCounsellorCoursefinder
           ele={editingCounsellor}
           fetchData={loadCounsellors}
           handleClose={() => {

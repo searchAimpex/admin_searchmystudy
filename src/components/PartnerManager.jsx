@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt";
-
-import { Icon } from "@iconify/react/dist/iconify.js";
+import React, { useEffect, useMemo, useState } from "react";
+import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 import {
   deletePartner,
@@ -17,8 +17,8 @@ import CreatePartner from "../form/CreatePartner";
 
 const PartnerManager = () => {
   const dispatch = useDispatch();
-  const partners = useSelector((state) => state.partner.partner);
-  console.log(partners,"///////////////////////////")
+  const partners = useSelector((state) => state.partner.partner || []);
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
@@ -27,50 +27,39 @@ const PartnerManager = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [centerCodeFilter, setCenterCodeFilter] = useState("");
 
-  // ================= FETCH DATA =================
-  const fetchData = async () => {
-    const a  =await dispatch(fetchPartner());
-  };
+  // 🔹 PAGINATION
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 5;
 
+  // ================= FETCH =================
   useEffect(() => {
-    fetchData();
+    dispatch(fetchPartner());
   }, [dispatch]);
 
   // ================= FILTER LOGIC =================
-  const filteredPartners = partners?.filter((ele) => {
-    const statusMatch =
-      statusFilter === ""
-        ? true
-        : String(ele.status) === statusFilter;
+  const filteredPartners = useMemo(() => {
+    return partners.filter((p) => {
+      const statusMatch =
+        statusFilter === "" ? true : String(p.status) === statusFilter;
 
-    const centerCodeMatch =
-      centerCodeFilter === ""
-        ? true
-        : ele.CenterCode === centerCodeFilter;
+      const centerMatch =
+        centerCodeFilter === ""
+          ? true
+          : p.CenterCode?.toLowerCase().includes(
+              centerCodeFilter.toLowerCase()
+            );
 
-    return statusMatch && centerCodeMatch;
-  });
+      return statusMatch && centerMatch;
+    });
+  }, [partners, statusFilter, centerCodeFilter]);
 
-  // ================= UNIQUE CENTER CODES =================
-  const uniqueCenterCodes = [
-    ...new Set(partners?.map((p) => p.CenterCode)),
-  ];
-
-  // ================= DATATABLE =================
-  useEffect(() => {
-    if (filteredPartners?.length >= 0) {
-      if ($.fn.DataTable.isDataTable("#dataTable")) {
-        $("#dataTable").DataTable().destroy();
-      }
-
-      $("#dataTable").DataTable({
-        paging: true,
-        searching: true,
-        pageLength: 5,
-        lengthMenu: [5, 10, 20, 50],
-      });
-    }
-  }, [filteredPartners]);
+  // ================= PAGINATION LOGIC =================
+  const totalPages = Math.ceil(filteredPartners.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const currentRows = filteredPartners.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
 
   // ================= CHECKBOX =================
   const handleCheckboxChange = (id) => {
@@ -86,15 +75,14 @@ const PartnerManager = () => {
       return;
     }
 
-    const confirm = window.confirm("Are you sure you want to delete?");
-    if (!confirm) return;
+    if (!window.confirm("Are you sure you want to delete?")) return;
 
     try {
       await dispatch(deletePartner(selectedIds)).unwrap();
       toast.success("Deleted successfully");
       setSelectedIds([]);
-      fetchData();
-    } catch (err) {
+      dispatch(fetchPartner());
+    } catch {
       toast.error("Delete failed");
     }
   };
@@ -102,37 +90,59 @@ const PartnerManager = () => {
   // ================= STATUS UPDATE =================
   const statusHandler = async (id, status) => {
     try {
-      const a = await dispatch(updateStatus({ id, status }));
-      console.log(a,"-----------------")
+      await dispatch(updateStatus({ id, status })).unwrap();
       toast.success("Status updated");
-      fetchData();
-    } catch (err) {
+      dispatch(fetchPartner());
+    } catch {
       toast.error("Failed to update status");
     }
   };
 
+  // ================= EXCEL DOWNLOAD =================
+  const downloadExcel = () => {
+    if (!filteredPartners.length) {
+      toast.warning("No data to download");
+      return;
+    }
+
+    const data = filteredPartners.map((p) => ({
+      "Center Name": p.name,
+      "Owner Name": p.OwnerName,
+      "Center Code": p.CenterCode,
+      Email: p.email,
+      Status: p.status ? "Active" : "Inactive",
+      City: p.city,
+      "Created At": new Date(p.createdAt).toLocaleDateString("en-IN"),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Partners");
+
+    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([buffer]), "partners.xlsx");
+  };
+
   return (
-    <div className="card basic-data-table">
+    <div className="card">
       {/* ================= HEADER ================= */}
-      <div
-        className="card-header"
-        style={{ display: "flex", justifyContent: "space-between" }}
-      >
-        <h5 className="card-title mb-0">Partner Table</h5>
+      <div className="card-header d-flex justify-content-between">
+        <h5 className="mb-0">Partner Table</h5>
 
         <div>
           <button
-            className="mx-2 btn btn-primary rounded-pill"
+            className="btn btn-primary mx-1"
             onClick={() => setShowModal(true)}
           >
             Add Partner
           </button>
 
-          <button
-            className="mx-2 btn btn-danger rounded-pill"
-            onClick={handleDelete}
-          >
+          <button className="btn btn-danger mx-1" onClick={handleDelete}>
             Delete Selected
+          </button>
+
+          <button className="btn btn-success mx-1" onClick={downloadExcel}>
+            Download Excel
           </button>
         </div>
       </div>
@@ -140,37 +150,34 @@ const PartnerManager = () => {
       {/* ================= FILTERS ================= */}
       <div className="card-body">
         <div className="d-flex gap-3 mb-3">
-          {/* STATUS FILTER */}
           <select
             className="form-select w-auto"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
           >
             <option value="">All Status</option>
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
 
-          {/* CENTER CODE FILTER */}
-          <select
-            className="form-select w-auto"
+          <input
+            type="text"
+            className="form-control w-auto"
+            placeholder="Search Center Code"
             value={centerCodeFilter}
-            onChange={(e) => setCenterCodeFilter(e.target.value)}
-          >
-            <option value="">All Center Codes</option>
-            {uniqueCenterCodes?.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>    
+            onChange={(e) => {
+              setCenterCodeFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
         </div>
 
         {/* ================= TABLE ================= */}
-        <div className="overflow-x-auto">
-          <table 
-          // id="dataTable"
-           className="table bordered-table mb-0">
+        <div className="table-responsive">
+          <table className="table bordered-table mb-0">
             <thead>
               <tr>
                 <th>Check</th>
@@ -181,31 +188,41 @@ const PartnerManager = () => {
                 <th>Status</th>
                 <th>Password</th>
                 <th>City</th>
-                <th>Created At</th>
+                <th>Created</th>
                 <th>Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {partners?.map((ele) => (
+              {currentRows.length === 0 && (
+                <tr>
+                  <td colSpan="10" className="text-center text-danger">
+                    No Data Found
+                  </td>
+                </tr>
+              )}
+
+              {currentRows.map((ele) => (
                 <tr key={ele._id}>
                   <td>
                     <input
+
                       type="checkbox"
-                       className="form-check-input"
+                         className="form-check-input"
                       checked={selectedIds.includes(ele._id)}
                       onChange={() => handleCheckboxChange(ele._id)}
                     />
                   </td>
 
-                  <td>{ele?.name}</td>
-                  <td>{ele?.OwnerName}</td>
-                  <td>{ele?.CenterCode}</td>
-                  <td>{ele?.email}</td>
+                  <td>{ele.name}</td>
+                  <td>{ele.OwnerName}</td>
+                  <td>{ele.CenterCode}</td>
+                  <td>{ele.email}</td>
 
                   <td>
                     <select
-                      value={String(ele?.status)}
+                    className="form-select form-select-sm"
+                      value={String(ele.status)}
                       onChange={(e) =>
                         statusHandler(ele._id, e.target.value === "true")
                       }
@@ -215,16 +232,14 @@ const PartnerManager = () => {
                     </select>
                   </td>
 
-                  <td>{ele?.passwordTracker || "Null"}</td>
-                  <td>{ele?.city}</td>
-
+                  <td>{ele.passwordTracker || "Null"}</td>
+                  <td>{ele.city}</td>
                   <td>
-                    {new Date(ele?.createdAt).toLocaleDateString("en-IN")}
+                    {new Date(ele.createdAt).toLocaleDateString("en-IN")}
                   </td>
 
                   <td>
-                    <Link
-                      to="#"
+                    <button
                       className="btn btn-sm btn-success"
                       onClick={() => {
                         setEditingPartner(ele);
@@ -232,19 +247,38 @@ const PartnerManager = () => {
                       }}
                     >
                       <Icon icon="lucide:edit" />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {/* ================= PAGINATION ================= */}
+        {totalPages > 1 && (
+          <div className="mt-3">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                className={`btn btn-sm mx-1 ${
+                  currentPage === i + 1
+                    ? "btn-primary"
+                    : "btn-outline-primary"
+                }`}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ================= MODAL ================= */}
       {showModal && (
         <CreatePartner
-          fetchData={fetchData}
+          fetchData={() => dispatch(fetchPartner())}
           ele={editingPartner}
           handleClose={() => {
             setShowModal(false);

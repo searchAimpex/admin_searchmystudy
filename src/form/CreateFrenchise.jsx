@@ -146,7 +146,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
         <div className="modal-dialog" style={{ maxWidth: 900 }}>
           <div className="modal-content p-20">
             <div className="modal-header">
-              <h5 className="modal-title">{ele ? "Edit Partner" : "Create Partner"}</h5>
+              <h5 className="modal-title">{ele ? "Edit Partner" : "Create"}</h5>
               <button type="button" className="btn-close" onClick={handleClose}></button>
             </div>
 
@@ -170,19 +170,19 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
                 <div className="col-md-6">
                   <label className="form-label">Contact Number</label>
-                  <input name="ContactNumber" value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
+                  <input name="ContactNumber" maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
                   {errors.ContactNumber && <div className="invalid-feedback">{errors.ContactNumber}</div>}
                 </div>
 
                 <div className="col-md-6">
                   <label className="form-label">WhatsApp Number</label>
-                  <input name="WhatsAppNumber" value={formValues.WhatsAppNumber} onChange={handleInputChange} className="form-control" />
+                  <input name="WhatsAppNumber"  maxLength={10} value={formValues.WhatsAppNumber} onChange={handleInputChange} className="form-control" />
                 </div>
 
              
                 <div className="col-md-4">
                   <label className="form-label">Center Code</label>
-                  <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
+                  <input name="CenterCode" maxLength={8} value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
                 </div>
 
 
@@ -246,7 +246,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                 </div>
                 <div className="col-md-4">
                   <label className="form-label">Zip Code</label>
-                  <input name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className="form-control" />
+                  <input name="zipCode" maxLength={6} type="number"  value={formValues.zipCode} onChange={handleInputChange} className="form-control" />
                 </div>
 
                 <div className="col-12">
