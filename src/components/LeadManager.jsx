@@ -1,233 +1,296 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import $ from "jquery";
 import "datatables.net-dt";
+import "datatables.net-buttons";
+import "datatables.net-buttons/js/buttons.html5";
 
-import { Icon } from "@iconify/react/dist/iconify.js";
+import JSZip from "jszip";
+window.JSZip = JSZip;
+
+import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
-import CreateWebinar from "../form/CreateWebinar";
-import { toast } from "react-toastify";
-import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
-import CreatePartner from "../form/CreatePartner";
 import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
 import AssissmentStatus from "../form/AssissmentStatus";
+import { toast } from "react-toastify";
 
 const LeadManager = () => {
     const dispatch = useDispatch();
-    //   const webinars  = useSelector((state) => state.partner.partner);
-    const { assessment } = useSelector(state => state.assessment)
-    // console.log(data,"|||||||||||||||||||||||");
+    const { assessment } = useSelector((state) => state.assessment);
+
+    const tableRef = useRef(null);
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [editingWebinar, setEditingWebinar] = useState(null);
 
+    /* ================= FETCH ================= */
     const fetchData = async () => {
-        const b = await dispatch(FetchAssessment());
-        // console.log(b,"||||||||||||||||||||||||||||")
+        await dispatch(FetchAssessment());
     };
-    //   console.log(webinars)
 
     useEffect(() => {
         fetchData();
-    }, [dispatch]);
+    }, []);
 
+    /* ================= DATATABLE INIT ================= */
     useEffect(() => {
-        if (assessment?.length > 0) {
-            // Delay initialization to ensure DOM is ready
-            setTimeout(() => {
-                try {
-                    if ($.fn.DataTable.isDataTable("#dataTable")) {
-                        $("#dataTable").DataTable().destroy();
-                    }
+        if (!assessment?.length) return;
 
-                    $("#dataTable").DataTable({
-                        paging: true,
-                        searching: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10, 20, 50],
-                        columnDefs: [
-                            { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
-                            { targets: "_all", searchable: false },
-                        ],
-                    });
-                } catch (error) {
-                    console.error("DataTable initialization error:", error);
-                }
-            }, 100);
+        if ($.fn.DataTable.isDataTable("#dataTable")) {
+            $("#dataTable").DataTable().destroy();
         }
+
+        tableRef.current = $("#dataTable").DataTable({
+            paging: true,
+            searching: true,
+            pageLength: 5,
+            lengthMenu: [5, 10, 20, 50],
+            dom: "Bfrtip",
+            buttons: [
+                {
+                    extend: "excelHtml5",
+                    title: "Lead_Report",
+                    exportOptions: {
+                        columns: [
+                            1, // Tracking ID
+                            2, // Student Name
+                            3, // Role
+                            4, // Country
+                            5, // Course
+                            6, // Email
+                            7, // Phone
+                            9, // Center Code
+                            10, // Status
+                            11, // Created At
+                        ],
+                        modifier: {
+                            search: "applied", // export filtered data only
+                            order: "applied",
+                        },
+                    },
+                },
+            ],
+            language: {
+                emptyTable: "No data available",
+                zeroRecords: "Data not found",
+            },
+        });
+
+        return () => {
+            tableRef.current?.destroy();
+        };
     }, [assessment]);
 
-    // ✅ Checkbox (single select/unselect)
-    const handleCheckboxChange = (id) => {
-        setSelectedIds((prevSelected) =>
-            prevSelected.includes(id)
-                ? prevSelected.filter((item) => item !== id)
-                : [...prevSelected, id]
-        );
+    /* ================= FILTER HELPERS ================= */
+    const searchColumn = (index, value) => {
+        tableRef.current?.column(index).search(value).draw();
     };
 
-    // ✅ Master checkbox (select/unselect all)
-    const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedIds(assessment?.map((w) => w._id) || []);
-        } else {
-            setSelectedIds([]);
+    const filterDate = (value) => {
+        if (!value) {
+            searchColumn(11, "");
+            return;
         }
+        const formatted = new Date(value).toLocaleDateString();
+        searchColumn(11, formatted);
     };
 
-    // ✅ Delete selected webinars
+    /* ================= DELETE ================= */
     const handleDelete = async () => {
-        try {
-            if (selectedIds.length === 0) {
-                toast.warning("Please select at least one webinar to delete.");
-                return;
-            }
-
-            const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} webinar(s)?`
-            );  
-            if (!confirmed) return;
-            // console.log(selectedIds,"----------------------------------------");
-           const a =  await dispatch(deleteLead(selectedIds));
-           console.log(a,"================");
-           
-            toast.success("Selected webinar(s) deleted successfully");
-            await dispatch(FetchAssessment());
-            window.location.reload()
-            setSelectedIds([]);
-
-        } catch (error) {
-            console.log(error);
-            toast.error("Error deleting webinar(s)");
+        if (!selectedIds.length) {
+            toast.warning("Select at least one lead");
+            return;
         }
+
+        if (!window.confirm("Are you sure you want to delete?")) return;
+
+        await dispatch(deleteLead(selectedIds));
+        toast.success("Deleted successfully");
+        fetchData();
+        setSelectedIds([]);
     };
+
+    /* ================= ROLE DROPDOWN ================= */
+    const roles = [
+        ...new Set(assessment?.map((a) => a?.User?.role).filter(Boolean)),
+    ];
 
     return (
         <div className="card basic-data-table">
-            <div
-                className="card-header"
-                style={{ display: "flex", justifyContent: "space-between" }}
-            >
-                <h5 className="card-title mb-0">Partner Table</h5>
+            <div className="card-header d-flex justify-content-between">
+                <h5>Lead Manager</h5>
                 <div>
                     <button
-                        type="button"
-                        className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
+                        className="btn btn-success mx-2"
+                        onClick={() =>
+                            tableRef.current
+                                .button(".buttons-excel")
+                                .trigger()
+                        }
+                    >
+                        Download Excel
+                    </button>
+
+                    <button
+                        className="btn btn-primary mx-2"
                         onClick={() => setShowModal(true)}
                     >
                         Create Lead
                     </button>
 
                     <button
-                        className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
+                        className="btn btn-danger mx-2"
                         onClick={handleDelete}
                     >
                         Delete Selected
                     </button>
-
-                    {showModal && (
-                        <CreateLead
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
-
-                     {showStatusModal && (
-                        <AssissmentStatus
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowStatusModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
                 </div>
             </div>
 
-            <div className="card-body overflow-x-auto">
-                <table id="dataTable" className="table bordered-table mb-0">
+            <div className="card-body">
+
+                {/* ================= FILTERS ================= */}
+                <div className="row mb-3">
+                    <div className="col-md-2">
+                        <input
+                            className="form-control"
+                            placeholder="Tracking ID"
+                            onKeyUp={(e) =>
+                                searchColumn(1, e.target.value)
+                            }
+                        />
+                    </div>
+
+                    <div className="col-md-2">
+                        <select
+                            className="form-control"
+                            onChange={(e) =>
+                                searchColumn(3, e.target.value)
+                            }
+                        >
+                            <option value="">All Roles</option>
+                            {roles.map((role) => (
+                                <option key={role} value={role}>
+                                    {role}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="col-md-2">
+                        <input
+                            className="form-control"
+                            placeholder="Center Code"
+                            onKeyUp={(e) =>
+                                searchColumn(9, e.target.value)
+                            }
+                        />
+                    </div>
+
+                    <div className="col-md-2">
+                        <select
+                            className="form-control"
+                            onChange={(e) =>
+                                searchColumn(10, e.target.value)
+                            }
+                        >
+                            <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+
+                    <div className="col-md-2">
+                        <input
+                            type="date"
+                            className="form-control"
+                            onChange={(e) =>
+                                filterDate(e.target.value)
+                            }
+                        />
+                    </div>
+                </div>
+
+                {/* ================= TABLE ================= */}
+                <table id="dataTable" className="table bordered-table">
                     <thead>
                         <tr>
-                            <th>Check</th>
+                            <th>#</th>
                             <th>Tracking ID</th>
-                            <th>Punched By</th>
-                            <th>Center Type</th>
-                            <th>Center Code</th>
-                            <th>Name</th>
-                            <th>Email ID</th>
+                            <th>Student Name</th>
+                            <th>Role</th>
+                            <th>Country</th>
+                            <th>Course</th>
+                            <th>Email</th>
+                            <th>Phone</th>
                             <th>DOB</th>
-                            <th>Mobile Number</th>
-                            <th>Passport No.</th>
+                            <th>Center Code</th>
                             <th>Status</th>
-                            <th>Resume</th>
                             <th>Created At</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {assessment?.map((ele, ind) => (
-                            <tr key={ele._id || ind}>
+                        {assessment?.map((ele) => (
+                            <tr key={ele._id}>
                                 <td>
-                                    <div className="form-check style-check d-flex align-items-center">
-                                        <input
-                                            type="checkbox"
-                                            className="form-check-input"
-                                            checked={selectedIds.includes(ele._id)}
-                                            onChange={() => handleCheckboxChange(ele._id)}
-                                        />
-                                        <label className="form-check-label">{ind + 1}</label>
-                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.includes(ele._id)}
+                                        onChange={() =>
+                                            setSelectedIds((prev) =>
+                                                prev.includes(ele._id)
+                                                    ? prev.filter(
+                                                          (id) =>
+                                                              id !== ele._id
+                                                      )
+                                                    : [...prev, ele._id]
+                                            )
+                                        }
+                                    />
                                 </td>
 
-                                <td>{ele?.trackingId}</td>
-                                <td>{ele?.User?.OwnerName || "Null"}</td>
-                                <td>{ele?.User?.role || "Null"}</td>
-                                <td>{ele?.User?.CenterCode || "Null"}</td>
-                                <td>{ele?.firstName} {ele.middleName} {ele.lastName}</td>
-                                <td>{ele?.emailID}</td>
-                                <td>{ele.dob}</td>
+                                <td>{ele.trackingId}</td>
+                                <td>
+                                    {ele.firstName} {ele.lastName}
+                                </td>
+                                <td>{ele?.User?.role}</td>
+                                <td>{ele?.Country?.name || "—"}</td>
+                                <td>{ele.Course}</td>
+                                <td>{ele.emailID}</td>
                                 <td>{ele.mobileNumber}</td>
-                                <td>{ele.passportNumber}</td>
+                                <td>{ele.dob}</td>
+                                <td>{ele?.User?.CenterCode}</td>
                                 <td>{ele.status}</td>
                                 <td>
-                                    {ele?.resume ? (
-                                        <a href={ele.resume} target="_blank" rel="noreferrer" className="btn btn-sm btn-info">
-                                            <Icon icon="lucide:download" />
-                                        </a>
-                                    ) : (
-                                        <span className="text-muted">—</span>
-                                    )}
+                                    {new Date(
+                                        ele.createdAt
+                                    ).toLocaleDateString()}
                                 </td>
-                                <td>{ele?.createdAt ? new Date(ele.createdAt).toLocaleDateString() : "—"}</td>
-                            
 
                                 <td>
                                     <Link
+                                        to="#"
+                                        className="btn btn-sm btn-success"
                                         onClick={() => {
                                             setEditingWebinar(ele);
                                             setShowModal(true);
                                         }}
-                                        to="#"
-                                        className="btn btn-sm btn-success"
                                     >
                                         <Icon icon="lucide:edit" />
                                     </Link>
-                                      <Link
+
+                                    <Link
+                                        to="#"
+                                        className="btn btn-sm btn-primary mx-2"
                                         onClick={() => {
                                             setEditingWebinar(ele);
                                             setShowStatusModal(true);
                                         }}
-                                        to="#"
-                                        className="mx-4 btn btn-sm btn-primary"
                                     >
                                         <Icon icon="lucide:edit" />
                                     </Link>
@@ -238,6 +301,21 @@ const LeadManager = () => {
                 </table>
             </div>
 
+            {showModal && (
+                <CreateLead
+                    ele={editingWebinar}
+                    fetchData={fetchData}
+                    handleClose={() => setShowModal(false)}
+                />
+            )}
+
+            {showStatusModal && (
+                <AssissmentStatus
+                    ele={editingWebinar}
+                    fetchData={fetchData}
+                    handleClose={() => setShowStatusModal(false)}
+                />
+            )}
         </div>
     );
 };

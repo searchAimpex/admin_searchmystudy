@@ -14,7 +14,7 @@ import StudentStatus from "../form/StudentStatus";
 const StudentManager = () => {
   const dispatch = useDispatch();
   const { student = [] } = useSelector((state) => state.student || {});
-
+  console.log(student)
   /* ================= refs for DataTable ================= */
   const tableRef = useRef(null);
   const dataTableRef = useRef(null);
@@ -268,14 +268,15 @@ const StudentManager = () => {
               <th>Tracking ID</th>
               <th>Student Name</th>
               <th>Punched By</th>
-              <th>Father Name</th>
+           
               <th>Country</th>
               <th>Course Name</th>
               <th>State</th>
               <th>Email</th>
               <th>Phone</th>
-              <th>Role</th>
+              <th>DOB</th>
               <th>Center Code</th>
+              <th>Status</th>
               <th>Created At</th>
               <th>Action</th>
             </tr>
@@ -297,15 +298,16 @@ const StudentManager = () => {
                 <td>
                   {ele.firstName} {ele.middleName} {ele.lastName}
                 </td>
-                <td>{ele.fatherName || "—"}</td>
-                <td>asd</td>
+             
+                <td>{ele?.User?.role}</td>
                 <td>{ele?.Country?.name || "—"}</td>
                 <td>Course</td>
                 <td>{ele.state || "—"}</td>
                 <td>{ele.emailID}</td>
                 <td>{ele.mobileNumber}</td>
-                <td>{ele?.User?.role}</td>
+                <td>{ele?.dob}</td>
                 <td>{ele?.User?.CenterCode}</td>
+                  <td>{ele?.status}</td>
                 <td>
                   {ele.createdAt
                     ? new Date(ele.createdAt).toLocaleDateString()
