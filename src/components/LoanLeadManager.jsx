@@ -1,228 +1,288 @@
-import React, { useEffect, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt";
-
-import { Icon } from "@iconify/react/dist/iconify.js";
+import React, { useEffect, useMemo, useState } from "react";
+import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+
 import { deleteLoanLead, fetchLoanLead } from "../slice/loanLead";
-import CreateLoanLead from "../form/CreateLoanLead";
 import { fetchCountry } from "../slice/CountrySlicr";
+import CreateLoanLead from "../form/CreateLoanLead";
+
+const PAGE_SIZE = 5;
 
 const LoanLeadManager = () => {
-    const dispatch = useDispatch();
-    const { loan } = useSelector((state) => state?.loan);
+  const dispatch = useDispatch();
 
+  /* ================= REDUX ================= */
+  const loan = useSelector((state) => state?.loan?.loan || []);
 
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [editingWebinar, setEditingWebinar] = useState(null);
+  /* ================= STATE ================= */
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingLead, setEditingLead] = useState(null);
 
-    const fetchData = async () => {
-        await dispatch(fetchCountry())
-        const a = await dispatch(fetchLoanLead())
-        console.log(a)
-    };
+  // 🔹 STATUS FILTER
+  const [statusFilter, setStatusFilter] = useState("");
 
-    useEffect(() => {
-        fetchData();
-    }, [dispatch]);
+  // pagination
+  const [page, setPage] = useState(1);
 
-    useEffect(() => {
-        if (loan?.length > 0) {
-            // Delay initialization to ensure DOM is ready
-            setTimeout(() => {
-                try {
-                    if ($.fn.DataTable.isDataTable("#dataTable")) {
-                        $("#dataTable").DataTable().destroy();
-                    }
+  /* ================= FETCH ================= */
+  const fetchData = async () => {
+    await dispatch(fetchCountry());
+    await dispatch(fetchLoanLead());
+  };
 
-                    $("#dataTable").DataTable({
-                        paging: true,
-                        searching: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10, 20, 50],
-                        columnDefs: [
-                            { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
-                            { targets: "_all", searchable: false },
-                        ],
-                    });
-                } catch (error) {
-                    console.error("DataTable initialization error:", error);
-                }
-            }, 100);
-        }
-    }, [loan]);
+  useEffect(() => {
+    fetchData();
+  }, [dispatch]);
 
-    // ✅ Checkbox (single select/unselect)
-    const handleCheckboxChange = (id) => {
-        setSelectedIds((prevSelected) =>
-            prevSelected.includes(id)
-                ? prevSelected.filter((item) => item !== id)
-                : [...prevSelected, id]
-        );
-    };
+  /* ================= FILTER ================= */
+  const filteredLoan = useMemo(() => {
+    return loan.filter((l) => {
+      if (!statusFilter) return true;
+      return l?.status === statusFilter;
+    });
+  }, [loan, statusFilter]);
 
-    // ✅ Master checkbox (select/unselect all)
-    const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedIds(loan?.map((w) => w._id) || []);
-        } else {
-            setSelectedIds([]);
-        }
-    };
+  /* ================= PAGINATION ================= */
+  const totalPages = Math.ceil(filteredLoan.length / PAGE_SIZE);
 
-    // ✅ Delete selected webinars
-    const handleDelete = async () => {
-        try {
-            if (selectedIds.length === 0) {
-                toast.warning("Please select at least one lead to delete.");
-                return;
-            }
+  const paginatedLoan = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredLoan.slice(start, start + PAGE_SIZE);
+  }, [filteredLoan, page]);
 
-            const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} lead(s)?`
-            );
-            if (!confirmed) return;
-            // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteLoanLead(selectedIds));
-            console.log(a, "+++++++++++++++++++++++++++");
-
-            toast.success("Selected lead(s) deleted successfully");
-            fetchData()
-            setSelectedIds([]);
-
-        } catch (error) {
-            console.log(error);
-            toast.error("Error deleting lead(s)");
-        }
-    };
-
-    return (
-        <div className="card basic-data-table">
-            <div
-                className="card-header"
-                style={{ display: "flex", justifyContent: "space-between" }}
-            >
-                <h5 className="card-title mb-0">Partner Table</h5>
-                <div>
-
-
-                    <button
-                        className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
-                        onClick={handleDelete}
-                    >
-                        Delete Selected
-                    </button>
-
-                    {showModal && (
-                        <CreateLoanLead
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
-
-                </div>
-            </div>
-
-            <div className="card-body overflow-x-auto">
-                <table id="dataTable" className="table bordered-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Check</th>
-                            <th>Tracking ID</th>
-                            <th>Name</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>File</th>
-                            <th>Status</th>
-                            <th>Create At</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loan?.map((ele, ind) => (
-                            <tr key={ele._id || ind}>
-                                <td>
-                                    <div className="form-check style-check d-flex align-items-center">
-                                        <input
-                                            type="checkbox"
-                                            className="form-check-input"
-                                            checked={selectedIds.includes(ele._id)}
-                                            onChange={() => handleCheckboxChange(ele._id)}
-                                        />
-                                        <label className="form-check-label">{ind + 1}</label>
-                                    </div>
-                                </td>
-                                <td>{ele?.trackingId}</td>
-                                <td>{ele?.firstName}</td>
-                                <td>{ele?.middleName}</td>
-                                <td>{ele?.lastName}</td>
-                                <td>
-                                    <a href={ele?.offerLetter} target="_blank">Link</a>
-                                </td>
-                                <td
-
-                                >
-                                    <p
-                                        style={{
-                                            paddingLeft:"10px",
-                                            color: "white",
-                                            backgroundColor:
-                                                ele?.status === 'approved'
-                                                    ? 'green'
-                                                    : ele?.status === 'rejected'
-                                                        ? 'red'
-                                                        : ele?.status === 'processing'
-                                                            ? 'blue'
-                                                            : 'orange' // pending or default
-
-                                        }}>
-                                        {ele?.status}
-                                    </p>
-                                </td>
-
-                                <td>{ele?.createdAt}</td>
-
-
-                                <td>
-                                    <Link
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowModal(true);
-                                        }}
-                                        to="#"
-                                        className="btn btn-sm btn-success"
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link>
-
-
-                                    {/* <Link
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowStatusModal(true);
-                                        }}
-                                        to="#"
-                                        className="btn mx-10 btn-sm btn-primary"
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link> */}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
+  /* ================= CHECKBOX ================= */
+  const handleCheckboxChange = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
     );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(paginatedLoan.map((l) => l._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  /* ================= DELETE ================= */
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one lead");
+      return;
+    }
+
+    const confirm = window.confirm(
+      `Delete ${selectedIds.length} lead(s)?`
+    );
+    if (!confirm) return;
+
+    await dispatch(deleteLoanLead(selectedIds));
+    toast.success("Selected lead(s) deleted");
+
+    setSelectedIds([]);
+    fetchData();
+  };
+
+  /* ================= STATUS COLOR ================= */
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "approved":
+        return { backgroundColor: "green" };
+      case "rejected":
+        return { backgroundColor: "red" };
+      case "processing":
+        return { backgroundColor: "blue" };
+      default:
+        return { backgroundColor: "orange" };
+    }
+  };
+
+  /* ================= JSX ================= */
+  return (
+    <div className="card">
+      {/* HEADER */}
+      <div className="card-header d-flex justify-content-between">
+        <h5>Loan Lead Manager</h5>
+
+        <div>
+          <button
+            className="btn btn-danger mx-2"
+            onClick={handleDelete}
+          >
+            Delete Selected
+          </button>
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div className="card-body">
+        {/* FILTER */}
+        <div className="d-flex gap-3 mb-3">
+          <select
+            className="form-select w-25"
+            value={statusFilter}
+            onChange={(e) => {
+              setPage(1);
+              setStatusFilter(e.target.value);
+            }}
+          >
+            <option value="">All Status</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="processing">Processing</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+
+        {/* TABLE */}
+        <div className="table-responsive">
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                     className="form-check-input"
+
+                    checked={
+                      paginatedLoan.length > 0 &&
+                      paginatedLoan.every((l) =>
+                        selectedIds.includes(l._id)
+                      )
+                    }
+                    onChange={handleSelectAll}
+                  />
+                </th>
+                <th>Tracking ID</th>
+                <th>First Name</th>
+                <th>Middle Name</th>
+                <th>Last Name</th>
+                <th>File</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {paginatedLoan.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="text-center">
+                    No data found
+                  </td>
+                </tr>
+              ) : (
+                paginatedLoan.map((ele) => (
+                  <tr key={ele._id}>
+                    <td>
+                      <input
+                         className="form-check-input"
+
+                        type="checkbox"
+                        checked={selectedIds.includes(ele._id)}
+                        onChange={() =>
+                          handleCheckboxChange(ele._id)
+                        }
+                      />
+                    </td>
+
+                    <td>{ele?.trackingId}</td>
+                    <td>{ele?.firstName}</td>
+                    <td>{ele?.middleName}</td>
+                    <td>{ele?.lastName}</td>
+
+                    <td>
+                      {ele?.offerLetter ? (
+                        <a
+                          href={ele.offerLetter}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Link
+                        </a>
+                      ) : "—"}
+                    </td>
+
+                    <td>
+                      <span
+                        style={{
+                          color: "white",
+                          padding: "4px 10px",
+                          borderRadius: "4px",
+                          ...getStatusStyle(ele?.status),
+                        }}
+                      >
+                        {ele?.status}
+                      </span>
+                    </td>
+
+                    <td>
+                      {new Date(ele?.createdAt).toLocaleDateString()}
+                    </td>
+
+                    <td>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => {
+                          setEditingLead(ele);
+                          setShowModal(true);
+                        }}
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-end mt-3 gap-2">
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Prev
+            </button>
+
+            <span className="px-3 align-self-center">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <CreateLoanLead
+          ele={editingLead}
+          fetchData={fetchData}
+          handleClose={() => {
+            setShowModal(false);
+            setEditingLead(null);
+          }}
+        />
+      )}
+    </div>
+  );
 };
 
 export default LoanLeadManager;

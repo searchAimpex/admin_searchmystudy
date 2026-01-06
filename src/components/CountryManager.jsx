@@ -1,205 +1,297 @@
-import React, { useEffect, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt";
-
-import { Icon } from "@iconify/react/dist/iconify.js";
+import React, { useEffect, useMemo, useState } from "react";
+import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
-import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { fetchPartner } from "../slice/PartnerSlice";
-import CreatePartner from "../form/CreatePartner";
-import { deleteSecondCountry, fetchCountry } from "../slice/CountrySlicr";
+
+import {
+  fetchCountry,
+  deleteSecondCountry,
+} from "../slice/CountrySlicr";
+
 import CreateCountryDocs from "../form/CreateCountryDocs";
+
+const PAGE_SIZE = 5;
 
 const CountryManager = () => {
   const dispatch = useDispatch();
-  const webinars  = useSelector((state) => state.country.country);
-  console.log(webinars);
-  
 
+  /* ================= REDUX ================= */
+  const countries = useSelector((state) => state.country.country || []);
+
+  /* ================= STATE ================= */
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingWebinar, setEditingWebinar] = useState(null);
+  const [editingCountry, setEditingCountry] = useState(null);
 
+  const [nameFilter, setNameFilter] = useState("");
+  const [codeFilter, setCodeFilter] = useState("");
+
+  const [page, setPage] = useState(1);
+
+  /* ================= FETCH ================= */
   const fetchData = async () => {
-    const a = await dispatch(fetchCountry());
-    // console.log(a)
+    await dispatch(fetchCountry());
   };
-  console.log(webinars)
 
   useEffect(() => {
     fetchData();
   }, [dispatch]);
 
-  useEffect(() => {
-    if (webinars?.length > 0) {
-      if ($.fn.DataTable.isDataTable("#dataTable")) {
-        $("#dataTable").DataTable().destroy();
-      }
+  /* ================= FILTER ================= */
+  const filteredCountries = useMemo(() => {
+    return countries.filter((c) => {
+      const nameMatch = c?.name
+        ?.toLowerCase()
+        .includes(nameFilter.toLowerCase());
 
-      $("#dataTable").DataTable({
-        paging: true,
-        searching: true,
-        pageLength: 5,
-        lengthMenu: [5, 10, 20, 50],
-        columnDefs: [
-          { targets: [1, 2], searchable: true }, // Title & Trainer Name searchable
-          { targets: "_all", searchable: false },
-        ],
-      });
-    }
-  }, [webinars]);
+      const codeMatch = c?.code
+        ?.toLowerCase()
+        .includes(codeFilter.toLowerCase());
 
-  // ✅ Checkbox (single select/unselect)
+      return nameMatch && codeMatch;
+    });
+  }, [countries, nameFilter, codeFilter]);
+
+  /* ================= PAGINATION ================= */
+  const totalPages = Math.ceil(filteredCountries.length / PAGE_SIZE);
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredCountries.slice(start, start + PAGE_SIZE);
+  }, [filteredCountries, page]);
+
+  /* ================= CHECKBOX ================= */
   const handleCheckboxChange = (id) => {
-    setSelectedIds((prevSelected) =>
-      prevSelected.includes(id)
-        ? prevSelected.filter((item) => item !== id)
-        : [...prevSelected, id]
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
     );
   };
 
-  // ✅ Master checkbox (select/unselect all)
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedIds(webinars.map((w) => w._id));
+      setSelectedIds(paginatedData.map((c) => c._id));
     } else {
       setSelectedIds([]);
     }
   };
 
-  // ✅ Delete selected webinars
+  /* ================= DELETE ================= */
   const handleDelete = async () => {
-    try {
-      if (selectedIds.length === 0) {
-        toast.warning("Please select at least one webinar to delete.");
-        return;
-      }
-
-      const confirmed = window.confirm(
-        `Are you sure you want to delete ${selectedIds.length} webinar(s)?`
-      );
-      if (!confirmed) return;
-      // Send array of IDs to API
-      const res = await dispatch(deleteSecondCountry(selectedIds));
-      console.log(res,"-------------------------")
-
-      toast.success("Selected Country(s) deleted successfully");
-      setSelectedIds([]);
-      await dispatch(fetchCountry());
-      fetchData()
-    } catch (error) {
-      console.log(error);
-      toast.error("Error deleting webinar(s)");
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one country");
+      return;
     }
+
+    const confirm = window.confirm(
+      `Delete ${selectedIds.length} selected country(s)?`
+    );
+
+    if (!confirm) return;
+
+    await dispatch(deleteSecondCountry(selectedIds));
+    toast.success("Country deleted successfully");
+
+    setSelectedIds([]);
+    fetchData();
   };
 
+  /* ================= JSX ================= */
   return (
-    <div className="card basic-data-table">
-      <div
-        className="card-header"
-        style={{ display: "flex", justifyContent: "space-between" }}
-      >
-        <h5 className="card-title mb-0">Partner Table</h5>
+    <div className="card">
+      {/* HEADER */}
+      <div className="card-header d-flex justify-content-between">
+        <h5>Country Manager</h5>
+
         <div>
           <button
-            type="button"
-            className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
+            className="btn btn-primary mx-2"
             onClick={() => setShowModal(true)}
           >
-            Add Partner
+            Add Country
           </button>
 
           <button
-            className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
+            className="btn btn-danger mx-2"
             onClick={handleDelete}
           >
             Delete Selected
           </button>
-
-          {showModal && (
-            <CreateCountryDocs
-              fetchData={fetchData}
-              ele={editingWebinar}
-              handleClose={() => {
-                setShowModal(false);
-                setEditingWebinar(null);
-              }}
-            />
-          )}
         </div>
       </div>
 
-     <div className="card-body overflow-x-auto">
-  <table id="dataTable" className="table bordered-table mb-0">
-    <thead>
-      <tr>
-        <th>Check</th>
-        <th>Name</th>
-        <th>Code</th>
-        <th>Faq</th>
-        <th>Flag URL</th>
-        <th>Why This Country</th>
-        <th>VFS</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {webinars?.map((ele, ind) => (
-        <tr key={ele._id || ind}>
-          <td>
-            <div className="form-check style-check d-flex align-items-center">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                checked={selectedIds.includes(ele._id)}
-                onChange={() => handleCheckboxChange(ele._id)}
-              />
-              <label className="form-check-label">{ind + 1}</label>
-            </div>
-          </td>
+      {/* BODY */}
+      <div className="card-body">
+        {/* FILTERS */}
+        <div className="d-flex gap-3 mb-3">
+          <input
+            className="form-control w-25"
+            placeholder="Filter by Name"
+            value={nameFilter}
+            onChange={(e) => {
+              setPage(1);
+              setNameFilter(e.target.value);
+            }}
+          />
 
-          <td>{ele?.name}</td>
-          <td>{ele?.code}</td>
-          <td>
-            <a target="_blank" href={ele?.faq}>Link</a>
-          </td>
-          <td> 
-            <a target="_blank" href={ele?.flagURL}>Link</a>
-          </td>
-          <td>
-                <a target="_blank" href={ele?.whyThisCountry}>Link</a>
-          </td>
+          <input
+            className="form-control w-25"
+            placeholder="Filter by Code"
+            value={codeFilter}
+            onChange={(e) => {
+              setPage(1);
+              setCodeFilter(e.target.value);
+            }}
+          />
+        </div>
 
-          <td>
-            {/* VFS column - ensure there's a cell for the VFS header (avoid DataTables unknown parameter error) */}
-            {ele?.vfs ? (
-              <a target="_blank" rel="noopener noreferrer" href={ele.vfs}>VFS</a>
-            ) : (
-              <span>—</span>
-            )}
-          </td>
+        {/* TABLE */}
+        <div className="table-responsive">
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>
+                  <input
+                   className="form-check-input"
+                    type="checkbox"
+                    checked={
+                      paginatedData.length > 0 &&
+                      paginatedData.every((c) =>
+                        selectedIds.includes(c._id)
+                      )
+                    }
+                    onChange={handleSelectAll}
+                  />
+                </th>
+                <th>Name</th>
+                <th>Code</th>
+                <th>FAQ</th>
+                <th>Currency</th>
+                <th>Step</th>
+                <th>Flag</th>
+                <th>Why Country</th>
+                <th>VFS</th>
+                <th>Action</th>
+              </tr>
+            </thead>
 
-          <td>
-            <Link
-              onClick={() => {
-                setEditingWebinar(ele);
-                setShowModal(true);
-              }}
-              to="#"
-              className="btn btn-sm btn-success"
+            <tbody>
+              {paginatedData.length === 0 ? (
+                <tr>
+                  <td colSpan="10" className="text-center">
+                    No data found
+                  </td>
+                </tr>
+              ) : (
+                paginatedData.map((c) => (
+                  <tr key={c._id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(c._id)}
+                        onChange={() =>
+                          handleCheckboxChange(c._id)
+                        }
+                      />
+                    </td>
+
+                    <td>{c.name}</td>
+                    <td>{c.code}</td>
+
+                    <td>
+                      {c.faq ? (
+                        <a href={c.faq} target="_blank">Link</a>
+                      ) : "—"}
+                    </td>
+
+                    <td>{c.currency || "—"}</td>
+
+                    <td>
+                      {c.step ? (
+                        <a href={c.step} target="_blank">Link</a>
+                      ) : "—"}
+                    </td>
+
+                    <td>
+                      {c.flagURL ? (
+                        <a href={c.flagURL} target="_blank">Link</a>
+                      ) : "—"}
+                    </td>
+
+                    <td>
+                      {c.whyThisCountry ? (
+                        <a
+                          href={c.whyThisCountry}
+                          target="_blank"
+                        >
+                          Link
+                        </a>
+                      ) : "—"}
+                    </td>
+
+                    <td>
+                      {c.vfs ? (
+                        <a href={c.vfs} target="_blank">VFS</a>
+                      ) : "—"}
+                    </td>
+
+                    <td>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => {
+                          setEditingCountry(c);
+                          setShowModal(true);
+                        }}
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-end mt-3 gap-2">
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
             >
-              <Icon icon="lucide:edit" />
-            </Link>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+              Prev
+            </button>
 
+            <span className="px-3 align-self-center">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <CreateCountryDocs
+          ele={editingCountry}
+          fetchData={fetchData}
+          handleClose={() => {
+            setShowModal(false);
+            setEditingCountry(null);
+          }}
+        />
+      )}
     </div>
   );
 };

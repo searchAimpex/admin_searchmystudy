@@ -1,210 +1,265 @@
-import React, {  useEffect, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt";
-
-import { Icon } from "@iconify/react/dist/iconify.js";
+import React, { useEffect, useMemo, useState } from "react";
+import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import {  fetchCountry } from "../slice/CountrySlicr";
-import { deleteLoanLead } from "../slice/loanLead";
+
+import { fetchCountry } from "../slice/CountrySlicr";
 import { deleteCmission, fetchComission } from "../slice/comission";
 import CreateCommission from "../form/CreateCommission";
 
+const PAGE_SIZE = 5;
+
 const CommissionManager = () => {
-    const dispatch = useDispatch();
-    const { comission } = useSelector((state) => state?.comission);
+  const dispatch = useDispatch();
 
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [editingWebinar, setEditingWebinar] = useState(null);
+  /* ================= REDUX ================= */
+  const comission = useSelector(
+    (state) => state?.comission?.comission || []
+  );
 
-    const fetchData = async () => {
-        await dispatch(fetchCountry())
-        const a = await dispatch(fetchComission())
-    };
+  /* ================= STATE ================= */
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingCommission, setEditingCommission] = useState(null);
 
-    useEffect(() => {
-        fetchData();
-    }, [dispatch]);
+  // 🔹 COUNTRY FILTER
+  const [countryFilter, setCountryFilter] = useState("");
 
-    useEffect(() => {
-        if (comission?.length > 0) {
-            setTimeout(() => {
-                try {
-                    if ($.fn.DataTable.isDataTable("#dataTable")) {
-                        $("#dataTable").DataTable().destroy();
-                    }
+  // pagination
+  const [page, setPage] = useState(1);
 
-                    $("#dataTable").DataTable({
-                        paging: true,
-                        searching: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10, 20, 50],
-                        columnDefs: [
-                            { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
-                            { targets: "_all", searchable: false },
-                        ],
-                    });
-                } catch (error) {
-                    console.error("DataTable initialization error:", error);
-                }
-            }, 100);
-        }
-    }, [comission]);
+  /* ================= FETCH ================= */
+  const fetchData = async () => {
+    await dispatch(fetchCountry());
+    await dispatch(fetchComission());
+  };
 
-    // ✅ Checkbox (single select/unselect)
-    const handleCheckboxChange = (id) => {
-        setSelectedIds((prevSelected) =>
-            prevSelected.includes(id)
-                ? prevSelected.filter((item) => item !== id)
-                : [...prevSelected, id]
-        );
-    };
+  useEffect(() => {
+    fetchData();
+  }, [dispatch]);
 
-    // ✅ Master checkbox (select/unselect all)
-    const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedIds(comission?.map((w) => w._id) || []);
-        } else {
-            setSelectedIds([]);
-        }
-    };
+  /* ================= FILTER ================= */
+  const filteredCommission = useMemo(() => {
+    return comission.filter((c) => {
+      if (!countryFilter) return true;
 
-    // ✅ Delete selected webinars
-    const handleDelete = async () => {
-        try {
-            if (selectedIds.length === 0) {
-                toast.warning("Please select at least one lead to delete.");
-                return;
-            }
+      return c?.SecondCountry?.name
+        ?.toLowerCase()
+        .includes(countryFilter.toLowerCase());
+    });
+  }, [comission, countryFilter]);
 
-            const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} lead(s)?`
-            );
-            if (!confirmed) return;
-            const a = await dispatch(deleteCmission(selectedIds));
-            toast.success("Selected lead(s) deleted successfully");
-            fetchData()
-            setSelectedIds([]);
+  /* ================= PAGINATION ================= */
+  const totalPages = Math.ceil(filteredCommission.length / PAGE_SIZE);
 
-        } catch (error) {
-            console.log(error);
-            toast.error("Error deleting lead(s)");
-        }
-    };
+  const paginatedCommission = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredCommission.slice(start, start + PAGE_SIZE);
+  }, [filteredCommission, page]);
 
-    return (
-        <div className="card basic-data-table">
-            <div
-                className="card-header"
-                style={{ display: "flex", justifyContent: "space-between" }}
-            >
-                <h5 className="card-title mb-0">Partner Table</h5>
-                <div>
-                    <button
-                        type="button"
-                        className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
-                        onClick={() => setShowModal(true)}
-                    >
-                        Create Lead
-                    </button>
-
-                    <button
-                        className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
-                        onClick={handleDelete}
-                    >
-                        Delete Selected
-                    </button>
-
-                    {showModal && (
-                        <CreateCommission
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
-
-                </div>
-            </div>
-
-            <div className="card-body overflow-x-auto">
-                <table id="dataTable" className="table bordered-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Check</th>
-                            <th>Target</th>
-                            <th>Name</th>
-                            <th>File</th>
-                            <th>Country</th>
-                            {/* <th>File</th> */}
-                            <th>Create At</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {comission?.map((ele, ind) => (
-                            <tr key={ele._id || ind}>
-                                <td>
-                                    <div 
-                                    className="form-check style-check d-flex align-items-center"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            className="form-check-input"
-                                            checked={selectedIds.includes(ele._id)}
-                                            onChange={() => handleCheckboxChange(ele._id)}
-                                        />
-                                        <label className="form-check-label">{ind + 1}</label>
-                                    </div>
-                                </td>
-                                <td>{ele?.target}</td>
-                                <td>{ele?.title || "---------"}</td>
-
-                                <td>
-                                    <a href={ele?.fileURL} target="_blank">Link</a>
-                                </td>
-                                <td>{ele?.SecondCountry?.name || "---------"}</td>
-
-
-                                <td>{ele?.createdAt}</td>
-
-
-                                <td>
-                                    <Link
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowModal(true);
-                                        }}
-                                        to="#"
-                                        className="btn btn-sm btn-success"
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link>
-
-
-                                    {/* <Link
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowStatusModal(true);
-                                        }}
-                                        to="#"
-                                        className="btn mx-10 btn-sm btn-primary"
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link> */}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
+  /* ================= CHECKBOX ================= */
+  const handleCheckboxChange = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
     );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(paginatedCommission.map((c) => c._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  /* ================= DELETE ================= */
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one commission");
+      return;
+    }
+
+    const confirm = window.confirm(
+      `Delete ${selectedIds.length} commission(s)?`
+    );
+    if (!confirm) return;
+
+    await dispatch(deleteCmission(selectedIds));
+    toast.success("Selected commission(s) deleted");
+
+    setSelectedIds([]);
+    fetchData();
+  };
+
+  /* ================= JSX ================= */
+  return (
+    <div className="card">
+      {/* HEADER */}
+      <div className="card-header d-flex justify-content-between">
+        <h5>Commission Manager</h5>
+
+        <div>
+          <button
+            className="btn btn-primary mx-2"
+            onClick={() => setShowModal(true)}
+          >
+            Create Commission
+          </button>
+
+          <button
+            className="btn btn-danger mx-2"
+            onClick={handleDelete}
+          >
+            Delete Selected
+          </button>
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div className="card-body">
+        {/* FILTER */}
+        <div className="d-flex gap-3 mb-3">
+          <input
+            type="text"
+            className="form-control w-25"
+            placeholder="Filter by Country"
+            value={countryFilter}
+            onChange={(e) => {
+              setPage(1);
+              setCountryFilter(e.target.value);
+            }}
+          />
+        </div>
+
+        {/* TABLE */}
+        <div className="table-responsive">
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={
+                      paginatedCommission.length > 0 &&
+                      paginatedCommission.every((c) =>
+                        selectedIds.includes(c._id)
+                      )
+                    }
+                    onChange={handleSelectAll}
+                  />
+                </th>
+                <th>Target</th>
+                <th>Title</th>
+                <th>File</th>
+                <th>Country</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {paginatedCommission.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center">
+                    No data found
+                  </td>
+                </tr>
+              ) : (
+                paginatedCommission.map((ele) => (
+                  <tr key={ele._id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(ele._id)}
+                        onChange={() =>
+                          handleCheckboxChange(ele._id)
+                        }
+                      />
+                    </td>
+
+                    <td>{ele?.target}</td>
+                    <td>{ele?.title || "---------"}</td>
+
+                    <td>
+                      {ele?.fileURL ? (
+                        <a
+                          href={ele.fileURL}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Link
+                        </a>
+                      ) : "—"}
+                    </td>
+
+                    <td>
+                      {ele?.SecondCountry?.name || "---------"}
+                    </td>
+
+                    <td>
+                      {new Date(ele?.createdAt).toLocaleDateString()}
+                    </td>
+
+                    <td>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => {
+                          setEditingCommission(ele);
+                          setShowModal(true);
+                        }}
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-end mt-3 gap-2">
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Prev
+            </button>
+
+            <span className="px-3 align-self-center">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <CreateCommission
+          ele={editingCommission}
+          fetchData={fetchData}
+          handleClose={() => {
+            setShowModal(false);
+            setEditingCommission(null);
+          }}
+        />
+      )}
+    </div>
+  );
 };
 
 export default CommissionManager;

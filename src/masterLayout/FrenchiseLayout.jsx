@@ -261,7 +261,7 @@ const FrenchiseLayout = ({ children }) => {
             <li>
               <NavLink to="/commission-management">
                 <Icon icon="mdi:percent-outline" className="menu-icon" />
-                <span>Add Commission List</span>
+                <span>Add Center Payment</span>
               </NavLink>
             </li>
 

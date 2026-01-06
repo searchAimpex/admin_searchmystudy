@@ -1,226 +1,275 @@
-import React, { useEffect, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt";
-
-import { Icon } from "@iconify/react/dist/iconify.js";
+import React, { useEffect, useMemo, useState } from "react";
+import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
-import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
-import CreatePartner from "../form/CreatePartner";
-import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
-import CreateLead from "../form/CreateLead";
-import { deleteStudent, FetchStudent } from "../slice/StudentSlice";
-import StudentStatus from "../form/StudentStatus";
-import { deleteFiles, fetchCountry, fetchFile } from "../slice/CountrySlicr";
+
+import { fetchCountry, fetchFile, deleteFiles } from "../slice/CountrySlicr";
 import CreateFile from "../form/CreateFile";
 
+const PAGE_SIZE = 5;
+
 const FileManager = () => {
-    const dispatch = useDispatch();
-    //   const webinars  = useSelector((state) => state.partner.partner);
-    // const { assessment } = useSelector(state => state.assessment)
-    // const { student } = useSelector(state => state.student || [])
-    const file = useSelector(state => state.country?.file?.data || [])
-    // console.log(file,"|||||||||||||||||||||||");
+  const dispatch = useDispatch();
 
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [editingWebinar, setEditingWebinar] = useState(null);
+  /* ================= REDUX ================= */
+  const files = useSelector(
+    (state) => state.country?.file?.data || []
+  );
 
-    const fetchData = async () => {
-        await dispatch(fetchCountry())
-        const res = await dispatch(fetchFile())
-        // console.log(res, "::::::::::::::::::::::::::::");
+  /* ================= STATE ================= */
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingFile, setEditingFile] = useState(null);
 
-    };
-    useEffect(() => {
+  // 🔹 FILTER STATES
+  const [countryFilter, setCountryFilter] = useState("");
+  const [universityFilter, setUniversityFilter] = useState("");
 
-        fetchData()
-    }, [dispatch]);
+  // pagination
+  const [page, setPage] = useState(1);
 
-    useEffect(() => {
-        if (file?.length > 0) {
-            // Delay initialization to ensure DOM is ready
-            setTimeout(() => {
-                try {
-                    if ($.fn.DataTable.isDataTable("#dataTable")) {
-                        $("#dataTable").DataTable().destroy();
-                    }
+  /* ================= FETCH ================= */
+  const fetchData = async () => {
+    await dispatch(fetchCountry());
+    await dispatch(fetchFile());
+  };
 
-                    $("#dataTable").DataTable({
-                        paging: true,
-                        searching: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10, 20, 50],
-                        columnDefs: [
-                            { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
-                            { targets: "_all", searchable: false },
-                        ],
-                    });
-                } catch (error) {
-                    console.error("DataTable initialization error:", error);
-                }
-            }, 100);
-        }
-    }, [file]);
+  useEffect(() => {
+    fetchData();
+  }, [dispatch]);
 
-    // ✅ Checkbox (single select/unselect)
-    const handleCheckboxChange = (id) => {
-        setSelectedIds((prevSelected) =>
-            prevSelected.includes(id)
-                ? prevSelected.filter((item) => item !== id)
-                : [...prevSelected, id]
-        );
-    };
+  /* ================= FILTER ================= */
+  const filteredFiles = useMemo(() => {
+    return files.filter((f) => {
+      const countryMatch = f?.SecondCountry?.name
+        ?.toLowerCase()
+        .includes(countryFilter.toLowerCase());
 
-    // ✅ Master checkbox (select/unselect all)
-    const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedIds(file?.map((w) => w._id) || []);
-        } else {
-            setSelectedIds([]);
-        }
-    };
+      const universityMatch = f?.university?.name
+        ?.toLowerCase()
+        .includes(universityFilter.toLowerCase());
 
-    // ✅ Delete selected webinars
-    const handleDelete = async () => {
-        try {
-            if (selectedIds.length === 0) {
-                toast.warning("Please select at least one webinar to delete.");
-                return;
-            }
+      return countryMatch && universityMatch;
+    });
+  }, [files, countryFilter, universityFilter]);
 
-            const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} file(s)?`
-            );
-            if (!confirmed) return;
-            // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteFiles(selectedIds));
-            // console.log(a);
+  /* ================= PAGINATION ================= */
+  const totalPages = Math.ceil(filteredFiles.length / PAGE_SIZE);
 
-            toast.success("Selected file(s) deleted successfully");
-            fetchData()
-            setSelectedIds([]);
+  const paginatedFiles = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredFiles.slice(start, start + PAGE_SIZE);
+  }, [filteredFiles, page]);
 
-        } catch (error) {
-            console.log(error);
-            toast.error("Error deleting file(s)");
-        }
-    };
-
-    return (
-        <div className="card basic-data-table">
-            <div
-                className="card-header"
-                style={{ display: "flex", justifyContent: "space-between" }}
-            >
-                <h5 className="card-title mb-0">Partner Table</h5>
-                <div>
-                    <button
-                        type="button"
-                        className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
-                        onClick={() => setShowModal(true)}
-                    >
-                        Create Lead
-                    </button>
-
-                    <button
-                        className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
-                        onClick={handleDelete}
-                    >
-                        Delete Selected
-                    </button>
-
-                    {showModal && (
-                        <CreateFile
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
-
-                </div>
-            </div>
-
-            <div className="card-body overflow-x-auto">
-                <table id="dataTable" className="table bordered-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Check</th>
-                            <th>Country</th>
-                            <th>University</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>File</th>
-                            <th>Create At</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {file?.map((ele, ind) => (
-                            <tr key={ele._id || ind}>
-                                <td>
-                                    <div className="form-check style-check d-flex align-items-center">
-                                        <input
-                                            type="checkbox"
-                                            className="form-check-input"
-                                            checked={selectedIds.includes(ele._id)}
-                                            onChange={() => handleCheckboxChange(ele._id)}
-                                        />
-                                        <label className="form-check-label">{ind + 1}</label>
-                                    </div>
-                                </td>
-
-                                <td>{ele?.SecondCountry?.name}</td>
-                                 <td>{ele?.university?.name}</td>
-                                <td>{ele?.name}</td>
-                                <td>{ele?.type}</td>
-                                <td>
-                                    <a href={ele?.template} target="_blank">Link</a>
-                                </td>
-
-
-                                <td>{ele?.createdAt}</td>
-
-
-                                <td>
-                                    <Link
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowModal(true);
-                                        }}
-                                        to="#"
-                                        className="btn btn-sm btn-success"
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link>
-
-
-                                    {/* <Link
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowStatusModal(true);
-                                        }}
-                                        to="#"
-                                        className="btn mx-10 btn-sm btn-primary"
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link> */}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
+  /* ================= CHECKBOX ================= */
+  const handleCheckboxChange = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
     );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(paginatedFiles.map((f) => f._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  /* ================= DELETE ================= */
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.warning("Please select at least one file");
+      return;
+    }
+
+    const confirm = window.confirm(
+      `Delete ${selectedIds.length} file(s)?`
+    );
+    if (!confirm) return;
+
+    await dispatch(deleteFiles(selectedIds));
+    toast.success("Selected file(s) deleted");
+
+    setSelectedIds([]);
+    fetchData();
+  };
+
+  /* ================= JSX ================= */
+  return (
+    <div className="card">
+      {/* HEADER */}
+      <div className="card-header d-flex justify-content-between">
+        <h5>File Manager</h5>
+
+        <div>
+          <button
+            className="btn btn-primary mx-2"
+            onClick={() => setShowModal(true)}
+          >
+            Create File
+          </button>
+
+          <button
+            className="btn btn-danger mx-2"
+            onClick={handleDelete}
+          >
+            Delete Selected
+          </button>
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div className="card-body">
+        {/* FILTERS */}
+        <div className="d-flex gap-3 mb-3">
+          <input
+            className="form-control w-25"
+            placeholder="Filter by Country"
+            value={countryFilter}
+            onChange={(e) => {
+              setPage(1);
+              setCountryFilter(e.target.value);
+            }}
+          />
+
+          <input
+            className="form-control w-25"
+            placeholder="Filter by University"
+            value={universityFilter}
+            onChange={(e) => {
+              setPage(1);
+              setUniversityFilter(e.target.value);
+            }}
+          />
+        </div>
+
+        {/* TABLE */}
+        <div className="table-responsive">
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    className=""
+                    checked={
+                      paginatedFiles.length > 0 &&
+                      paginatedFiles.every((f) =>
+                        selectedIds.includes(f._id)
+                      )
+                    }
+                    onChange={handleSelectAll}
+                  />Select
+                </th>
+                <th>Country</th>
+                <th>University</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>File</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {paginatedFiles.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center">
+                    No data found
+                  </td>
+                </tr>
+              ) : (
+                paginatedFiles.map((ele) => (
+                  <tr key={ele._id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                         className="form-check-input"
+                        checked={selectedIds.includes(ele._id)}
+                        onChange={() =>
+                          handleCheckboxChange(ele._id)
+                        }
+                      />
+                    </td>
+
+                    <td>{ele?.SecondCountry?.name || "—"}</td>
+                    <td>{ele?.university?.name || "—"}</td>
+                    <td>{ele?.name}</td>
+                    <td>{ele?.type}</td>
+
+                    <td>
+                      {ele?.template ? (
+                        <a href={ele.template} target="_blank">
+                          Link
+                        </a>
+                      ) : "—"}
+                    </td>
+
+                    <td>
+                      {new Date(ele?.createdAt).toLocaleDateString()}
+                    </td>
+
+                    <td>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => {
+                          setEditingFile(ele);
+                          setShowModal(true);
+                        }}
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-end mt-3 gap-2">
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Prev
+            </button>
+
+            <span className="px-3 align-self-center">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              className="btn btn-outline-secondary"
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <CreateFile
+          ele={editingFile}
+          fetchData={fetchData}
+          handleClose={() => {
+            setShowModal(false);
+            setEditingFile(null);
+          }}
+        />
+      )}
+    </div>
+  );
 };
 
 export default FileManager;
