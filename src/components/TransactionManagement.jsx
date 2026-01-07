@@ -1,234 +1,236 @@
 import React, { useEffect, useState } from "react";
-import $ from "jquery";
-import "datatables.net-dt";
-
-import { Icon } from "@iconify/react/dist/iconify.js";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
-import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
-import { deletePartner, fetchPartner } from "../slice/PartnerSlice";
-import CreatePartner from "../form/CreatePartner";
-import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
-import CreateLead from "../form/CreateLead";
-import AssissmentStatus from "../form/AssissmentStatus";
-import { deleteTransaction, FetchTransaction } from "../slice/transaction";
+
+import { FetchTransaction, deleteTransaction } from "../slice/transaction";
 import CreateTransaction from "../form/CreateTransaction";
 
 const TransactionManagement = () => {
     const dispatch = useDispatch();
-    //   const webinars  = useSelector((state) => state.partner.partner);
-    // const { assessment } = useSelector(state => state.assessment)
-    const { transaction } = useSelector(state => state?.transaction)
+    const { transaction } = useSelector((state) => state.transaction);
 
-    console.log(transaction, "|||||||||||||||||||||||");
-
+    const [filterTransactionID, setFilterTransactionID] = useState("");
+    const [filterCenterCode, setFilterCenterCode] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [editingWebinar, setEditingWebinar] = useState(null);
 
-    const fetchData = async () => {
-        const b = await dispatch(FetchAssessment());
-        const res = await dispatch(FetchTransaction())
-        console.log(res, "/////////////////////////");
-
-    };
-
+    // ✅ Fetch data
     useEffect(() => {
-        fetchData();
+        dispatch(FetchTransaction());
     }, [dispatch]);
 
-    useEffect(() => {
-        if (transaction?.length > 0) {
-            // Delay initialization to ensure DOM is ready
-            setTimeout(() => {
-                try {
-                    if ($.fn.DataTable.isDataTable("#dataTable")) {
-                        $("#dataTable").DataTable().destroy();
-                    }
+    // ✅ Filtering logic (SAFE)
+    const filteredTransaction = transaction?.filter((item) => {
+        const matchTransactionID = filterTransactionID
+            ? item?.transactionID
+                  ?.toLowerCase()
+                  .includes(filterTransactionID.toLowerCase())
+            : true;
 
-                    $("#dataTable").DataTable({
-                        paging: true,
-                        searching: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10, 20, 50],
-                        columnDefs: [
-                            { targets: [1, 2], searchable: true }, // Tracking ID & Name searchable
-                            { targets: "_all", searchable: false },
-                        ],
-                    });
-                } catch (error) {
-                    console.error("DataTable initialization error:", error);
-                }
-            }, 100);
-        }
-    }, [transaction]);
+        const matchCenterCode = filterCenterCode
+            ? item?.centerCode
+                  ?.toLowerCase()
+                  .includes(filterCenterCode.toLowerCase())
+            : true;
 
-    // ✅ Checkbox (single select/unselect)
+        return matchTransactionID && matchCenterCode;
+    });
+
+
+    // console.log(filteredTransaction)
+    // ✅ Checkbox
     const handleCheckboxChange = (id) => {
-        setSelectedIds((prevSelected) =>
-            prevSelected.includes(id)
-                ? prevSelected.filter((item) => item !== id)
-                : [...prevSelected, id]
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
     };
 
-    // ✅ Master checkbox (select/unselect all)
-    const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedIds(transaction?.map((w) => w._id) || []);
-        } else {
-            setSelectedIds([]);
-        }
-    };
-
-    // ✅ Delete selected webinars
+    // ✅ Delete
     const handleDelete = async () => {
-        try {
-            if (selectedIds.length === 0) {
-                toast.warning("Please select at least one webinar to delete.");
-                return;
-            }
-            const confirmed = window.confirm(
-                `Are you sure you want to delete ${selectedIds.length} webinar(s)?`
-            );
-            if (!confirmed) return;
-            // console.log(selectedIds,"----------------------------------------");
-            const a = await dispatch(deleteTransaction(selectedIds));
-            console.log(a, "================");
-            toast.success("Selected webinar(s) deleted successfully");
-
-            setSelectedIds([]);
-
-        } catch (error) {
-            console.log(error);
-            toast.error("Error deleting webinar(s)");
+        if (selectedIds.length === 0) {
+            toast.warning("Select at least one transaction");
+            return;
         }
+
+        if (!window.confirm("Delete selected transactions?")) return;
+
+        const res = await dispatch(deleteTransaction(selectedIds));
+        console.log(res)
+        toast.success("Deleted successfully");
+        setSelectedIds([]);
+        dispatch(FetchTransaction());
     };
 
     return (
-        <div className="card basic-data-table">
-            <div
-                className="card-header"
-                style={{ display: "flex", justifyContent: "space-between" }}
-            >
-                <h5 className="card-title mb-0">Partner Table</h5>
+        <div className="card">
+            {/* HEADER */}
+            <div className="card-header d-flex justify-content-between">
+                <h5>Transaction Management</h5>
+
                 <div>
                     <button
-                        type="button"
-                        className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
+                        className="btn btn-primary mx-2"
                         onClick={() => setShowModal(true)}
                     >
-                        Create Lead
+                        Create Transaction
                     </button>
 
                     <button
-                        className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
+                        className="btn btn-danger mx-2"
                         onClick={handleDelete}
                     >
                         Delete Selected
                     </button>
-
-                    {showModal && (
-                        <CreateTransaction
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
-
-                    {showStatusModal && (
-                        <AssissmentStatus
-                            fetchData={fetchData}
-                            ele={editingWebinar}
-                            handleClose={() => {
-                                setShowStatusModal(false);
-                                setEditingWebinar(null);
-                            }}
-                        />
-                    )}
                 </div>
             </div>
 
-            <div className="card-body overflow-x-auto">
-                <table id="dataTable" className="table bordered-table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Check</th>
-                            <th>centerCode</th>
-                            <th>invoice</th>
-                            <th>other</th>
-                            <th>recipt</th>
-                            <th>remarks</th>
-                            <th>transactionDate</th>
-                            <th>transactionID</th>
-                            <th>transactionMode</th>
+            {/* FILTERS */}
+            <div className="card-body">
+                <div className="row mb-3">
+                    <div className="col-md-4">
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Filter by Transaction ID"
+                            value={filterTransactionID}
+                            onChange={(e) =>
+                                setFilterTransactionID(e.target.value)
+                            }
+                        />
+                    </div>
 
-                            <th>Created At</th>
-                            {/* <th>Action</th> */}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {transaction?.map((ele, ind) => (
-                            <tr key={ele._id || ind}>
-                                <td>
-                                    <div className="form-check style-check d-flex align-items-center">
+                    <div className="col-md-4">
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Filter by Center Code"
+                            value={filterCenterCode}
+                            onChange={(e) =>
+                                setFilterCenterCode(e.target.value)
+                            }
+                        />
+                    </div>
+
+                    <div className="col-md-2">
+                        <button
+                            className="btn btn-secondary w-100"
+                            onClick={() => {
+                                setFilterTransactionID("");
+                                setFilterCenterCode("");
+                            }}
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                {/* TABLE */}
+                <div className="table-responsive">
+                    <table className="table table-bordered">
+                        <thead>
+                           <tr>
+                                <th>#
+                                    {/* <input
+                                        type="checkbox"
+                                        onChange={handleSelectAll}
+                                        checked={
+                                            filteredTransaction.length > 0 &&
+                                            selectedIds.length ===
+                                                filteredTransaction.length
+                                        }
+                                    /> */}
+                                </th>
+                                <th>Center Code</th>
+                                <th>Invoice</th>
+                                <th>Other</th>
+                                <th>Receipt</th>
+                                <th>Remarks</th>
+                                <th>Transaction Date</th>
+                                <th>Transaction ID</th>
+                                <th>Mode</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {filteredTransaction?.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan="6"
+                                        className="text-center text-danger fw-bold"
+                                    >
+                                        No data available
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredTransaction?.map((ele) => (
+                                     <tr key={ele._id}>
+                                    <td>
                                         <input
                                             type="checkbox"
-                                            className="form-check-input"
-                                            checked={selectedIds.includes(ele._id)}
-                                            onChange={() => handleCheckboxChange(ele._id)}
+                                              className="form-check-input"
+                                            checked={selectedIds.includes(
+                                                ele._id
+                                            )}
+                                            onChange={() =>
+                                                handleCheckboxChange(ele._id)
+                                            }
                                         />
-                                        <label className="form-check-label">{ind + 1}</label>
-                                    </div>
-                                </td>
-
-                                <td>{ele?.centerCode}</td>
-                                <td>
-                                    <a target="_blank" href={ele?.invoice}>Link</a>
-                                    {/* <a href="htt">asdf</a> */}
-                                </td>
-                                <td>
-                                    <a target="_blank" href={ele?.other}>Link</a>
-                                </td>
-                                <td>
-                                    <a href={ele?.receipt} target="_blank">Link</a>
-                                </td>
-                                <td>
-                                    {ele?.remarks}
-                                    {/* <a href={ele?.User?.recipt}>Linfdsfgdhk</a> */}
-                                </td>
-                                <td>{ele?.transactionDate}</td>
-                                <td>{ele?.transactionID}</td>
-                                <td>{ele.transactionMode}</td>
-
-                                <td>{ele?.createdAt ? new Date(ele.createdAt).toLocaleDateString() : "—"}</td>
-
-
-                                {/* <td>
-                                    <Link
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowModal(true);
-                                        }}
-                                        to="#"
-                                        className="btn btn-sm btn-success"
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link>
-                                    
-                                </td> */}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                    </td>
+                                    <td>{ele?.centerCode}</td>
+                                    <td>
+                                        <a
+                                            href={ele?.invoice}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            Link
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a
+                                            href={ele?.other}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            Link
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a
+                                            href={ele?.receipt}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            Link
+                                        </a>
+                                    </td>
+                                    <td>{ele?.remarks}</td>
+                                    <td>{ele?.transactionDate}</td>
+                                    <td>{ele?.transactionID}</td>
+                                    <td>{ele?.transactionMode}</td>
+                                    <td>
+                                        {ele?.createdAt
+                                            ? new Date(
+                                                  ele.createdAt
+                                              ).toLocaleDateString()
+                                            : "—"}
+                                    </td>
+                                </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
+            {/* MODAL */}
+            {showModal && (
+                <CreateTransaction
+                    fetchData={() => dispatch(FetchTransaction())}
+                    handleClose={() => setShowModal(false)}
+                />
+            )}
         </div>
     );
 };

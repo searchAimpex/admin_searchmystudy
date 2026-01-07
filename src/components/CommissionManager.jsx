@@ -139,9 +139,11 @@ const CommissionManager = () => {
           <table className="table table-bordered">
             <thead>
               <tr>
-                <th>
+                <th> 
+
                   <input
                     type="checkbox"
+                     className="form-check-input"
                     checked={
                       paginatedCommission.length > 0 &&
                       paginatedCommission.every((c) =>
@@ -150,6 +152,7 @@ const CommissionManager = () => {
                     }
                     onChange={handleSelectAll}
                   />
+                  
                 </th>
                 <th>Target</th>
                 <th>Title</th>
@@ -173,6 +176,7 @@ const CommissionManager = () => {
                     <td>
                       <input
                         type="checkbox"
+                        className="form-check-input"
                         checked={selectedIds.includes(ele._id)}
                         onChange={() =>
                           handleCheckboxChange(ele._id)

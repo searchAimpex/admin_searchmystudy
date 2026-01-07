@@ -33,7 +33,7 @@ export const deleteTransaction = createAsyncThunk(
   async (ids,{rejectWithValue})=>{
     try {
       console.log(ids)
-      const res = await axios.delete("https://searchmystud.com/api/admin/transaction",
+      const res = await axios.delete("https://searchmystudy.com/api/admin/transaction",
         {data:{ids}}
       )
       return res.data

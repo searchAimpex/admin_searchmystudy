@@ -36,7 +36,7 @@ export const fetchPartner = createAsyncThunk(
   'webinar/fetchPartner',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('https://searchmystudy.com/api/users/profile/all');
+      const response = await axios.get('http://localhost:3000/api/users/profile/all');
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -49,7 +49,7 @@ export const fetchFrenchise = createAsyncThunk(
   'webinar/fetchFrenchise',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('https://searchmystudy.com/api/users/profile/frenchise');
+      const response = await axios.get('http://localhost:3000/api/users/profile/frenchise');
       return response.data;
     } catch (error) {
       return rejectWithValue(

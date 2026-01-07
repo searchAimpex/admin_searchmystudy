@@ -268,7 +268,7 @@ const FrenchiseLayout = ({ children }) => {
             <li>
               <NavLink to="/transaction-management">
                 <Icon icon="mdi:cash-multiple" className="menu-icon" />
-                <span>Transactions</span>
+                <span>Center Payments</span>
               </NavLink>
             </li>
 

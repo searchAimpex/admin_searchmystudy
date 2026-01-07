@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -21,8 +20,10 @@ const LoanLeadManager = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
 
-  // 🔹 STATUS FILTER
+  // 🔹 FILTER STATES
   const [statusFilter, setStatusFilter] = useState("");
+  const [trackingIdFilter, setTrackingIdFilter] = useState("");
+  const [centerCodeFilter, setCenterCodeFilter] = useState("");
 
   // pagination
   const [page, setPage] = useState(1);
@@ -40,10 +41,21 @@ const LoanLeadManager = () => {
   /* ================= FILTER ================= */
   const filteredLoan = useMemo(() => {
     return loan.filter((l) => {
-      if (!statusFilter) return true;
-      return l?.status === statusFilter;
+      const trackingMatch = l?.trackingId
+        ?.toLowerCase()
+        .includes(trackingIdFilter.toLowerCase());
+
+      const centerCodeMatch = l?.User?.CenterCode
+        ?.toLowerCase()
+        .includes(centerCodeFilter.toLowerCase());
+
+      const statusMatch = statusFilter
+        ? l?.status === statusFilter
+        : true;
+
+      return trackingMatch && centerCodeMatch && statusMatch;
     });
-  }, [loan, statusFilter]);
+  }, [loan, trackingIdFilter, centerCodeFilter, statusFilter]);
 
   /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filteredLoan.length / PAGE_SIZE);
@@ -77,10 +89,7 @@ const LoanLeadManager = () => {
       return;
     }
 
-    const confirm = window.confirm(
-      `Delete ${selectedIds.length} lead(s)?`
-    );
-    if (!confirm) return;
+    if (!window.confirm(`Delete ${selectedIds.length} lead(s)?`)) return;
 
     await dispatch(deleteLoanLead(selectedIds));
     toast.success("Selected lead(s) deleted");
@@ -109,21 +118,35 @@ const LoanLeadManager = () => {
       {/* HEADER */}
       <div className="card-header d-flex justify-content-between">
         <h5>Loan Lead Manager</h5>
-
-        <div>
-          <button
-            className="btn btn-danger mx-2"
-            onClick={handleDelete}
-          >
-            Delete Selected
-          </button>
-        </div>
+        <button className="btn btn-danger" onClick={handleDelete}>
+          Delete Selected
+        </button>
       </div>
 
       {/* BODY */}
       <div className="card-body">
-        {/* FILTER */}
-        <div className="d-flex gap-3 mb-3">
+        {/* FILTERS */}
+        <div className="d-flex gap-3 mb-3 flex-wrap">
+          <input
+            className="form-control w-25"
+            placeholder="Filter by Tracking ID"
+            value={trackingIdFilter}
+            onChange={(e) => {
+              setPage(1);
+              setTrackingIdFilter(e.target.value);
+            }}
+          />
+
+          <input
+            className="form-control w-25"
+            placeholder="Filter by Center Code"
+            value={centerCodeFilter}
+            onChange={(e) => {
+              setPage(1);
+              setCenterCodeFilter(e.target.value);
+            }}
+          />
+
           <select
             className="form-select w-25"
             value={statusFilter}
@@ -148,8 +171,7 @@ const LoanLeadManager = () => {
                 <th>
                   <input
                     type="checkbox"
-                     className="form-check-input"
-
+                    className="form-check-input"
                     checked={
                       paginatedLoan.length > 0 &&
                       paginatedLoan.every((l) =>
@@ -163,6 +185,7 @@ const LoanLeadManager = () => {
                 <th>First Name</th>
                 <th>Middle Name</th>
                 <th>Last Name</th>
+                <th>Center Code</th>
                 <th>File</th>
                 <th>Status</th>
                 <th>Created At</th>
@@ -173,7 +196,7 @@ const LoanLeadManager = () => {
             <tbody>
               {paginatedLoan.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="text-center">
+                  <td colSpan="10" className="text-center">
                     No data found
                   </td>
                 </tr>
@@ -182,8 +205,7 @@ const LoanLeadManager = () => {
                   <tr key={ele._id}>
                     <td>
                       <input
-                         className="form-check-input"
-
+                        className="form-check-input"
                         type="checkbox"
                         checked={selectedIds.includes(ele._id)}
                         onChange={() =>
@@ -196,6 +218,7 @@ const LoanLeadManager = () => {
                     <td>{ele?.firstName}</td>
                     <td>{ele?.middleName}</td>
                     <td>{ele?.lastName}</td>
+                    <td>{ele?.User?.CenterCode}</td>
 
                     <td>
                       {ele?.offerLetter ? (

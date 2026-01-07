@@ -11,7 +11,7 @@ const storage = getStorage(app);
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
   // console.log(ele,"-----------------------");
-  
+
   const initial = {
     name: ele?.name || ele?.OwnerName || "demo",
     email: ele?.email || "",
@@ -77,7 +77,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       });
       return next;
     });
-  }, [ele]);    
+  }, [ele]);
 
   const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
 
@@ -188,7 +188,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       if (ele && ele._id && !payload.password) delete payload.password;
 
       if (ele && ele._id) {
-        console.log(payload,"-------------------------")
+        console.log(payload, "-------------------------")
         const res = await dispatch(updatePartner({ id: ele._id, data: payload }));
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner updated");
@@ -197,10 +197,10 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
         } else {
           const msg = res?.payload?.message || res?.error?.message || "Update failed";
           toast.error(msg);
-        }       
+        }
       } else {
-        console.log(payload,"///////////////////////////////");
-        
+        console.log(payload, "///////////////////////////////");
+
         const res = await dispatch(createPartner(payload));
         console.log(res)
         if (res?.meta?.requestStatus === "fulfilled") {
@@ -252,45 +252,56 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Contact Number <span style={{color:"red"}}>*</span></label>
-                    <input name="ContactNumber"  maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
+                    <label className="form-label">Contact Number <span style={{ color: "red" }}>*</span></label>
+                    <input name="ContactNumber" maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
                     {errors.ContactNumber && <div className="invalid-feedback">{errors.ContactNumber}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">WhatsApp Number <span style={{color:"red"}}>*</span></label>
-                    <input   maxLength={10} name="WhatappNumber"  value={formValues.WhatappNumber} onChange={handleInputChange} className="form-control" />
-                  </div> 
+                    <label className="form-label">WhatsApp Number <span style={{ color: "red" }}>*</span></label>
+                    <input maxLength={10} name="WhatappNumber" value={formValues.WhatappNumber} onChange={handleInputChange} className="form-control" />
+                  </div>
 
                   <div className="col-md-4">
-                    <label className="form-label">Center Code <span style={{color:"red"}}>*</span></label>
+                    <label className="form-label">Center Code <span style={{ color: "red" }}>*</span></label>
                     <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
                   </div>
 
                   <div className="col-md-4">
-                    <label className="form-label">Date Of Birth <span style={{color:"red"}}>*</span></label>
+                    <label className="form-label">Date Of Birth <span style={{ color: "red" }}>*</span></label>
                     <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className="form-control" />
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Type</label>
                     <select name="role" value={formValues.role} onChange={handleInputChange} className="form-control">
-                      <option value="partner">Partner</option>
-                      <option value="franchise">Franchise</option>
+                      <option value="partner" selected>Partner</option>
+                      <option value="franchise" disabled>Franchise</option>
                       {/* <option value="admin">Admin</option> */}
                     </select>
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Email <span style={{color:"red"}}>*</span></label>
+                    <label className="form-label">Email <span style={{ color: "red" }}>*</span></label>
                     <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
                     {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Password <span style={{color:"red"}}>*</span></label>
-                    <input name="password" type="password" value={formValues.password}  className="form-control" placeholder={ele ? "Leave blank to keep current" : ""} />
+                    <label className="form-label">
+                      Password <span style={{ color: "red" }}>*</span>
+                    </label>
+
+                    <input
+                      type="password"
+                      name="password"
+                      className="form-control"
+                      placeholder={ele ? ele?.passwordTracker : ""}
+                      readOnly={!!ele}
+                    />
+
                   </div>
+
 
                   <div className="col-md-4">
                     <label className="form-label">City</label>
@@ -321,7 +332,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                           <div>Progress: {Math.round(uploads[f].progress)}%</div>
                         </div>
                       )}
-                    </div> 
+                    </div>
                   ))}
 
                 </div>

@@ -68,7 +68,7 @@ const FrenchiseManager = () => {
 
     return centerMatch && statusMatch;
   });
-
+console.log(filteredWebinars)
   /* ================= DATATABLE ================= */
   useEffect(() => {
     if (filteredWebinars.length > 0) {

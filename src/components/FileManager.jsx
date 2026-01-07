@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -25,6 +24,7 @@ const FileManager = () => {
   // 🔹 FILTER STATES
   const [countryFilter, setCountryFilter] = useState("");
   const [universityFilter, setUniversityFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState(""); // ✅ NEW
 
   // pagination
   const [page, setPage] = useState(1);
@@ -50,9 +50,13 @@ const FileManager = () => {
         ?.toLowerCase()
         .includes(universityFilter.toLowerCase());
 
-      return countryMatch && universityMatch;
+      const typeMatch = f?.type
+        ?.toLowerCase()
+        .includes(typeFilter.toLowerCase()); // ✅ NEW
+
+      return countryMatch && universityMatch && typeMatch;
     });
-  }, [files, countryFilter, universityFilter]);
+  }, [files, countryFilter, universityFilter, typeFilter]);
 
   /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filteredFiles.length / PAGE_SIZE);
@@ -86,10 +90,7 @@ const FileManager = () => {
       return;
     }
 
-    const confirm = window.confirm(
-      `Delete ${selectedIds.length} file(s)?`
-    );
-    if (!confirm) return;
+    if (!window.confirm(`Delete ${selectedIds.length} file(s)?`)) return;
 
     await dispatch(deleteFiles(selectedIds));
     toast.success("Selected file(s) deleted");
@@ -145,6 +146,16 @@ const FileManager = () => {
               setUniversityFilter(e.target.value);
             }}
           />
+
+          <input
+            className="form-control w-25"
+            placeholder="Filter by Type"
+            value={typeFilter}
+            onChange={(e) => {
+              setPage(1);
+              setTypeFilter(e.target.value);
+            }}
+          />
         </div>
 
         {/* TABLE */}
@@ -155,7 +166,6 @@ const FileManager = () => {
                 <th>
                   <input
                     type="checkbox"
-                    className=""
                     checked={
                       paginatedFiles.length > 0 &&
                       paginatedFiles.every((f) =>
@@ -163,7 +173,8 @@ const FileManager = () => {
                       )
                     }
                     onChange={handleSelectAll}
-                  />Select
+                  />{" "}
+                  Select
                 </th>
                 <th>Country</th>
                 <th>University</th>
@@ -188,7 +199,7 @@ const FileManager = () => {
                     <td>
                       <input
                         type="checkbox"
-                         className="form-check-input"
+                        className="form-check-input"
                         checked={selectedIds.includes(ele._id)}
                         onChange={() =>
                           handleCheckboxChange(ele._id)
@@ -203,7 +214,7 @@ const FileManager = () => {
 
                     <td>
                       {ele?.template ? (
-                        <a href={ele.template} target="_blank">
+                        <a href={ele.template} target="_blank" rel="noreferrer">
                           Link
                         </a>
                       ) : "—"}
