@@ -29,6 +29,7 @@ const ChangePassword = () => {
     useEffect(() => {
         const checkToken = async () => {
             try {
+                //  navigate('https://coursefinder.co.in');
                 // console.log(token,email)
                 const res = await dispatch(verifyToken({token}));
                 console.log(res.payload.success,":::::::::::::::::::::::::");
@@ -60,7 +61,7 @@ const ChangePassword = () => {
                     
                     if (res.meta?.requestStatus === "fulfilled") {
                         toast.success('Password reset successful');
-                        navigate('/https://coursefinder.co.in');
+                        window.location.href = "https://coursefinder.co.in";
                     }
                 } else {
                     toast.error("Password do not match!");
