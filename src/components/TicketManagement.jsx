@@ -46,7 +46,6 @@ const TicketManagement = () => {
   const loadCounsellors = async () => {
     const res = await dispatch(fetchPopup());
     const res1 = await dispatch(FetchTicket());
-    console.log(res1, "-----------------------------------");
 
   };
 
@@ -151,6 +150,7 @@ const TicketManagement = () => {
                 <th scope="col">Category</th>
                 <th>Status</th>
                 <th>Created By</th>
+                <th>Remark</th>
                   <th>Priority</th>
                 <th scope="col">Image</th>
                 <th scope="col">Action</th>
@@ -198,6 +198,7 @@ const TicketManagement = () => {
                    <td>
                     {ele?.createdBy?.name}
                   </td>
+                  <td>{ele?.remark}</td>
                    <td>
                     {ele?.priority}
                   </td>

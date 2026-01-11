@@ -23,6 +23,7 @@ const TicketStatus = ({ ele, handleClose, fetchData }) => {
     // align keys with your Mongoose schema (accept common variants from older code)
     const initial = {   
         status:ele?.status || "",
+        remark:ele?.remark || ""
     };
     
     const [formValues, setFormValues] = useState(initial);
@@ -34,6 +35,8 @@ const TicketStatus = ({ ele, handleClose, fetchData }) => {
             const payload = { ...formValues };
 
         try {
+            console.log(payload,"|||||||||||||||||||||||||");
+            
             const data = await dispatch(updateTicketStatus({ id: ele._id, data: payload }))
             console.log(data,">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             if(data?.meta?.requestStatus === "fulfilled"){
@@ -76,6 +79,15 @@ const TicketStatus = ({ ele, handleClose, fetchData }) => {
                                    <option value="closed">Closed</option>
                                 </select>
                             </div>
+                               <div className="m-4">
+                                <label className="form-label">Remark</label>
+                           <input
+                                type="text"
+                                 className="form-control"
+                                value={formValues.remark}
+                                onChange={(e) => setFormValues({ ...formValues, remark: e.target.value })}
+                                />
+                            </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={handleClose}>Close</button>
                                 <button type="submit" className="btn btn-primary" >
@@ -88,7 +100,7 @@ const TicketStatus = ({ ele, handleClose, fetchData }) => {
 
 
                     </div>
-                </div>
+                </div>  
             </div>
         </>
     );

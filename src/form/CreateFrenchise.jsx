@@ -17,11 +17,11 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const [formValues, setFormValues] = useState({
     email: ele?.email || '',
     password: ele?.password || '',
-    role: ele?.role || 'franchise',
+    role: ele?.role || 'franchise', 
     name: ele?.name || 'Null',
     OwnerName: ele?.OwnerName || '',
     OwnerFatherName: ele?.OwnerFatherName || '',
-    InstitutionName: ele?.InsitutionName || '',
+    InsitutionName: ele?.InsitutionName || '',
     ContactNumber: ele?.ContactNumber || '',
     WhatsAppNumber: ele?.WhatappNumber || '',
     CenterCode: ele?.CenterCode || '',
@@ -42,10 +42,11 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     accountedDetails: ele?.accountedDetails || '',
     IFSC: ele?.IFSC || '',
     bankName: ele?.bankName || '',
+    passwordTracker:ele?.passwordTracker || '',
     mou:ele?.mou || '',
     registration:ele?.registration || '',
   });
-
+  // console.log(formValues)
   const [uploads, setUploads] = useState({
     FrontAadhar: { progress: 0, preview: formValues.FrontAadhar || null, loading: false },
     BackAadhar: { progress: 0, preview: formValues.BackAadhar || null, loading: false },
@@ -124,13 +125,15 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
         }
       } else {
         console.log(formValues,"++++++++++++++++++++++++++++++++++++")
-        const res = await dispatch(createPartner(formValues));
+        const res = await dispatch(createPartner(formValues));  
+        console.log(res.payload)
         if (res?.type?.endsWith("/fulfilled")) {
           toast.success("Partner created");
           handleClose();
           fetchData?.();
         } else {
-          toast.error("Creation failed");
+
+          toast.error(res?.payload?.message);
         }
       }
     } catch (err) {
@@ -165,7 +168,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
                 <div className="col-md-6">
                   <label className="form-label">Institution Name</label>
-                  <input name="InstitutionName" value={formValues.InstitutionName} onChange={handleInputChange} className="form-control" />
+                  <input name="InsitutionName" value={formValues.InsitutionName} onChange={handleInputChange} className="form-control" />
                 </div>
 
                 <div className="col-md-6">
@@ -215,7 +218,14 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
                 <div className="col-md-6">
                   <label className="form-label">Password</label>
-                  <input name="password" value={formValues.password} onChange={handleInputChange} className={`form-control ${errors.password ? "is-invalid" : ""}`} />
+                    <input
+                      type="password"
+                      name="password"
+                      className="form-control"
+                      placeholder={ele ? ele?.passwordTracker : ""}
+                      readOnly={!!ele}
+                    />
+
                   {errors.password && <div className="invalid-feedback">{errors.password}</div>}
                 </div>
 

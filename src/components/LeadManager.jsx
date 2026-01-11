@@ -240,6 +240,7 @@ const LeadManager = () => {
                                 <td>
                                     <input
                                         type="checkbox"
+                                           className="form-check-input"
                                         checked={selectedIds.includes(ele._id)}
                                         onChange={() =>
                                             setSelectedIds((prev) =>

@@ -29,7 +29,13 @@ const PopupManagement = () => {
     }
   };
 
-  // console.log(counsellor, "-----------------------------------");
+
+  const filterCounsellor = counsellor.filter((ele)=>{
+    if(ele.target === "partner"){
+      return ele
+    }
+  })
+
 
     // Handle checkbox (select blogs)
     const handleCheckboxChange = (id) => {
@@ -151,7 +157,7 @@ const PopupManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {counsellor.map((ele, ind) => (
+              {filterCounsellor?.map((ele, ind) => (
                 <tr key={ele._id || ind}>
                   <td>
                   <div className="form-check style-check d-flex align-items-center">

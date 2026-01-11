@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -23,37 +22,51 @@ const PartnerManager = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
 
-  // 🔹 FILTER STATES
-  const [statusFilter, setStatusFilter] = useState("");
-  const [centerCodeFilter, setCenterCodeFilter] = useState("");
+  /* ================= FILTER STATE ================= */
+  const [filters, setFilters] = useState({
+    status: "",
+    centerCode: "",
+  });
 
-  // 🔹 PAGINATION
+  /* ================= PAGINATION ================= */
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
 
-  // ================= FETCH =================
+  /* ================= FETCH ================= */
   useEffect(() => {
     dispatch(fetchPartner());
   }, [dispatch]);
 
-  // ================= FILTER LOGIC =================
+  /* ================= FILTER HANDLER ================= */
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setCurrentPage(1);
+  };
+
+  /* ================= FILTER LOGIC ================= */
   const filteredPartners = useMemo(() => {
     return partners.filter((p) => {
       const statusMatch =
-        statusFilter === "" ? true : String(p.status) === statusFilter;
+        filters.status === ""
+          ? true
+          : String(p.status) === filters.status;
 
       const centerMatch =
-        centerCodeFilter === ""
+        filters.centerCode.trim() === ""
           ? true
           : p.CenterCode?.toLowerCase().includes(
-              centerCodeFilter.toLowerCase()
+              filters.centerCode.trim().toLowerCase()
             );
 
       return statusMatch && centerMatch;
     });
-  }, [partners, statusFilter, centerCodeFilter]);
+  }, [partners, filters]);
 
-  // ================= PAGINATION LOGIC =================
+  /* ================= PAGINATION LOGIC ================= */
   const totalPages = Math.ceil(filteredPartners.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const currentRows = filteredPartners.slice(
@@ -61,14 +74,14 @@ const PartnerManager = () => {
     startIndex + rowsPerPage
   );
 
-  // ================= CHECKBOX =================
+  /* ================= CHECKBOX ================= */
   const handleCheckboxChange = (id) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  // ================= DELETE =================
+  /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one partner");
@@ -87,7 +100,7 @@ const PartnerManager = () => {
     }
   };
 
-  // ================= STATUS UPDATE =================
+  /* ================= STATUS UPDATE ================= */
   const statusHandler = async (id, status) => {
     try {
       await dispatch(updateStatus({ id, status })).unwrap();
@@ -98,7 +111,7 @@ const PartnerManager = () => {
     }
   };
 
-  // ================= EXCEL DOWNLOAD =================
+  /* ================= EXCEL DOWNLOAD ================= */
   const downloadExcel = () => {
     if (!filteredPartners.length) {
       toast.warning("No data to download");
@@ -106,7 +119,7 @@ const PartnerManager = () => {
     }
 
     const data = filteredPartners.map((p) => ({
-      "Center Name": p.name,
+      "Center Name": p.InsitutionName,
       "Owner Name": p.OwnerName,
       "Center Code": p.CenterCode,
       Email: p.email,
@@ -149,30 +162,44 @@ const PartnerManager = () => {
 
       {/* ================= FILTERS ================= */}
       <div className="card-body">
-        <div className="d-flex gap-3 mb-3">
-          <select
-            className="form-select w-auto"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-          >
-            <option value="">All Status</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
+        <div className="row g-2 mb-3">
+          {/* STATUS FILTER */}
+          <div className="col-md-4">
+            <select
+              className="form-select form-select-sm"
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+            >
+              <option value="">All Status</option>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
 
-          <input
-            type="text"
-            className="form-control w-auto"
-            placeholder="Search Center Code"
-            value={centerCodeFilter}
-            onChange={(e) => {
-              setCenterCodeFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
+          {/* CENTER CODE FILTER */}
+          <div className="col-md-4">
+            <input
+              type="text"
+              className="form-control form-control-sm"
+              placeholder="Search Center Code"
+              name="centerCode"
+              value={filters.centerCode}
+              onChange={handleFilterChange}
+            />
+          </div>
+
+          {/* CLEAR FILTERS */}
+          <div className="col-md-4">
+            <button
+              className="btn btn-sm btn-secondary w-100"
+              onClick={() =>
+                setFilters({ status: "", centerCode: "" })
+              }
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
 
         {/* ================= TABLE ================= */}
@@ -186,7 +213,7 @@ const PartnerManager = () => {
                 <th>Center Code</th>
                 <th>Email</th>
                 <th>Status</th>
-                <th>Contact Number</th>
+                <th>Contact</th>
                 <th>Password</th>
                 <th>City</th>
                 <th>Created</th>
@@ -195,66 +222,69 @@ const PartnerManager = () => {
             </thead>
 
             <tbody>
-              {currentRows.length === 0 && (
+              {currentRows.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="text-center text-danger">
+                  <td colSpan="11" className="text-center text-danger">
                     No Data Found
                   </td>
                 </tr>
+              ) : (
+                currentRows.map((ele) => (
+                  <tr key={ele._id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        checked={selectedIds.includes(ele._id)}
+                        onChange={() =>
+                          handleCheckboxChange(ele._id)
+                        }
+                      />
+                    </td>
+
+                    <td>{ele.InsitutionName}</td>
+                    <td>{ele.OwnerName}</td>
+                    <td>{ele.CenterCode}</td>
+                    <td>{ele.email}</td>
+
+                    {/* ROW STATUS SELECT */}
+                    <td>
+                      <select
+                        className="form-select form-select-sm"
+                        value={String(ele.status)}
+                        onChange={(e) =>
+                          statusHandler(
+                            ele._id,
+                            e.target.value === "true"
+                          )
+                        }
+                      >
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                      </select>
+                    </td>
+
+                    <td>{ele.ContactNumber}</td>
+                    <td>{ele.passwordTracker || "Null"}</td>
+                    <td>{ele.city}</td>
+                    <td>
+                      {new Date(ele.createdAt).toLocaleDateString("en-IN")}
+                    </td>
+
+                    <td>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => {
+                          setEditingPartner(ele);
+                          setShowModal(true);
+                        }}
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
-
-              {currentRows.map((ele) => (
-                <tr key={ele._id}>
-                  <td>
-                    <input
-
-                      type="checkbox"
-                         className="form-check-input"
-                      checked={selectedIds.includes(ele._id)}
-                      onChange={() => handleCheckboxChange(ele._id)}
-                    />
-                  </td>
-
-                  <td>{ele.name}</td>
-                  <td>{ele.OwnerName}</td>
-                  <td>{ele.CenterCode}</td>
-                  <td>{ele.email}</td>
-
-                  <td>
-                    <select
-                    className="form-select form-select-sm"
-                      value={String(ele.status)}
-                      onChange={(e) =>
-                        statusHandler(ele._id, e.target.value === "true")
-                      }
-                    >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
-                    </select>
-                  </td>
-                  <td>
-                    {ele?.ContactNumber}
-                  </td>
-
-                  <td>{ele.passwordTracker || "Null"}</td>
-                  <td>{ele.city}</td>
-                  <td>
-                    {new Date(ele.createdAt).toLocaleDateString("en-IN")}
-                  </td>
-
-                  <td>
-                    <button
-                      className="btn btn-sm btn-success"
-                      onClick={() => {
-                        setEditingPartner(ele);
-                        setShowModal(true);
-                      }}
-                    >
-                      <Icon icon="lucide:edit" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
             </tbody>
           </table>
         </div>
