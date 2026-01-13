@@ -3,25 +3,41 @@ import { useDispatch } from "react-redux";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { deleteStudyCourse, fetchAbroadCourse } from "../slice/AbroadCourseSlice";
+import {
+  deleteStudyCourse,
+  fetchAbroadCourse,
+} from "../slice/AbroadCourseSlice";
 import CreateAbroadCourse from "../form/CreateAbroadCourse";
 import DataTable from "react-data-table-component";
 
+/* ================= HELPER ================= */
+const normalize = (val) =>
+  val ? val.toString().toLowerCase().trim() : "";
+
 const AbroadCourseManager = () => {
   const dispatch = useDispatch();
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [course, setCourse] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
-  const [search, setSearch] = useState("");
 
+  /* ================= FILTER STATES ================= */
+  const [search, setSearch] = useState(""); // Course name
+  const [provinceSearch, setProvinceSearch] = useState("");
+  const [universitySearch, setUniversitySearch] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  /* ================= FETCH ================= */
   const loadCourse = async () => {
     setLoading(true);
     try {
       const res = await dispatch(fetchAbroadCourse());
       if (res?.meta?.requestStatus === "fulfilled") {
-        setCourse(res.payload);
+        setCourse(res.payload || []);
       }
     } finally {
       setLoading(false);
@@ -32,251 +48,210 @@ const AbroadCourseManager = () => {
     loadCourse();
   }, [dispatch]);
 
+  /* ================= CHECKBOX ================= */
   const handleCheckboxChange = (id) => {
-    setSelectedIds((prevSelected) =>
-      prevSelected.includes(id)
-        ? prevSelected.filter((item) => item !== id)
-        : [...prevSelected, id]
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
+  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     const idsToDelete = id ? [id] : selectedIds;
-    if (idsToDelete.length === 0) {
+
+    if (!idsToDelete.length) {
       toast.warn("⚠️ No items selected for deletion.");
       return;
     }
-    const confirmed = window.confirm(
-      idsToDelete.length > 1
-        ? `Are you sure you want to delete ${idsToDelete.length} courses?`
-        : "Are you sure you want to delete this course?"
-    );
-    if (!confirmed) return;
+
+    if (
+      !window.confirm(
+        idsToDelete.length > 1
+          ? `Delete ${idsToDelete.length} courses?`
+          : "Delete this course?"
+      )
+    )
+      return;
+
     try {
       const res = await dispatch(deleteStudyCourse(idsToDelete));
       if (deleteStudyCourse.fulfilled.match(res)) {
         toast.success("✅ Abroad Course deleted successfully!");
         setSelectedIds([]);
         loadCourse();
-      } else if (deleteStudyCourse.rejected.match(res)) {
-        toast.error(
-          "❌ Failed to delete Abroad Course: " +
-            (res.payload?.message || res.error?.message || "Unknown error")
-        );
+      } else {
+        toast.error("❌ Delete failed");
       }
     } catch (error) {
-      toast.error("⚠️ Unexpected error: " + (error.message || "Something went wrong"));
+      toast.error("⚠️ Something went wrong");
     }
   };
 
-  // Filter by course name
-  const filteredData = course.filter((ele) =>
-    ele?.ProgramName?.toLowerCase().includes(search.toLowerCase())
-  );
+  /* ================= FILTER LOGIC (SAFE & FIXED) ================= */
+  const filteredData = course.filter((ele) => {
+    const courseName = normalize(ele?.ProgramName);
+    const provinceName = normalize(ele?.Province?.name);
+    const universityName = normalize(ele?.University?.name);
+    const countryName = normalize(ele?.University?.Country?.name);
 
+    const cSearch = normalize(search);
+    const pSearch = normalize(provinceSearch);
+    const uSearch = normalize(universitySearch);
+    const coSearch = normalize(countrySearch);
+
+    const matchCourse = !cSearch || courseName.includes(cSearch);
+    const matchProvince = !pSearch || provinceName.includes(pSearch);
+    const matchUniversity = !uSearch || universityName.includes(uSearch);
+    const matchCountry = !coSearch || countryName.includes(coSearch);
+
+    /* DATE FILTER */
+    const createdDate = new Date(ele?.createdAt);
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+
+    const matchDate =
+      (!from || createdDate >= from) &&
+      (!to || createdDate <= new Date(to.setHours(23, 59, 59, 999)));
+
+    return (
+      matchCourse &&
+      matchProvince &&
+      matchUniversity &&
+      matchCountry &&
+      matchDate
+    );
+  });
+
+  /* ================= TABLE COLUMNS ================= */
   const columns = [
     {
       name: "S.L",
       cell: (row, idx) => (
-        <div className="form-check style-check d-flex align-items-center">
+        <div className="form-check d-flex align-items-center">
           <input
             type="checkbox"
             className="form-check-input"
             checked={selectedIds.includes(row._id)}
             onChange={() => handleCheckboxChange(row._id)}
           />
-          <label className="form-check-label">{idx + 1}</label>
+          <span className="ms-2">{idx + 1}</span>
         </div>
       ),
       width: "80px",
     },
-    { name: "Course Name", selector: row => row.ProgramName, sortable: true },
-    { name: "Country", selector: row => row.University?.Country?.name || "None", sortable: true },
-    { name: "Province", selector: row => row.Province?.name || "None", sortable: true },
+    { name: "Course Name", selector: (row) => row.ProgramName, sortable: true },
     {
-      name: "Total Fees",
-      cell: row => `${row?.Fees?.totalAmount || ""} ${row?.Fees?.currency || ""}`,
+      name: "Country",
+      selector: (row) => row.University?.Country?.name || "None",
     },
     {
-      name: "Total Year/Sem",
-      cell: row => `${row?.Fees?.breakdown?.length || ""} ${row?.Fees?.mode || ""}`,
-    },
-    {
-      name: "Complete Fees",
-      cell: row => `${row?.completeFees?.amount || ""} ${row?.completeFees?.currency || ""}`,
-    },
-    {
-      name: "Intake",
-      cell: row => (
-        <div
-          className="custom-scrollbar"
-          style={{
-            width: "200px",
-            height: "50px",
-            overflowY: "auto",
-            overflowX: "hidden",
-            whiteSpace: "normal",
-          }}
-        >
-          {row?.Intake?.map((intake, index) => {
-            const isExpired = new Date(intake?.end_date) < new Date();
-            return (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "4px",
-                }}
-              >
-                <span>{intake?.date}</span>
-                {isExpired ? (
-                  <span
-                    style={{
-                      backgroundColor: "#f800003b",
-                      padding: "1px 6px",
-                      marginLeft: "5px",
-                      borderRadius: "10px",
-                    }}
-                  >
-                    Closed
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      backgroundColor: "#1bf8003b",
-                      padding: "1px 6px",
-                      marginLeft: "5px",
-                      borderRadius: "5px",
-                    }}
-                  >
-                    Open
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ),
+      name: "Province",
+      selector: (row) => row.Province?.name || "None",
     },
     {
       name: "University",
-      cell: row => row.University?.name || "None",
-      sortable: true,
-    },
-    { name: "Category", selector: row => row.Category || "None", sortable: true },
-    { name: "Location", selector: row => row.Location || "None", sortable: true },
-    {
-      name: "Website URL",
-      cell: row => (
-        <a href={row.WebsiteURL} target="_blank" rel="noopener noreferrer">
-          Click to Open
-        </a>
-      ),
-    },
-    {
-      name: "Eligibility",
-      cell: row => (
-        <div
-          className="custom-scrollbar"
-          style={{
-            width: "300px",
-            height: "50px",
-            overflowY: "auto",
-            overflowX: "hidden",
-            whiteSpace: "normal",
-          }}
-        >
-          <h6 className="text-md mb-0 fw-medium flex-grow-1">
-            {row?.Eligibility
-              ? row.Eligibility.replace(/<[^>]+>/g, "")
-              : "None"}
-          </h6>
-        </div>
-      ),
+      selector: (row) => row.University?.name || "None",
     },
     {
       name: "Created At",
-      cell: row => (
-        <p>
-          {new Date(row?.createdAt).toLocaleString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour12: true,
-          })}
-        </p>
-      ),
+      cell: (row) =>
+        new Date(row.createdAt).toLocaleDateString("en-GB"),
     },
     {
       name: "Action",
-      cell: row => (
+      cell: (row) => (
         <Link
+          to="#"
           onClick={() => {
             setEditingCourse(row);
             setShowModal(true);
           }}
-          to="#"
-          className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+          className="text-success"
         >
           <Icon icon="lucide:edit" />
         </Link>
       ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
     },
   ];
 
+  /* ================= UI ================= */
   return (
     <div className="card basic-data-table">
-      <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
-        <h5 className="card-title mb-0">Course Table</h5>
-        <div>
-          <button
-            type="button"
-            className="btn rounded-pill text-primary radius-8 px-4 py-2"
-            onClick={() => setShowModal(true)}
-          >
-            Add Course
-          </button>
-          {selectedIds.length > 0 && (
-            <button
-              className="btn rounded-pill text-danger radius-8 px-4 py-2"
-              onClick={() => handleDelete()}
-            >
-              Delete Selected ({selectedIds.length})
-            </button>
-          )}
-          {showModal && (
-            <CreateAbroadCourse
-              loadCourse={loadCourse}
-              ele={editingCourse}
-              handleClose={() => {
-                setShowModal(false);
-                setEditingCourse(null);
-              }}
-            />
-          )}
-        </div>
+      <div className="card-header d-flex justify-content-between">
+        <h5>Course Table</h5>
+        <button
+          className="btn btn-primary"
+          onClick={() => setShowModal(true)}
+        >
+          Add Course
+        </button>
       </div>
-      <div className="card-body overflow-x-auto">
-        <input
-          type="text"
-          placeholder="Search by Course Name"
-          className="form-control mb-3"
+
+      <div className="card-body">
+        {/* FILTER INPUTS */}
+      <div className="d-flex gap-2 mb-3">
+          <input
+          className="form-control mb-2"
+          placeholder="Search Course Name"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
+        <input
+          className="form-control mb-2"
+          placeholder="Search Province"
+          value={provinceSearch}
+          onChange={(e) => setProvinceSearch(e.target.value)}
+        />
+        <input
+          className="form-control mb-2"
+          placeholder="Search University"
+          value={universitySearch}
+          onChange={(e) => setUniversitySearch(e.target.value)}
+        />
+        <input
+          className="form-control mb-2"
+          placeholder="Search Country"
+          value={countrySearch}
+          onChange={(e) => setCountrySearch(e.target.value)}
+        />
+      </div>
+
+        {/* DATE RANGE */}
+        <div className="d-flex gap-2 mb-3">
+          <input
+            type="date"
+            className="form-control"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+          />
+          <input
+            type="date"
+            className="form-control"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+          />
+        </div>
+
         <DataTable
           columns={columns}
           data={filteredData}
           pagination
           highlightOnHover
           responsive
+          progressPending={loading}
         />
       </div>
+
+      {showModal && (
+        <CreateAbroadCourse
+          loadCourse={loadCourse}
+          ele={editingCourse}
+          handleClose={() => {
+            setShowModal(false);
+            setEditingCourse(null);
+          }}
+        />
+      )}
     </div>
   );
 };

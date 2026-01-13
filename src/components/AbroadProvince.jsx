@@ -3,7 +3,10 @@ import { useDispatch } from "react-redux";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { deleteAbroadProvince, fetchAbroadProvince } from "../slice/AbroadProvinceSlice";
+import {
+  deleteAbroadProvince,
+  fetchAbroadProvince,
+} from "../slice/AbroadProvinceSlice";
 import CreateAbroadProvince from "../form/CreateAbroadProvince";
 import DataTable from "react-data-table-component";
 
@@ -14,7 +17,9 @@ const AbroadProvince = () => {
   const [province, setProvince] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingProvince, setEditingProvince] = useState(null);
-  const [search, setSearch] = useState("");
+
+  const [search, setSearch] = useState(""); // Province name filter
+  const [countrySearch, setCountrySearch] = useState(""); // ✅ NEW country filter
 
   const loadProvince = async () => {
     setLoading(true);
@@ -52,13 +57,14 @@ const AbroadProvince = () => {
         : "Are you sure you want to delete this province?"
     );
     if (!confirmed) return;
+
     try {
       const res = await dispatch(deleteAbroadProvince(idsToDelete));
       if (deleteAbroadProvince.fulfilled.match(res)) {
         toast.success("✅ Abroad Province deleted successfully!");
         setSelectedIds([]);
         loadProvince();
-      } else if (deleteAbroadProvince.rejected.match(res)) {
+      } else {
         toast.error(
           "❌ Failed to delete Abroad Province: " +
             (res.payload?.message || res.error?.message || "Unknown error")
@@ -69,10 +75,18 @@ const AbroadProvince = () => {
     }
   };
 
-  // Filter by province name
-  const filteredData = province.filter((ele) =>
-    ele?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  /* ================= FILTER LOGIC ================= */
+  const filteredData = province.filter((ele) => {
+    const provinceMatch = ele?.name
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+
+    const countryMatch = ele?.Country?.name
+      ?.toLowerCase()
+      .includes(countrySearch.toLowerCase());
+
+    return provinceMatch && countryMatch;
+  });
 
   const columns = [
     {
@@ -90,11 +104,11 @@ const AbroadProvince = () => {
       ),
       width: "80px",
     },
-    { name: "Name", selector: row => row.name, sortable: true },
-    { name: "Country", selector: row => row.Country?.name, sortable: true },
+    { name: "Name", selector: (row) => row.name, sortable: true },
+    { name: "Country", selector: (row) => row.Country?.name, sortable: true },
     {
       name: "Description",
-      cell: row => (
+      cell: (row) => (
         <div
           className="custom-scrollbar"
           style={{
@@ -113,7 +127,7 @@ const AbroadProvince = () => {
     },
     {
       name: "Image",
-      cell: row => (
+      cell: (row) => (
         <a href={row.heroURL} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
@@ -121,7 +135,7 @@ const AbroadProvince = () => {
     },
     {
       name: "Banner",
-      cell: row => (
+      cell: (row) => (
         <a href={row.bannerURL} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
@@ -129,7 +143,7 @@ const AbroadProvince = () => {
     },
     {
       name: "Created Date",
-      cell: row => (
+      cell: (row) => (
         <span className="text-success-main px-24 py-4 rounded-pill fw-medium text-sm">
           {new Date(row?.createdAt).toLocaleDateString("en-US", {
             year: "numeric",
@@ -142,7 +156,7 @@ const AbroadProvince = () => {
     },
     {
       name: "Action",
-      cell: row => (
+      cell: (row) => (
         <>
           <Link
             onClick={() => {
@@ -171,7 +185,10 @@ const AbroadProvince = () => {
 
   return (
     <div className="card basic-data-table">
-      <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
+      <div
+        className="card-header"
+        style={{ display: "flex", justifyContent: "space-between" }}
+      >
         <h5 className="card-title mb-0">Province Table</h5>
         <div>
           <button
@@ -201,20 +218,36 @@ const AbroadProvince = () => {
           )}
         </div>
       </div>
+
       <div className="card-body overflow-x-auto">
-        <input
+        {/* FILTER INPUTS */}
+      <div className="d-flex ">
+          <input
           type="text"
           placeholder="Search by Province Name"
-          className="form-control mb-3"
+          className="form-control "
+          style={{width:"300px",marginLeft:"20px"}}
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
+
+        <input
+          type="text"
+          style={{width:"300px", marginLeft:"20px"}}
+          placeholder="Search by Country Name"
+          className="form-control mb-3"
+          value={countrySearch}
+          onChange={(e) => setCountrySearch(e.target.value)}
+        />
+      </div>
+
         <DataTable
           columns={columns}
           data={filteredData}
           pagination
           highlightOnHover
           responsive
+          progressPending={loading}
         />
       </div>
     </div>

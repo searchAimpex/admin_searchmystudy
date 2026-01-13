@@ -13,11 +13,12 @@ import {
 } from "../slice/PartnerSlice";
 
 import CreatePartner from "../form/CreatePartner";
+import Switch from "../form/Switch";
 
 const PartnerManager = () => {
   const dispatch = useDispatch();
   const partners = useSelector((state) => state.partner.partner || []);
-
+  console.log(partners)
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
@@ -103,13 +104,14 @@ const PartnerManager = () => {
   /* ================= STATUS UPDATE ================= */
   const statusHandler = async (id, status) => {
     try {
-      await dispatch(updateStatus({ id, status })).unwrap();
+      const a  = await dispatch(updateStatus({ id, status })).unwrap();
+      // console.log(a)
       toast.success("Status updated");
       dispatch(fetchPartner());
     } catch {
       toast.error("Failed to update status");
     }
-  };
+  };  
 
   /* ================= EXCEL DOWNLOAD ================= */
   const downloadExcel = () => {
@@ -249,9 +251,9 @@ const PartnerManager = () => {
 
                     {/* ROW STATUS SELECT */}
                     <td>
-                      <select
+                      {/* <select
                         className="form-select form-select-sm"
-                        value={String(ele.status)}
+                        value={String(ele.block)}
                         onChange={(e) =>
                           statusHandler(
                             ele._id,
@@ -261,7 +263,9 @@ const PartnerManager = () => {
                       >
                         <option value="true">Active</option>
                         <option value="false">Inactive</option>
-                      </select>
+                      </select> */}
+
+                      <Switch statusHandler={statusHandler} ele={ele}/>
                     </td>
 
                     <td>{ele.ContactNumber}</td>

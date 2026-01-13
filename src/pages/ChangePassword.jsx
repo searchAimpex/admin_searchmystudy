@@ -1,173 +1,251 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { useFormik } from 'formik';
-import { toast } from 'react-toastify';
-import * as yup from 'yup';
-import { Icon } from '@iconify/react/dist/iconify.js';
-import { changePwd, resetPwd, verifyToken } from '../slice/authSlice';
-import { fetchProfile, updateProfile } from '../slice/profileSlice';
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useFormik } from "formik";
+import * as yup from "yup";
+import { toast } from "react-toastify";
+import { Icon } from "@iconify/react";
+import { changePwd, verifyToken } from "../slice/authSlice";
 
 const Schema = yup.object({
-    oldPassword: yup.string().required('Password is required'),
-    newPassword: yup.string().min(8, 'New Password must be at least 8 chars').required('New Password is required'),
+  oldPassword: yup.string().required("Password is required"),
+  newPassword: yup
+    .string()
+    .min(8, "New Password must be at least 8 characters")
+    .required("New Password is required"),
 });
 
 const ChangePassword = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const {token,email } = useParams();
-    const { loading, error } = useSelector((state) => state.auth);
-    const state = useSelector((state) => state?.profile?.profile);
-    // console.log(token,email,"=========================");
-    
-    const [showOldPassword, setShowOldPassword] = useState(false);
-    const [showNewPassword, setShowNewPassword] = useState(false);
-    const [invalidToken, setInvalidToken] = useState(false);
+  const dispatch = useDispatch();
+  const { token, email } = useParams();
+  const { loading } = useSelector((state) => state.auth);
 
-    // Check token validity
-    useEffect(() => {
-        const checkToken = async () => {
-            try {
-                //  navigate('https://coursefinder.co.in');
-                // console.log(token,email)
-                const res = await dispatch(verifyToken({token}));
-                console.log(res.payload.success,":::::::::::::::::::::::::");
-                
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [validToken, setValidToken] = useState(false);
 
-                if (res.payload.success) {
-                    setInvalidToken(true);
-                }
-            } catch (err) {
-                // setInvalidToken(true);
-                console.log(err)
-            }
-        };
-        checkToken();
-    }, [dispatch, token]);
+  useEffect(() => {
+    const checkToken = async () => {
+      const res = await dispatch(verifyToken({ token }));
+      if (res?.payload?.success) {
+        setValidToken(true);
+      }
+    };
+    checkToken();
+  }, [dispatch, token]);
 
-    const formik = useFormik({
-        initialValues: { oldPassword: '', newPassword: '' },
-        validationSchema: Schema,
-        onSubmit: async (values) => {
-            try {
+  const formik = useFormik({
+    initialValues: {
+      oldPassword: "",
+      newPassword: "",
+    },
+    validationSchema: Schema,
+    onSubmit: async (values) => {
+      if (values.oldPassword !== values.newPassword) {
+        toast.error("Password do not match!");
+        return;
+      }
 
-                if (values.oldPassword === values.newPassword) {
-                    // console.log({password:values.oldPassword,email:state.email})
-                    // console.log(values);
-                    
-                    const res = await dispatch(changePwd( {password:values.newPassword,email:email} ));
-                    console.log(res,"+++++++++++++++++++++++++++++++++");
-                    
-                    if (res.meta?.requestStatus === "fulfilled") {
-                        toast.success('Password reset successful');
-                        window.location.href = "https://coursefinder.co.in";
-                    }
-                } else {
-                    toast.error("Password do not match!");
+      const res = await dispatch(
+        changePwd({ password: values.newPassword, email })
+      );
 
-                }
+      if (res.meta.requestStatus === "fulfilled") {
+        toast.success("Password reset successful");
+       setTimeout(() => {
+         window.location.href = "https://coursefinder.co.in";
+       }, 1000);
+      }
+    },
+  });
 
-            } catch (err) {
-                setInvalidToken(true);
-            }
-        },
-    });
+  const { values, errors, touched, handleChange, handleSubmit } = formik;
 
-    const { errors, touched, values, handleChange, handleSubmit } = formik;
-
-    if (!invalidToken) {
-        return (
-            <div className='d-flex justify-content-center align-items-center' style={{ minHeight: '100vh' }}>
-                <h2>Page does not exist or token has expired</h2>
-            </div>
-        );
-    }
-
-    if(invalidToken){
- return (
-        <section className='d-flex flex-column justify-content-center align-items-center auth bg-base' style={{ minHeight: "100vh" }}>
-            <div style={{
-                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                padding: '2rem',
-                borderRadius: '1rem',
-                backgroundColor: 'white',
-                minWidth: 350,
-                maxWidth: 400,
-                width: '100%',
-            }}>
-                <div className='mb-32 text-center'>
-                    <Icon icon="mage:lock" width={48} height={48} className="mb-2 text-primary" />
-                    <h5 className='mb-2'>Reset Your Password</h5>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    {/* Old Password */}
-                    <div className='mb-24 position-relative'>
-                        <input
-                            type={showOldPassword ? 'text' : 'password'}
-                            className={`form-control h-56-px bg-neutral-50 radius-12 ${errors.oldPassword && touched.oldPassword ? 'is-invalid' : ''}`}
-                            placeholder='Password'
-                            name='oldPassword'
-                            id='oldPassword'
-                            onChange={handleChange}
-                            value={values.oldPassword}
-                            autoComplete="current-password"
-                        />
-                        <span
-                            className="position-absolute end-0 top-50 translate-middle-y me-16 cursor-pointer"
-                            style={{ right: 12, top: '50%', transform: 'translateY(-50%)' }}
-                            onClick={() => setShowOldPassword((prev) => !prev)}
-                            tabIndex={0}
-                            role="button"
-                            aria-label={showOldPassword ? "Hide password" : "Show password"}
-                        >
-                            <Icon icon={showOldPassword ? "mdi:eye-off-outline" : "mdi:eye-outline"} width={24} />
-                        </span>
-                        {errors.oldPassword && touched.oldPassword && (
-                            <div className="invalid-feedback d-block">{errors.oldPassword}</div>
-                        )}
-                    </div>
-
-                    {/* New Password */}
-                    <div className='mb-24 position-relative'>
-                        <input
-                            type={showNewPassword ? 'text' : 'password'}
-                            className={`form-control h-56-px bg-neutral-50 radius-12 ${errors.newPassword && touched.newPassword ? 'is-invalid' : ''}`}
-                            placeholder='Confirm Password'
-                            name='newPassword'
-                            id='newPassword'
-                            onChange={handleChange}
-                            value={values.newPassword}
-                            autoComplete="new-password"
-                        />
-                        <span
-                            className="position-absolute end-0 top-50 translate-middle-y me-16 cursor-pointer"
-                            style={{ right: 12, top: '50%', transform: 'translateY(-50%)' }}
-                            onClick={() => setShowNewPassword((prev) => !prev)}
-                            tabIndex={0}
-                            role="button"
-                            aria-label={showNewPassword ? "Hide password" : "Show password"}
-                        >
-                            <Icon icon={showNewPassword ? "mdi:eye-off-outline" : "mdi:eye-outline"} width={24} />
-                        </span>
-                        {errors.newPassword && touched.newPassword && (
-                            <div className="invalid-feedback d-block">{errors.newPassword}</div>
-                        )}
-                    </div>
-
-                    <button
-                        type='submit'
-                        className='btn btn-primary text-md w-100 radius-12 py-3'
-                        disabled={loading}
-                    >
-                        {loading ? 'Sending...' : 'Reset Password'}
-                    </button>
-                </form>
-            </div>
-        </section>
+  if (!validToken) {
+    return (
+      <div className="token-error">
+        Page does not exist or token has expired
+      </div>
     );
-    }
-   
+  }
+
+  return (
+    <>
+      {/* ================= CSS INSIDE COMPONENT ================= */}
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+          }
+
+          .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f4f6f8;
+            padding: 16px;
+          }
+
+          .auth-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+          }
+
+          .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+          }
+
+          .auth-header h5 {
+            margin-top: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #101828;
+          }
+
+          .input-group {
+            position: relative;
+            margin-bottom: 24px;
+          }
+
+          .auth-input {
+            width: 100%;
+            height: 56px;
+            padding: 0 44px 0 16px;
+            border-radius: 12px;
+            border: 1px solid #d0d5dd;
+            background: #f9fafb;
+            font-size: 14px;
+          }
+
+          .auth-input:focus {
+            outline: none;
+            border-color: #0d6efd;
+            background: #ffffff;
+          }
+
+          .eye-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #667085;
+          }
+
+          .error-text {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 6px;
+          }
+
+          .auth-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            background: #0d6efd;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+          }
+
+          .auth-btn:disabled {
+            background: #9ec5fe;
+            cursor: not-allowed;
+          }
+
+          .token-error {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 500;
+          }
+        `}
+      </style>
+
+      {/* ================= UI ================= */}
+      <div className="auth-wrapper">
+        <div className="auth-card">
+          <div className="auth-header">
+            <Icon icon="mage:lock" width={48} height={48} color="#0d6efd" />
+            <h5>Reset Your Password</h5>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {/* Password */}
+            <div className="input-group">
+              <input
+                type={showOldPassword ? "text" : "password"}
+                className="auth-input"
+                placeholder="Password"
+                name="oldPassword"
+                value={values.oldPassword}
+                onChange={handleChange}
+              />
+              <span
+                className="eye-icon"
+                onClick={() => setShowOldPassword(!showOldPassword)}
+              >
+                <Icon
+                  icon={
+                    showOldPassword
+                      ? "mdi:eye-off-outline"
+                      : "mdi:eye-outline"
+                  }
+                  width={22}
+                />
+              </span>
+              {errors.oldPassword && touched.oldPassword && (
+                <div className="error-text">{errors.oldPassword}</div>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div className="input-group">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                className="auth-input"
+                placeholder="Confirm Password"
+                name="newPassword"
+                value={values.newPassword}
+                onChange={handleChange}
+              />
+              <span
+                className="eye-icon"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                <Icon
+                  icon={
+                    showNewPassword
+                      ? "mdi:eye-off-outline"
+                      : "mdi:eye-outline"
+                  }
+                  width={22}
+                />
+              </span>
+              {errors.newPassword && touched.newPassword && (
+                <div className="error-text">{errors.newPassword}</div>
+              )}
+            </div>
+
+            <button className="auth-btn" type="submit" disabled={loading}>
+              {loading ? "Processing..." : "Reset Password"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default ChangePassword;

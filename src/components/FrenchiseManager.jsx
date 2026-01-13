@@ -14,6 +14,7 @@ import {
 } from "../slice/PartnerSlice";
 
 import CreateFrenchise from "../form/CreateFrenchise";
+import Switch from "../form/Switch";
 
 const FrenchiseManager = () => {
   const dispatch = useDispatch();
@@ -187,7 +188,7 @@ const FrenchiseManager = () => {
                   <td>{e.email}</td>
                   <td>{e.passwordTracker}</td>
                   <td>
-                    <select
+                    {/* <select
                       value={String(e.status)}
                       onChange={(ev) =>
                         statusHandler(e._id, ev.target.value === "true")
@@ -195,7 +196,9 @@ const FrenchiseManager = () => {
                     >
                       <option value="true">Active</option>
                       <option value="false">Inactive</option>
-                    </select>
+                    </select> */}
+
+                      <Switch statusHandler={statusHandler} ele={e}/>
                   </td>
                   <td>
                     <button

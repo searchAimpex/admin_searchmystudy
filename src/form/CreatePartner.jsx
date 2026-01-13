@@ -199,14 +199,14 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
           toast.error(msg);
         }
       } else {
-        console.log(payload, "///////////////////////////////");
+        console.log(payload, "//////////------------/////////////////////");
 
         const res = await dispatch(createPartner(payload));
         console.log(res)
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner created");
           fetchData?.();
-          // handleClose?.();
+          handleClose?.();
         } else {
           // surface full server error for easier debugging
           const msg = res?.payload || res?.error || res;
@@ -296,6 +296,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                       type="password"
                       name="password"
                       className="form-control"
+                       onChange={handleInputChange}
                       placeholder={ele ? ele?.passwordTracker : ""}
                       readOnly={!!ele}
                     />

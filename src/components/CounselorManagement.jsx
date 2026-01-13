@@ -48,6 +48,7 @@ const CounselorManagement = () => {
     counsellorCode: "",
     role: "",
     centerCode: "",
+    name: "", // ✅ NEW FILTER
   });
 
   /* ================= FETCH ================= */
@@ -59,16 +60,18 @@ const CounselorManagement = () => {
     loadCounsellors();
   }, []);
 
-  /* ================= FILTER LOGIC (FULLY FIXED) ================= */
+  /* ================= FILTER LOGIC ================= */
   const filteredCounsellors = useMemo(() => {
     return courseFinderCounsellor.filter((ele) => {
       const counsellorCode = normalize(ele?.CounsellorCOde);
       const role = normalize(ele?.createdBy?.role);
       const centerCode = normalize(ele?.createdBy?.CenterCode);
+      const name = normalize(ele?.name); // ✅ NEW
 
       const fCounsellorCode = normalize(filters.counsellorCode);
       const fRole = normalize(filters.role);
       const fCenterCode = normalize(filters.centerCode);
+      const fName = normalize(filters.name); // ✅ NEW
 
       const matchCounsellorCode =
         !fCounsellorCode || counsellorCode.includes(fCounsellorCode);
@@ -78,11 +81,18 @@ const CounselorManagement = () => {
       const matchCenterCode =
         !fCenterCode || centerCode.includes(fCenterCode);
 
-      return matchCounsellorCode && matchRole && matchCenterCode;
+      const matchName =
+        !fName || name.includes(fName); // ✅ NEW
+
+      return (
+        matchCounsellorCode &&
+        matchRole &&
+        matchCenterCode &&
+        matchName // ✅ NEW
+      );
     });
   }, [courseFinderCounsellor, filters]);
 
-  console.log(filteredCounsellors)
   /* ================= CHECKBOX ================= */
   const handleCheckboxChange = (id) => {
     setSelectedIds((prev) =>
@@ -195,6 +205,18 @@ const CounselorManagement = () => {
           />
         </div>
 
+        {/* ✅ NEW NAME FILTER */}
+        <div className="col-md-3">
+          <input
+            className="form-control"
+            placeholder="Search Counsellor Name"
+            value={filters.name}
+            onChange={(e) =>
+              setFilters({ ...filters, name: e.target.value })
+            }
+          />
+        </div>
+
         <div className="col-md-3">
           <select
             className="form-select"
@@ -224,7 +246,12 @@ const CounselorManagement = () => {
           <button
             className="btn btn-secondary w-100"
             onClick={() =>
-              setFilters({ counsellorCode: "", role: "", centerCode: "" })
+              setFilters({
+                counsellorCode: "",
+                role: "",
+                centerCode: "",
+                name: "", // ✅ RESET NAME
+              })
             }
           >
             Reset Filters
@@ -265,7 +292,7 @@ const CounselorManagement = () => {
                 <td>
                   <input
                     type="checkbox"
-                      className="form-check-input"
+                    className="form-check-input"
                     checked={selectedIds.includes(ele._id)}
                     onChange={() => handleCheckboxChange(ele._id)}
                   />
