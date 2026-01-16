@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { deleteCounsellorLead, fetchCounsellorSingleLead } from "../slice/counsellorLead";
+import {
+  deleteCounsellorLead,
+  fetchCounsellorSingleLead,
+} from "../slice/counsellorLead";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import DataTable from "react-data-table-component";
@@ -8,6 +11,7 @@ import DataTable from "react-data-table-component";
 const CounselorSingleLead = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [leads, setLeads] = useState([]);
   const [error, setError] = useState(null);
@@ -16,12 +20,22 @@ const CounselorSingleLead = () => {
 
   const handleDelete = async () => {
     try {
-      const confirmed = window.confirm("Are you sure you want to delete this lead?");
+      if (selectedIds.length === 0) {
+        toast.warning("Please select at least one lead");
+        return;
+      }
+
+      const confirmed = window.confirm(
+        "Are you sure you want to delete selected lead(s)?"
+      );
       if (!confirmed) return;
+
       await dispatch(deleteCounsellorLead(selectedIds));
       toast.success("Lead deleted successfully");
+
       const res = await dispatch(fetchCounsellorSingleLead(id));
       setLeads(res.payload);
+      setSelectedIds([]);
     } catch (error) {
       toast.error("Error deleting lead");
     }
@@ -40,25 +54,74 @@ const CounselorSingleLead = () => {
         setLoading(false);
       }
     };
-    if (id) {
-      fetchData();
-    }
+
+    if (id) fetchData();
   }, [id, dispatch]);
 
-  const handleCheckboxChange = (id) => {
-    setSelectedIds((prevSelected) =>
-      prevSelected.includes(id)
-        ? prevSelected.filter((item) => item !== id)
-        : [...prevSelected, id]
+  const handleCheckboxChange = (leadId) => {
+    setSelectedIds((prev) =>
+      prev.includes(leadId)
+        ? prev.filter((item) => item !== leadId)
+        : [...prev, leadId]
     );
   };
 
-  // Filter by name/email/phone
-  const filteredData = leads?.filter((ele) =>
-    (ele?.name || "").toLowerCase().includes(search.toLowerCase()) ||
-    (ele?.email || "").toLowerCase().includes(search.toLowerCase()) ||
-    (String(ele?.phone || "")).toLowerCase().includes(search.toLowerCase())
+  // 🔍 Search filter
+  const filteredData = leads?.filter(
+    (ele) =>
+      (ele?.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (ele?.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      String(ele?.phone || "").includes(search)
   );
+
+  // ⬇️ DOWNLOAD CSV FUNCTION
+  const handleDownloadCSV = () => {
+    if (!filteredData || filteredData.length === 0) {
+      toast.warning("No data available to download");
+      return;
+    }
+
+    const headers = [
+      "Name",
+      "Email",
+      "Phone",
+      "City",
+      "Type",
+      "Interested Course",
+      "Interested Country",
+      "Test",
+      "Score",
+      "Created At",
+    ];
+
+    const rows = filteredData.map((row) => [
+      row.name || "",
+      row.email || "",
+      row.phone || "",
+      row.city || "",
+      row.type || "",
+      row.intersetedCourse || "",
+      row.intersetedCountry || "",
+      row.test || "",
+      row.score || "",
+      row.createdAt
+        ? new Date(row.createdAt).toLocaleString("en-GB")
+        : "",
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows]
+        .map((row) => row.map((v) => `"${v}"`).join(","))
+        .join("\n");
+
+    const link = document.createElement("a");
+    link.href = encodeURI(csvContent);
+    link.download = "counselor_leads.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const columns = [
     {
@@ -76,18 +139,26 @@ const CounselorSingleLead = () => {
       ),
       width: "80px",
     },
-    { name: "Name", selector: row => row.name || "-----", sortable: true },
-    { name: "Email", selector: row => row.email || "-----", sortable: true },
-    { name: "Phone", selector: row => row.phone || "-----", sortable: true },
-    { name: "City", selector: row => row.city || "-----", sortable: true },
-    { name: "Type", selector: row => row.type || "-----", sortable: true },
-    { name: "Interested Course", selector: row => row.intersetedCourse || "-----", sortable: true },
-    { name: "Interested Country", selector: row => row.intersetedCountry || "-----", sortable: true },
-    { name: "Test", selector: row => row.test || "-----", sortable: true },
-    { name: "Score", selector: row => row.score || "-----", sortable: true },
+    { name: "Name", selector: (row) => row.name || "-----", sortable: true },
+    { name: "Email", selector: (row) => row.email || "-----", sortable: true },
+    { name: "Phone", selector: (row) => row.phone || "-----", sortable: true },
+    { name: "City", selector: (row) => row.city || "-----", sortable: true },
+    { name: "Type", selector: (row) => row.type || "-----", sortable: true },
+    {
+      name: "Interested Course",
+      selector: (row) => row.intersetedCourse || "-----",
+      sortable: true,
+    },
+    {
+      name: "Interested Country",
+      selector: (row) => row.intersetedCountry || "-----",
+      sortable: true,
+    },
+    { name: "Test", selector: (row) => row.test || "-----", sortable: true },
+    { name: "Score", selector: (row) => row.score || "-----", sortable: true },
     {
       name: "Created At",
-      cell: row =>
+      cell: (row) =>
         row?.createdAt
           ? new Date(row.createdAt).toLocaleString("en-GB", {
               day: "2-digit",
@@ -104,16 +175,20 @@ const CounselorSingleLead = () => {
 
   return (
     <div className="card basic-data-table">
-      <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
-        <h5 className="card-title mb-0">Counselor lead Table</h5>
+      <div
+        className="card-header"
+        style={{ display: "flex", justifyContent: "space-between" }}
+      >
+        <h5 className="card-title mb-0">Counselor Lead Table</h5>
         <div>
           <button
             type="button"
             className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
-            onClick={() => {}} // Implement download if needed
+            onClick={handleDownloadCSV}
           >
             Download
           </button>
+
           <button
             className="mx-4 btn rounded-pill text-danger radius-8 px-4 py-2"
             onClick={handleDelete}
@@ -122,14 +197,16 @@ const CounselorSingleLead = () => {
           </button>
         </div>
       </div>
+
       <div className="card-body overflow-x-auto">
         <input
           type="text"
           placeholder="Search by Name, Email or Phone"
           className="form-control mb-3"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
+
         <DataTable
           columns={columns}
           data={filteredData}

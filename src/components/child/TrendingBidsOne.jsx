@@ -1,6 +1,64 @@
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFrenchise, fetchPartner } from "../../slice/PartnerSlice";
+import { FetchStudent } from "../../slice/StudentSlice";
 
 const TrendingBidsOne = () => {
+  const partners = useSelector((state) => state.partner.partner || []);
+  const franchise = useSelector((state) => state.partner.frenchise || []);
+  const { student = [] } = useSelector((state) => state.student || {});
+
+    
+  const getWeekRange = (offset = 0) => {
+  const now = new Date();
+
+  // Start of current week (Monday)
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay() + 1 - offset * 7);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  return { startOfWeek, endOfWeek };
+};
+const calculateWeeklyGrowth = (data = []) => {
+  const { startOfWeek, endOfWeek } = getWeekRange(0);
+  const { startOfWeek: lastStart, endOfWeek: lastEnd } = getWeekRange(1); 
+
+  const thisWeekCount = data.filter(
+    (item) =>
+      item.createdAt &&
+      new Date(item.createdAt) >= startOfWeek &&
+      new Date(item.createdAt) <= endOfWeek
+  ).length;
+
+  const lastWeekCount = data.filter(
+    (item) =>
+      item.createdAt &&
+      new Date(item.createdAt) >= lastStart &&
+      new Date(item.createdAt) <= lastEnd
+  ).length;
+
+  if (lastWeekCount === 0) {
+    return {
+      thisWeekCount,
+      lastWeekCount,
+      percentage: thisWeekCount > 0 ? 100 : 0,
+    };
+  }
+
+  const percentage = ((thisWeekCount - lastWeekCount) / lastWeekCount) * 100;
+
+  return {
+    thisWeekCount,
+    lastWeekCount,
+    percentage: Number(percentage.toFixed(2)),
+  };
+};
+
   return (
     <div className='col-12'>
       <h6 className='mb-16'>Trending Bids</h6>
@@ -15,9 +73,9 @@ const TrendingBidsOne = () => {
                     <Icon icon='flowbite:users-group-solid' className='icon' />
                   </span>
                   <div className='flex-grow-1'>
-                    <h6 className='fw-semibold mb-0'>24,000</h6>
+                    <h6 className='fw-semibold mb-0'>{student.length}</h6>
                     <span className='fw-medium text-secondary-light text-md'>
-                      Artworks
+                      Students
                     </span>
                     <p className='text-sm mb-0 d-flex align-items-center flex-wrap gap-12 mt-12'>
                       <span className='bg-success-focus px-6 py-2 rounded-2 fw-medium text-success-main text-sm d-flex align-items-center gap-8'>
@@ -43,9 +101,9 @@ const TrendingBidsOne = () => {
                     <Icon icon='flowbite:users-group-solid' className='icon' />
                   </span>
                   <div className='flex-grow-1'>
-                    <h6 className='fw-semibold mb-0'>82,000</h6>
+                    <h6 className='fw-semibold mb-0'>{partners.length}</h6>
                     <span className='fw-medium text-secondary-light text-md'>
-                      Auction
+                      Partners
                     </span>
                     <p className='text-sm mb-0 d-flex align-items-center flex-wrap gap-12 mt-12'>
                       <span className='bg-danger-focus px-6 py-2 rounded-2 fw-medium text-danger-main text-sm d-flex align-items-center gap-8'>
@@ -71,9 +129,9 @@ const TrendingBidsOne = () => {
                     <Icon icon='flowbite:users-group-solid' className='icon' />
                   </span>
                   <div className='flex-grow-1'>
-                    <h6 className='fw-semibold mb-0'>800</h6>
+                    <h6 className='fw-semibold mb-0'>{franchise.length}</h6>
                     <span className='fw-medium text-secondary-light text-md'>
-                      Creators
+                      Freanchise
                     </span>
                     <p className='text-sm mb-0 d-flex align-items-center flex-wrap gap-12 mt-12'>
                       <span className='bg-success-focus px-6 py-2 rounded-2 fw-medium text-success-main text-sm d-flex align-items-center gap-8'>

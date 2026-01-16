@@ -14,7 +14,17 @@ const MbbsCourseManager = () => {
   const [course, setCourse] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+
+  // Existing filters
   const [search, setSearch] = useState("");
+  const [universitySearch, setUniversitySearch] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
+
+  // NEW filters
+  const [programLevelSearch, setProgramLevelSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const loadCourse = async () => {
     setLoading(true);
@@ -33,46 +43,69 @@ const MbbsCourseManager = () => {
   }, [dispatch]);
 
   const handleCheckboxChange = (id) => {
-    setSelectedIds((prevSelected) =>
-      prevSelected.includes(id)
-        ? prevSelected.filter((item) => item !== id)
-        : [...prevSelected, id]
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id]
     );
   };
 
   const handleDelete = async (id) => {
     const idsToDelete = id ? [id] : selectedIds;
-    if (idsToDelete.length === 0) {
+    if (!idsToDelete.length) {
       toast.warn("⚠️ No items selected for deletion.");
       return;
     }
-    const confirmed = window.confirm(
-      idsToDelete.length > 1
-        ? `Are you sure you want to delete ${idsToDelete.length} courses?`
-        : "Are you sure you want to delete this course?"
-    );
-    if (!confirmed) return;
+
+    if (
+      !window.confirm(
+        idsToDelete.length > 1
+          ? `Are you sure you want to delete ${idsToDelete.length} courses?`
+          : "Are you sure you want to delete this course?"
+      )
+    )
+      return;
+
     try {
       const res = await dispatch(deleteMbbsCourse(idsToDelete));
       if (deleteMbbsCourse.fulfilled.match(res)) {
         toast.success("✅ MBBS Course deleted successfully!");
         setSelectedIds([]);
         loadCourse();
-      } else if (deleteMbbsCourse.rejected.match(res)) {
-        toast.error(
-          "❌ Failed to delete MBBS Course: " +
-            (res.payload?.message || res.error?.message || "Unknown error")
-        );
       }
     } catch (error) {
-      toast.error("⚠️ Unexpected error: " + (error.message || "Something went wrong"));
+      toast.error("⚠️ Unexpected error");
     }
   };
 
-  // Filter by course name
-  const filteredData = course.filter((ele) =>
-    ele?.ProgramName?.toLowerCase().includes(search.toLowerCase())
-  );
+  // 🔍 FULL FILTER LOGIC
+  const filteredData = course.filter((ele) => {
+    const courseName = ele?.ProgramName?.toLowerCase() || "";
+    const universityName = ele?.University?.name?.toLowerCase() || "";
+    const countryName =
+      ele?.University?.Country?.name?.toLowerCase() ||
+      ele?.Country?.name?.toLowerCase() ||
+      "";
+    const programLevel = ele?.ProgramLevel?.toLowerCase() || "";
+    const category = ele?.Category?.toLowerCase() || "";
+
+    const createdAt = ele?.createdAt ? new Date(ele.createdAt) : null;
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+
+    const dateMatch =
+      (!from || (createdAt && createdAt >= from)) &&
+      (!to || (createdAt && createdAt <= to));
+
+    return (
+      courseName.includes(search.toLowerCase()) &&
+      universityName.includes(universitySearch.toLowerCase()) &&
+      countryName.includes(countrySearch.toLowerCase()) &&
+      programLevel.includes(programLevelSearch.toLowerCase()) &&
+      category.includes(categorySearch.toLowerCase()) &&
+      dateMatch
+    );
+  });
 
   const columns = [
     {
@@ -106,54 +139,22 @@ const MbbsCourseManager = () => {
     },
     {
       name: "Intake",
-      // width:"0px",
       cell: row => (
-        <div
-          className="custom-scrollbar"
-          style={{
-            width: "200px",
-            // height: "50px",
-            overflowY: "auto",
-            overflowX: "hidden",
-            whiteSpace: "normal",
-          }}
-        >
-          {row?.Intake?.map((intake, index) => {
+        <div style={{ width: "200px", overflowY: "auto" }}>
+          {row?.Intake?.map((intake, i) => {
             const isExpired = new Date(intake?.end_date) < new Date();
             return (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "4px",
-                }}
-              >
+              <div key={i} className="d-flex justify-content-between mb-1">
                 <span>{intake?.date}</span>
-                {isExpired ? (
-                  <span
-                    style={{
-                      backgroundColor: "#f800003b",
-                      padding: "1px 6px",
-                      marginLeft: "5px",
-                      borderRadius: "10px",
-                    }}
-                  >
-                    Closed
-                  </span>
-                ) : (
-                  <span
-                    style={{
-                      backgroundColor: "#1bf8003b",
-                      padding: "1px 6px",
-                      marginLeft: "5px",
-                      borderRadius: "5px",
-                    }}
-                  >
-                    Open
-                  </span>
-                )}
+                <span
+                  style={{
+                    backgroundColor: isExpired ? "#f800003b" : "#1bf8003b",
+                    padding: "1px 6px",
+                    borderRadius: "5px",
+                  }}
+                >
+                  {isExpired ? "Closed" : "Open"}
+                </span>
               </div>
             );
           })}
@@ -162,7 +163,7 @@ const MbbsCourseManager = () => {
     },
     {
       name: "University",
-      cell: row => row.University?.name || row.University || "None",
+      cell: row => row.University?.name || "None",
       sortable: true,
     },
     { name: "Category", selector: row => row.Category || "None", sortable: true },
@@ -179,107 +180,77 @@ const MbbsCourseManager = () => {
     {
       name: "Eligibility",
       cell: row => (
-        <div
-          className="custom-scrollbar"
-          style={{
-            width: "300px",
-            height: "50px",
-            overflowY: "auto",
-            overflowX: "hidden",
-            whiteSpace: "normal",
-          }}
-        >
-          <h6 className="text-md mb-0 fw-medium flex-grow-1">
-            {row?.Eligibility
-              ? row.Eligibility.replace(/<[^>]+>/g, "")
-              : "None"}
-          </h6>
+        <div style={{ width: "300px", height: "50px", overflowY: "auto" }}>
+          {row?.Eligibility
+            ? row.Eligibility.replace(/<[^>]+>/g, "")
+            : "None"}
         </div>
       ),
     },
     {
       name: "Created At",
-      cell: row => (
-        <p>
-          {row?.createdAt
-            ? new Date(row.createdAt).toLocaleString("en-GB", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour12: true,
-              })
-            : "None"}
-        </p>
-      ),
+      cell: row =>
+        row?.createdAt
+          ? new Date(row.createdAt).toLocaleDateString()
+          : "None",
     },
     {
       name: "Action",
       cell: row => (
         <Link
+          to="#"
           onClick={() => {
             setEditingCourse(row);
             setShowModal(true);
           }}
-          to="#"
-          className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+          className="w-32-px h-32-px bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
         >
           <Icon icon="lucide:edit" />
         </Link>
       ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
     },
   ];
 
   return (
     <div className="card basic-data-table">
-      <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
+      <div className="card-header d-flex justify-content-between">
         <h5 className="card-title mb-0">Course Table</h5>
-        <div>
-          <button
-            type="button"
-            className="btn rounded-pill text-primary radius-8 px-4 py-2"
-            onClick={() => setShowModal(true)}
-          >
-            Add Course
-          </button>
-          {selectedIds.length > 0 && (
-            <button
-              className="btn rounded-pill text-danger radius-8 px-4 py-2"
-              onClick={() => handleDelete()}
-            >
-              Delete Selected ({selectedIds.length})
-            </button>
-          )}
-          {showModal && (
-            <CreateMbbsCourse
-              loadCourse={loadCourse}
-              ele={editingCourse}
-              handleClose={() => {
-                setShowModal(false);
-                // setEditingCourse(null);
-              }}
-            />
-          )}
-        </div>
+        <button
+          className="btn rounded-pill text-primary radius-8 px-4 py-2"
+          onClick={() => setShowModal(true)}
+        >
+          Add Course
+        </button>
       </div>
+
       <div className="card-body overflow-x-auto">
-        <input
-          type="text"
-          placeholder="Search by Course Name"
-          className="form-control mb-3"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div className="d-flex flex-wrap gap-3 mb-3">
+          <input className="form-control" style={{ width: 300 }} placeholder="Course Name" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="form-control" style={{ width: 300 }} placeholder="University" value={universitySearch} onChange={e => setUniversitySearch(e.target.value)} />
+          <input className="form-control" style={{ width: 300 }} placeholder="Country" value={countrySearch} onChange={e => setCountrySearch(e.target.value)} />
+          <input className="form-control" style={{ width: 250 }} placeholder="Program Level" value={programLevelSearch} onChange={e => setProgramLevelSearch(e.target.value)} />
+          <input className="form-control" style={{ width: 250 }} placeholder="Category" value={categorySearch} onChange={e => setCategorySearch(e.target.value)} />
+          <input type="date" className="form-control" style={{ width: 200 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+          <input type="date" className="form-control" style={{ width: 200 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+        </div>
+
         <DataTable
           columns={columns}
           data={filteredData}
           pagination
           highlightOnHover
           responsive
+          progressPending={loading}
         />
       </div>
+
+      {showModal && (
+        <CreateMbbsCourse
+          loadCourse={loadCourse}
+          ele={editingCourse}
+          handleClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 };

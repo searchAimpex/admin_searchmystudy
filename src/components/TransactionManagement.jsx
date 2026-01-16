@@ -37,8 +37,7 @@ const TransactionManagement = () => {
     });
 
 
-    // console.log(filteredTransaction)
-    // ✅ Checkbox
+
     const handleCheckboxChange = (id) => {
         setSelectedIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -55,7 +54,7 @@ const TransactionManagement = () => {
         if (!window.confirm("Delete selected transactions?")) return;
 
         const res = await dispatch(deleteTransaction(selectedIds));
-        console.log(res)
+
         toast.success("Deleted successfully");
         setSelectedIds([]);
         dispatch(FetchTransaction());

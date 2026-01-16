@@ -85,6 +85,25 @@ export const deleteContactUsLead = createAsyncThunk(
 );
 
 
+export const deleteQueries = createAsyncThunk(
+    "lead/deleteContactUsLead",
+    async(ids,{rejectWithValue})=>{
+         if (!ids || ids.length === 0) {
+      return rejectWithValue({ message: "No IDs provided" });
+    }
+    try {
+        const response = await axios.delete("https://searchmystudy.com/api/admin/deleteQueries",{data:{ids}});
+        toast.success("Delete lead Successfully");
+        return response?.data;
+    } catch (error) {
+        toast.error("Failed to delete lead")
+        return rejectWithValue(error);
+    }
+    }
+    
+);
+
+
 export const deleteQuery = createAsyncThunk(
     "lead/deleteQuery",
     async(ids,{rejectWithValue})=>{

@@ -12,7 +12,7 @@ import CreateTestemonial from "../form/CreateTestemonials";
 import { deletePopup, fetchPopup } from "../slice/popupManagement";
 import Popup from "../form/Popup";
 
-const PopupManagement = () => {
+const AdminPopupManagement = () => {
   const dispatch = useDispatch();
   const [counsellor, setCounsellor] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -31,7 +31,7 @@ const PopupManagement = () => {
 
 
   const filterCounsellor = counsellor.filter((ele)=>{
-    if(ele.target === "main"){
+    if(ele.target === "partner"){
       return ele
     }
   })
@@ -203,4 +203,4 @@ const PopupManagement = () => {
   )
 }
 
-export default PopupManagement
+export default AdminPopupManagement

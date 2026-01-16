@@ -6,15 +6,27 @@ import ETHPriceOne from "./child/ETHPriceOne";
 import StatisticsOne from "./child/StatisticsOne";
 import FeaturedCreatorsOne from "./child/FeaturedCreatorsOne";
 import FeaturedCreatorsTwo from "./child/FeaturedCreatorsTwo";
+import { fetchFrenchise, fetchPartner } from "../slice/PartnerSlice";
+import { FetchStudent } from "../slice/StudentSlice";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 
 const DashBoardLayerSeven = () => {
+    const dispatch = useDispatch()
+  
+  useEffect(() => {
+      dispatch(fetchPartner());
+      dispatch(FetchStudent());
+      dispatch(fetchFrenchise());
+    }, [dispatch]);
+
   return (
     <>
       <div className='row gy-4'>
         <div className='col-xxl-8'>
           <div className='row gy-4'>
             {/* BannerInnerOne */}
-            <BannerInnerOne />
+            {/* <BannerInnerOne /> */}
 
             {/* TrendingBidsOne */}
             <TrendingBidsOne />

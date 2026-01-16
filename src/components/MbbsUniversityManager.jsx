@@ -3,7 +3,10 @@ import { useDispatch } from "react-redux";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { deleteMbbsUniversity, fetchMbbsUniversity } from "../slice/mbbsUniversity";
+import {
+  deleteMbbsUniversity,
+  fetchMbbsUniversity,
+} from "../slice/mbbsUniversity";
 import CreateMbbsUniversity from "../form/CreateMbbsUniversity";
 import DataTable from "react-data-table-component";
 
@@ -14,7 +17,12 @@ const MbbsUniversityManager = () => {
   const [university, setUniversity] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingUniversity, setEditingUniversity] = useState(null);
+
+  // 🔹 Existing search (University name)
   const [search, setSearch] = useState("");
+
+  // 🔹 NEW: Country filter
+  const [countrySearch, setCountrySearch] = useState("");
 
   const loadUniversity = async () => {
     setLoading(true);
@@ -65,14 +73,23 @@ const MbbsUniversityManager = () => {
         );
       }
     } catch (error) {
-      toast.error("⚠️ Unexpected error: " + (error.message || "Something went wrong"));
+      toast.error(
+        "⚠️ Unexpected error: " +
+          (error.message || "Something went wrong")
+      );
     }
   };
 
-  // Filter by university name
-  const filteredData = university.filter((ele) =>
-    ele?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  // 🔍 UPDATED FILTER (University + Country)
+  const filteredData = university.filter((ele) => {
+    const universityName = ele?.name?.toLowerCase() || "";
+    const countryName = ele?.Country?.name?.toLowerCase() || "";
+
+    return (
+      universityName.includes(search.toLowerCase()) &&
+      countryName.includes(countrySearch.toLowerCase())
+    );
+  });
 
   const columns = [
     {
@@ -90,11 +107,15 @@ const MbbsUniversityManager = () => {
       ),
       width: "80px",
     },
-    { name: "Name", selector: row => row.name, sortable: true },
-    { name: "Country", selector: row => row.Country?.name, sortable: true },
+    { name: "Name", selector: (row) => row.name, sortable: true },
+    {
+      name: "Country",
+      selector: (row) => row.Country?.name,
+      sortable: true,
+    },
     {
       name: "Image",
-      cell: row => (
+      cell: (row) => (
         <a href={row.heroURL} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
@@ -102,7 +123,7 @@ const MbbsUniversityManager = () => {
     },
     {
       name: "Banner",
-      cell: row => (
+      cell: (row) => (
         <a href={row.bannerURL} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
@@ -110,7 +131,7 @@ const MbbsUniversityManager = () => {
     },
     {
       name: "Logo",
-      cell: row => (
+      cell: (row) => (
         <a href={row.logo} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
@@ -118,7 +139,7 @@ const MbbsUniversityManager = () => {
     },
     {
       name: "Created Date",
-      cell: row => (
+      cell: (row) => (
         <span className="text-success-main px-24 py-4 rounded-pill fw-medium text-sm">
           {new Date(row?.createdAt).toLocaleDateString("en-US", {
             year: "numeric",
@@ -131,7 +152,7 @@ const MbbsUniversityManager = () => {
     },
     {
       name: "Action",
-      cell: row => (
+      cell: (row) => (
         <>
           <Link
             onClick={() => {
@@ -160,7 +181,10 @@ const MbbsUniversityManager = () => {
 
   return (
     <div className="card basic-data-table">
-      <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
+      <div
+        className="card-header"
+        style={{ display: "flex", justifyContent: "space-between" }}
+      >
         <h5 className="card-title mb-0">University Table</h5>
         <div>
           <button
@@ -190,14 +214,31 @@ const MbbsUniversityManager = () => {
           )}
         </div>
       </div>
+
       <div className="card-body overflow-x-auto">
-        <input
+       
+       <div className="d-flex ">
+         <input
           type="text"
+          style={{width:"400px"}}
           placeholder="Search by University Name"
           className="form-control mb-3"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
+
+      
+        <input
+          style={{width:"400px", marginLeft:"20px"
+          }}
+          type="text"
+          placeholder="Search by Country Name"
+          className="form-control mb-3"
+          value={countrySearch}
+          onChange={(e) => setCountrySearch(e.target.value)}
+        />
+
+       </div>
         <DataTable
           columns={columns}
           data={filteredData}

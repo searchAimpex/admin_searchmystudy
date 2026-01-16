@@ -54,6 +54,22 @@ export const fetchWebinar = createAsyncThunk(
 
 
 
+export const fetchWebinarLeadss = createAsyncThunk(
+  'webinar/fetchWebinarLeads',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get('https://searchmystudy.com/api/admin/fetchAll');
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+  }
+);
+
+
+
 // DeleteWebinar
 export const deleteWebinar = createAsyncThunk(
   'blogs/deleteWebinar',
@@ -73,6 +89,28 @@ export const deleteWebinar = createAsyncThunk(
     }
   }
 );
+
+
+export const deleteWebinarLeads = createAsyncThunk(
+  'leads/deleteWebinarLeads',
+  async (ids, { rejectWithValue }) => {
+    console.log(ids);
+    
+    if (!ids || ids.length === 0) {
+      return rejectWithValue({ message: "No Webinar IDs provided" });
+    }
+    try {
+      const response = await axios.delete("https://searchmystudy.com/api/admin/delete", {
+        data: { ids },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+
 // updateWebinar
 export const updateWebinar = createAsyncThunk(
   'blogs/updateWebinar',
