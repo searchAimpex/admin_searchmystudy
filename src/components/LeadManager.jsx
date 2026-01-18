@@ -7,6 +7,10 @@ import "datatables.net-buttons/js/buttons.html5";
 import JSZip from "jszip";
 window.JSZip = JSZip;
 
+/* ================= ADDED ================= */
+import { saveAs } from "file-saver";
+/* ========================================= */
+
 import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -54,20 +58,9 @@ const LeadManager = () => {
                     extend: "excelHtml5",
                     title: "Lead_Report",
                     exportOptions: {
-                        columns: [
-                            1, // Tracking ID
-                            2, // Student Name
-                            3, // Role
-                            4, // Country
-                            5, // Course
-                            6, // Email
-                            7, // Phone
-                            9, // Center Code
-                            10, // Status
-                            11, // Created At
-                        ],
+                        columns: [1, 2, 3, 4, 5, 6, 7, 9, 10, 11],
                         modifier: {
-                            search: "applied", // export filtered data only
+                            search: "applied",
                             order: "applied",
                         },
                     },
@@ -118,6 +111,49 @@ const LeadManager = () => {
         ...new Set(assessment?.map((a) => a?.User?.role).filter(Boolean)),
     ];
 
+    /* ================= ADDED: ZIP DOWNLOAD ================= */
+    const handleDownloadDocuments = async (ele) => {
+        try {
+            const zip = new JSZip();
+            const folder = zip.folder(ele.trackingId); // folder = trackingId
+
+            const documents = {
+                applicationFeeReceipt: ele.applicationFeeReceipt,
+                passport: ele.passport,
+                photo: ele.photo,
+                resume: ele.resume,
+                marksheet10: ele.marksheet10,
+                marksheet12: ele.marksheet12,
+                graduationMarksheet: ele.graduationMarksheet,
+                experienceLetter: ele.experienceLetter,
+                offerLetter: ele.offerLetter,
+            };
+
+            const tasks = Object.entries(documents)
+                .filter(([_, url]) => url)
+                .map(async ([name, url]) => {
+                    const res = await fetch(url);
+                    const blob = await res.blob();
+                    const ext = url.split(".").pop().split("?")[0];
+                    folder.file(`${name}.${ext}`, blob);
+                });
+
+            if (!tasks.length) {
+                toast.warning("No documents available");
+                return;
+            }
+
+            await Promise.all(tasks);
+
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            saveAs(zipBlob, `${ele.trackingId}.zip`);
+        } catch (err) {
+            console.error(err);
+            toast.error("Document download failed");
+        }
+    };
+    /* ===================================================== */
+
     return (
         <div className="card basic-data-table">
             <div className="card-header d-flex justify-content-between">
@@ -151,7 +187,6 @@ const LeadManager = () => {
             </div>
 
             <div className="card-body">
-
                 {/* ================= FILTERS ================= */}
                 <div className="row mb-3">
                     <div className="col-md-2">
@@ -216,7 +251,18 @@ const LeadManager = () => {
                 </div>
 
                 {/* ================= TABLE ================= */}
-                <table id="dataTable" className="table bordered-table">
+               <table
+  className="
+    // table
+    // table-bordered
+    // table-hover
+    // table-striped
+    // align-middle
+    text-nowrap
+    mb-0
+  "
+>
+
                     <thead>
                         <tr>
                             <th>#</th>
@@ -240,7 +286,7 @@ const LeadManager = () => {
                                 <td>
                                     <input
                                         type="checkbox"
-                                           className="form-check-input"
+                                        className="form-check-input"
                                         checked={selectedIds.includes(ele._id)}
                                         onChange={() =>
                                             setSelectedIds((prev) =>
@@ -294,6 +340,17 @@ const LeadManager = () => {
                                         }}
                                     >
                                         <Icon icon="lucide:edit" />
+                                    </Link>
+
+                                    {/* ===== ADDED DOWNLOAD BUTTON ===== */}
+                                    <Link
+                                        to="#"
+                                        className="btn btn-sm btn-danger"
+                                        onClick={() =>
+                                            handleDownloadDocuments(ele)
+                                        }
+                                    >
+                                        <Icon icon="lucide:download" />
                                     </Link>
                                 </td>
                             </tr>

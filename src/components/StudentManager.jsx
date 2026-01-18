@@ -7,6 +7,11 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
+/* ================= ADDED IMPORTS ================= */
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+/* ================================================= */
+
 import { FetchStudent, deleteStudent } from "../slice/StudentSlice";
 import CreateLead from "../form/CreateLead";
 import StudentStatus from "../form/StudentStatus";
@@ -14,7 +19,8 @@ import StudentStatus from "../form/StudentStatus";
 const StudentManager = () => {
   const dispatch = useDispatch();
   const { student = [] } = useSelector((state) => state.student || {});
-  console.log(student)
+  console.log(student);
+
   /* ================= refs for DataTable ================= */
   const tableRef = useRef(null);
   const dataTableRef = useRef(null);
@@ -105,7 +111,7 @@ const StudentManager = () => {
 
     dataTableRef.current = $(tableRef.current).DataTable({
       paging: true,
-      searching: false, // React filters only
+      searching: false,
       pageLength: 5,
       lengthMenu: [5, 10, 20, 50],
       destroy: true,
@@ -162,11 +168,75 @@ const StudentManager = () => {
     if (!confirmed) return;
 
     const res = await dispatch(deleteStudent(selectedIds));
-    console.log(res,"++++++++++++++++++++")
+    console.log(res, "++++++++++++++++++++");
     toast.success("Student(s) deleted successfully");
     setSelectedIds([]);
     fetchData();
   };
+
+  /* ================= ADDED: DOWNLOAD ZIP ================= */
+  const handleDownloadDocuments = async (ele) => {
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder(ele.trackingId); // folder name = trackingId
+
+      const documents = {
+        applicationFeeReceipt: ele.applicationFeeReceipt,
+        bachelorDegree: ele.bachelorDegree,
+        bachelorMarksheet: ele.bachelorMarksheet,
+        bachelorTranscripts: ele.bachelorTranscripts,
+        birthCertificate: ele.birthCertificate,
+        declarationForm: ele.declarationForm,
+        englishTestScorecard: ele.englishTestScorecard,
+        extracurricularCertificates: ele.extracurricularCertificates,
+        gapJustification: ele.gapJustification,
+        grade10Marksheet: ele.grade10Marksheet,
+        grade10PassingCertificate: ele.grade10PassingCertificate,
+        grade12Marksheet: ele.grade12Marksheet,
+        grade12PassingCertificate: ele.grade12PassingCertificate,
+        letterOfRecommendations: ele.letterOfRecommendations,
+        masterDegree: ele.masterDegree,
+        masterMarksheet: ele.masterMarksheet,
+        masterTranscripts: ele.masterTranscripts,
+        passportFrontBack: ele.passportFrontBack,
+        passportPhoto: ele.passportPhoto,
+        photo: ele.photo,
+        policeClearanceCertificate: ele.policeClearanceCertificate,
+        portfolio: ele.portfolio,
+        powerOfAttorney: ele.powerOfAttorney,
+        registrationForm: ele.registrationForm,
+        resume: ele.resume,
+        statementOfPurpose: ele.statementOfPurpose,
+        universityApplicationForm: ele.universityApplicationForm,
+        verificationForm: ele.verificationForm,
+        visaDocument: ele.visaDocument,
+        workExperience: ele.workExperience,
+      };
+
+      const tasks = Object.entries(documents)
+        .filter(([_, url]) => url)
+        .map(async ([name, url]) => {
+          const res = await fetch(url);
+          const blob = await res.blob();
+          const ext = url.split(".").pop().split("?")[0];
+          folder.file(`${name}.${ext}`, blob);
+        });
+
+      if (!tasks.length) {
+        toast.warning("No documents found");
+        return;
+      }
+
+      await Promise.all(tasks);
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `${ele.trackingId}.zip`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Download failed");
+    }
+  };
+  /* ======================================================= */
 
   /* ================= JSX ================= */
   return (
@@ -268,7 +338,6 @@ const StudentManager = () => {
               <th>Tracking ID</th>
               <th>Student Name</th>
               <th>Punched By</th>
-           
               <th>Country</th>
               <th>Course Name</th>
               <th>State</th>
@@ -283,12 +352,12 @@ const StudentManager = () => {
           </thead>
 
           <tbody>
-            {filteredStudent.map((ele, ind) => (
+            {filteredStudent.map((ele) => (
               <tr key={ele._id}>
                 <td>
                   <input
                     type="checkbox"
-                     className="form-check-input"
+                    className="form-check-input"
                     checked={selectedIds.includes(ele._id)}
                     onChange={() => handleCheckboxChange(ele._id)}
                   />
@@ -298,16 +367,15 @@ const StudentManager = () => {
                 <td>
                   {ele.firstName} {ele.middleName} {ele.lastName}
                 </td>
-             
                 <td>{ele?.User?.role}</td>
                 <td>{ele?.Country?.name || "—"}</td>
-                <td>Course</td>
+                <td>{ele?.Course?.ProgramName}</td>
                 <td>{ele.state || "—"}</td>
                 <td>{ele.emailID}</td>
                 <td>{ele.mobileNumber}</td>
                 <td>{ele?.dob}</td>
                 <td>{ele?.User?.CenterCode}</td>
-                  <td>{ele?.status}</td>
+                <td>{ele?.status}</td>
                 <td>
                   {ele.createdAt
                     ? new Date(ele.createdAt).toLocaleDateString()
@@ -335,6 +403,15 @@ const StudentManager = () => {
                     }}
                   >
                     <Icon icon="lucide:edit" />
+                  </Link>
+
+                  {/* ===== ONLY CHANGE: onClick ADDED ===== */}
+                  <Link
+                    to="#"
+                    className="btn mx-4 btn-sm btn-danger"
+                    onClick={() => handleDownloadDocuments(ele)}
+                  >
+                    <Icon icon="lucide:download" />
                   </Link>
                 </td>
               </tr>
