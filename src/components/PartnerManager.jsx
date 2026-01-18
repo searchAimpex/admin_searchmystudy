@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import JSZip from "jszip";
 
 import {
   deletePartner,
@@ -18,7 +19,7 @@ import Switch from "../form/Switch";
 const PartnerManager = () => {
   const dispatch = useDispatch();
   const partners = useSelector((state) => state.partner.partner || []);
-  console.log(partners)
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
@@ -41,10 +42,7 @@ const PartnerManager = () => {
   /* ================= FILTER HANDLER ================= */
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
     setCurrentPage(1);
   };
 
@@ -52,9 +50,7 @@ const PartnerManager = () => {
   const filteredPartners = useMemo(() => {
     return partners.filter((p) => {
       const statusMatch =
-        filters.status === ""
-          ? true
-          : String(p.status) === filters.status;
+        filters.status === "" ? true : String(p.status) === filters.status;
 
       const centerMatch =
         filters.centerCode.trim() === ""
@@ -67,7 +63,7 @@ const PartnerManager = () => {
     });
   }, [partners, filters]);
 
-  /* ================= PAGINATION LOGIC ================= */
+  /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filteredPartners.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const currentRows = filteredPartners.slice(
@@ -84,7 +80,7 @@ const PartnerManager = () => {
 
   /* ================= DELETE ================= */
   const handleDelete = async () => {
-    if (selectedIds.length === 0) {
+    if (!selectedIds.length) {
       toast.warning("Please select at least one partner");
       return;
     }
@@ -104,14 +100,57 @@ const PartnerManager = () => {
   /* ================= STATUS UPDATE ================= */
   const statusHandler = async (id, status) => {
     try {
-      const a  = await dispatch(updateStatus({ id, status })).unwrap();
-      // console.log(a)
+      await dispatch(updateStatus({ id, status })).unwrap();
       toast.success("Status updated");
       dispatch(fetchPartner());
     } catch {
       toast.error("Failed to update status");
     }
-  };  
+  };
+
+  /* ================= ZIP DOWNLOAD ================= */
+  const downloadDocumentsAsZip = async (ele) => {
+    const zip = new JSZip();
+
+    const documents = [
+      { name: "BackAdhar", url: ele?.BackAdhar },
+      { name: "CancelledCheck", url: ele?.CancelledCheck },
+      { name: "FrontAdhar", url: ele?.FrontAdhar },
+      { name: "Logo", url: ele?.Logo },
+      { name: "OfficePhoto", url: ele?.OfficePhoto },
+      { name: "PanCard", url: ele?.PanCard },
+      { name: "OwnerPhoto", url: ele?.OwnerPhoto },
+      { name: "MOU", url: ele?.mou },
+      { name: "Profile", url: ele?.Profile },
+      { name: "PhotoRegistration", url: ele?.Photoregistration },
+    ];
+
+    try {
+      let hasFiles = false;
+
+      for (const doc of documents) {
+        if (!doc.url) continue;
+
+        const response = await fetch(doc.url);
+        const blob = await response.blob();
+        const ext = doc.url.split(".").pop().split("?")[0];
+
+        zip.file(`${doc.name}.${ext}`, blob);
+        hasFiles = true;
+      }
+
+      if (!hasFiles) {
+        toast.warning("No documents available");
+        return;
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `${ele.CenterCode || "documents"}.zip`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to download documents");
+    }
+  };
 
   /* ================= EXCEL DOWNLOAD ================= */
   const downloadExcel = () => {
@@ -140,71 +179,23 @@ const PartnerManager = () => {
 
   return (
     <div className="card">
-      {/* ================= HEADER ================= */}
       <div className="card-header d-flex justify-content-between">
         <h5 className="mb-0">Partner Table</h5>
 
         <div>
-          <button
-            className="btn btn-primary mx-1"
-            onClick={() => setShowModal(true)}
-          >
+          <button className="btn btn-primary mx-1" onClick={() => setShowModal(true)}>
             Add Partner
           </button>
-
           <button className="btn btn-danger mx-1" onClick={handleDelete}>
             Delete Selected
           </button>
-
           <button className="btn btn-success mx-1" onClick={downloadExcel}>
             Download Excel
           </button>
         </div>
       </div>
 
-      {/* ================= FILTERS ================= */}
       <div className="card-body">
-        <div className="row g-2 mb-3">
-          {/* STATUS FILTER */}
-          <div className="col-md-4">
-            <select
-              className="form-select form-select-sm"
-              name="status"
-              value={filters.status}
-              onChange={handleFilterChange}
-            >
-              <option value="">All Status</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
-          </div>
-
-          {/* CENTER CODE FILTER */}
-          <div className="col-md-4">
-            <input
-              type="text"
-              className="form-control form-control-sm"
-              placeholder="Search Center Code"
-              name="centerCode"
-              value={filters.centerCode}
-              onChange={handleFilterChange}
-            />
-          </div>
-
-          {/* CLEAR FILTERS */}
-          <div className="col-md-4">
-            <button
-              className="btn btn-sm btn-secondary w-100"
-              onClick={() =>
-                setFilters({ status: "", centerCode: "" })
-              }
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
-
-        {/* ================= TABLE ================= */}
         <div className="table-responsive">
           <table className="table bordered-table mb-0">
             <thead>
@@ -219,101 +210,59 @@ const PartnerManager = () => {
                 <th>Password</th>
                 <th>City</th>
                 <th>Created</th>
+                <th>Download DOCs</th>
                 <th>Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {currentRows.length === 0 ? (
-                <tr>
-                  <td colSpan="11" className="text-center text-danger">
-                    No Data Found
+              {currentRows.map((ele) => (
+                <tr key={ele._id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                       className='form-check-input'
+                      checked={selectedIds.includes(ele._id)}
+                      onChange={() => handleCheckboxChange(ele._id)}
+                    />
+                  </td>
+                  <td>{ele.InsitutionName}</td>
+                  <td>{ele.OwnerName}</td>
+                  <td>{ele.CenterCode}</td>
+                  <td>{ele.email}</td>
+                  <td>
+                    <Switch statusHandler={statusHandler} ele={ele} />
+                  </td>
+                  <td>{ele.ContactNumber}</td>
+                  <td>{ele.passwordTracker || "Null"}</td>
+                  <td>{ele.city}</td>
+                  <td>{new Date(ele.createdAt).toLocaleDateString("en-IN")}</td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => downloadDocumentsAsZip(ele)}
+                    >
+                      ↓
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => {
+                        setEditingPartner(ele);
+                        setShowModal(true);
+                      }}
+                    >
+                      <Icon icon="lucide:edit" />
+                    </button>
                   </td>
                 </tr>
-              ) : (
-                currentRows.map((ele) => (
-                  <tr key={ele._id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={selectedIds.includes(ele._id)}
-                        onChange={() =>
-                          handleCheckboxChange(ele._id)
-                        }
-                      />
-                    </td>
-
-                    <td>{ele.InsitutionName}</td>
-                    <td>{ele.OwnerName}</td>
-                    <td>{ele.CenterCode}</td>
-                    <td>{ele.email}</td>
-
-                    {/* ROW STATUS SELECT */}
-                    <td>
-                      {/* <select
-                        className="form-select form-select-sm"
-                        value={String(ele.block)}
-                        onChange={(e) =>
-                          statusHandler(
-                            ele._id,
-                            e.target.value === "true"
-                          )
-                        }
-                      >
-                        <option value="true">Active</option>
-                        <option value="false">Inactive</option>
-                      </select> */}
-
-                      <Switch statusHandler={statusHandler} ele={ele}/>
-                    </td>
-
-                    <td>{ele.ContactNumber}</td>
-                    <td>{ele.passwordTracker || "Null"}</td>
-                    <td>{ele.city}</td>
-                    <td>
-                      {new Date(ele.createdAt).toLocaleDateString("en-IN")}
-                    </td>
-
-                    <td>
-                      <button
-                        className="btn btn-sm btn-success"
-                        onClick={() => {
-                          setEditingPartner(ele);
-                          setShowModal(true);
-                        }}
-                      >
-                        <Icon icon="lucide:edit" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
-
-        {/* ================= PAGINATION ================= */}
-        {totalPages > 1 && (
-          <div className="mt-3">
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i}
-                className={`btn btn-sm mx-1 ${
-                  currentPage === i + 1
-                    ? "btn-primary"
-                    : "btn-outline-primary"
-                }`}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* ================= MODAL ================= */}
       {showModal && (
         <CreatePartner
           fetchData={() => dispatch(fetchPartner())}

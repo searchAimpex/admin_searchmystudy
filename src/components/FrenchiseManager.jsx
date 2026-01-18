@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import JSZip from "jszip";
 
 import {
   deletePartner,
@@ -51,8 +51,6 @@ const FrenchiseManager = () => {
     return centerOk && statusOk;
   });
 
-  console.log(filteredWebinars)
-
   /* ================= HANDLERS ================= */
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +58,7 @@ const FrenchiseManager = () => {
   };
 
   const handleDelete = async () => {
-    if (selectedIds.length === 0) {
+    if (!selectedIds.length) {
       toast.warning("Select at least one");
       return;
     }
@@ -77,6 +75,50 @@ const FrenchiseManager = () => {
     dispatch(fetchFrenchise());
   };
 
+  /* ================= ZIP DOWNLOAD ================= */
+  const downloadDocumentsAsZip = async (ele) => {
+    const zip = new JSZip();
+
+    const documents = [
+      { name: "BackAdhar", url: ele?.BackAdhar },
+      { name: "CancelledCheck", url: ele?.CancelledCheck },
+      { name: "FrontAdhar", url: ele?.FrontAdhar },
+      { name: "Logo", url: ele?.Logo },
+      { name: "OfficePhoto", url: ele?.OfficePhoto },
+      { name: "PanCard", url: ele?.PanCard },
+      { name: "OwnerPhoto", url: ele?.OwnerPhoto },
+      { name: "MOU", url: ele?.mou },
+      { name: "Profile", url: ele?.Profile },
+      { name: "PhotoRegistration", url: ele?.Photoregistration },
+    ];
+
+    try {
+      let hasFiles = false;
+
+      for (const doc of documents) {
+        if (!doc.url) continue;
+
+        const res = await fetch(doc.url);
+        const blob = await res.blob();
+        const ext = doc.url.split(".").pop().split("?")[0];
+
+        zip.file(`${doc.name}.${ext}`, blob);
+        hasFiles = true;
+      }
+
+      if (!hasFiles) {
+        toast.warning("No documents available");
+        return;
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `${ele.CenterCode || "documents"}.zip`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Document download failed");
+    }
+  };
+
   /* ================= EXCEL ================= */
   const handleDownloadExcel = () => {
     if (!filteredWebinars.length) {
@@ -87,7 +129,7 @@ const FrenchiseManager = () => {
     const data = filteredWebinars.map((e, i) => ({
       "S.No": i + 1,
       "Center Code": e.CenterCode,
-      Name: e.name,
+      Name: e.InsitutionName,
       Owner: e.OwnerName,
       Email: e.email,
       Status: e.status ? "Active" : "Inactive",
@@ -160,6 +202,7 @@ const FrenchiseManager = () => {
               <th>Email</th>
               <th>Password</th>
               <th>Status</th>
+              <th>Docs</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -171,7 +214,7 @@ const FrenchiseManager = () => {
                   <td>
                     <input
                       type="checkbox"
-                        className="form-check-input"
+                      className="form-check-input"
                       checked={selectedIds.includes(e._id)}
                       onChange={() =>
                         setSelectedIds((p) =>
@@ -188,17 +231,15 @@ const FrenchiseManager = () => {
                   <td>{e.email}</td>
                   <td>{e.passwordTracker}</td>
                   <td>
-                    {/* <select
-                      value={String(e.status)}
-                      onChange={(ev) =>
-                        statusHandler(e._id, ev.target.value === "true")
-                      }
+                    <Switch statusHandler={statusHandler} ele={e} />
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-success"
+                      onClick={() => downloadDocumentsAsZip(e)}
                     >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
-                    </select> */}
-
-                      <Switch statusHandler={statusHandler} ele={e}/>
+                      ↓
+                    </button>
                   </td>
                   <td>
                     <button
@@ -215,7 +256,7 @@ const FrenchiseManager = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center text-muted py-4">
+                <td colSpan="9" className="text-center text-muted py-4">
                   ❌ No data found
                 </td>
               </tr>
