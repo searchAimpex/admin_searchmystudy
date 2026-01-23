@@ -31,7 +31,9 @@ const CountryManager = () => {
 
   /* ================= FETCH ================= */
   const fetchData = async () => {
-    await dispatch(fetchCountry());
+    const rs = await dispatch(fetchCountry());
+    console.log(rs,"::::::::::::::::");
+    
   };
 
   useEffect(() => {
@@ -190,6 +192,7 @@ const CountryManager = () => {
                     <td>
                       <input
                         type="checkbox"
+                          className="form-check-input"  
                         checked={selectedIds.includes(c._id)}
                         onChange={() =>
                           handleCheckboxChange(c._id)

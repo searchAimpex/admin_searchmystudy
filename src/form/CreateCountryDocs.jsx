@@ -13,7 +13,7 @@ const storage = getStorage(app);
 const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
     const {allCountries} = useSelector(state=>state.abroadStudy)
-    // console.log(state,"||||||||||||||||||||||||||||");
+    // console.log(allCountries,"||||||||||||||||||||||||||||");
     
     const fetchCountry  = async ()=>{
         const res  = await dispatch(allCountry());  
@@ -29,6 +29,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     const initial = {
         // fields matching secondCountry schema
         name: ele?.name || "",
+        country:ele?.Country?.name || "",
         flagURL: ele?.flagURL || "",
         currency: ele?.currency || "",
         code: ele?.code || "",
@@ -37,7 +38,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
         whyThisCountry: ele?.whyThisCountry || "",
         faq: ele?.faq || "",
         // optional relation to an existing country
-        countryId: ele?.countryId || ele?.parentCountry || "",
+        // countryId: ele?.countryId || ele?.parentCountry || "",   
     };
 
     const [formValues, setFormValues] = useState(initial);
@@ -157,6 +158,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                 }
             } else {
                 const res = await dispatch(createSecondCountry(payload));
+                console.log(res,"||||||||||||||||||||||||||||||")
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Country created");
                     fetchData?.();
@@ -186,12 +188,30 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                         <form onSubmit={handleSubmit}>
                             <div className="modal-body">
                                 <div className="row g-3">
-                                    <div className="col-md-6">
+                                   {/* <div className="col-md-6"> */}
+    {/* <label className="form-label">Parent Country</label>
+    <select
+        name="name"                  // must match state key
+        id="name"
+        value={formValues.name}       // must match state key
+        onChange={handleInputChange}
+        className="form-control"
+    >
+        <option value="" disabled>-- Select country --</option>
+        {(allCountries || []).map((country) => (
+            <option key={country._id} value={country.name}>
+                {country.name}
+            </option>
+        ))}
+    </select>
+</div> */}
+
+                                     <div className="col-md-6">
                                         <label className="form-label">Parent Country</label>
-                                        <select name="name" id="name" value={formValues.name} onChange={handleInputChange} className="form-control">
+                                        <select name="country" id="country" value={formValues.country} onChange={handleInputChange} className="form-control">
                                             <option value="" disabled>-- Select country --</option>
                                             {(allCountries || []).map((country) => (
-                                                <option key={country._id} value={country.name}>{country.name}</option>
+                                                <option key={country._id} value={country._id}>{country.name}</option>
                                             ))}
                                         </select>
                                         {/* avoid mapping undefined by using (allCountries || []) */}

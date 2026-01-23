@@ -71,7 +71,7 @@ const FrenchiseManager = () => {
 
   const statusHandler = async (id, status) => {
     await dispatch(updateStatus({ id, status }));
-    toast.success("Status updated");
+    toast   .success("Status updated");
     dispatch(fetchFrenchise());
   };
 
@@ -92,6 +92,7 @@ const FrenchiseManager = () => {
       { name: "PhotoRegistration", url: ele?.Photoregistration },
     ];
 
+    
     try {
       let hasFiles = false;
 

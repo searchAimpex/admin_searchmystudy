@@ -12,12 +12,13 @@ const storage = getStorage(app);
 const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
   console.log(ele);
-  
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formValues, setFormValues] = useState({
     email: ele?.email || '',
     password: ele?.password || '',
-    role: ele?.role || 'franchise', 
+    role: ele?.role || 'franchise',
     name: ele?.name || 'Null',
     OwnerName: ele?.OwnerName || '',
     OwnerFatherName: ele?.OwnerFatherName || '',
@@ -30,8 +31,8 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     state: ele?.state || '',
     zipCode: ele?.zipCode || '',
     address: ele?.address || '',
-    FrontAadhar: ele?.FrontAdhar || null,
-    BackAadhar: ele?.BackAdhar || null,
+    FrontAdhar: ele?.FrontAdhar || null,
+    BackAdhar: ele?.BackAdhar || null,
     PanCard: ele?.PanCard || null,
     ProfilePhoto: ele?.ProfilePhoto || null,
     VisitOffice: ele?.VistOffice || '',
@@ -42,18 +43,22 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     accountedDetails: ele?.accountedDetails || '',
     IFSC: ele?.IFSC || '',
     bankName: ele?.bankName || '',
-    passwordTracker:ele?.passwordTracker || '',
-    mou:ele?.mou || '',
-    registration:ele?.registration || '',
+    passwordTracker: ele?.passwordTracker || '',
+    mou: ele?.mou || '',
+    registration: ele?.registration || '',
   });
   // console.log(formValues)
   const [uploads, setUploads] = useState({
-    FrontAadhar: { progress: 0, preview: formValues.FrontAadhar || null, loading: false },
-    BackAadhar: { progress: 0, preview: formValues.BackAadhar || null, loading: false },
+    FrontAdhar: { progress: 0, preview: formValues.FrontAdhar || null, loading: false },
+    BackAdhar: { progress: 0, preview: formValues.BackAdhar || null, loading: false },
     PanCard: { progress: 0, preview: formValues.PanCard || null, loading: false },
     ProfilePhoto: { progress: 0, preview: formValues.ProfilePhoto || null, loading: false },
+    OwnerPhoto: { progress: 0, preview: formValues.OwnerPhoto || null, loading: false },
+    OfficePhoto: { progress: 0, preview: formValues.OfficePhoto || null, loading: false },
     CancelledCheck: { progress: 0, preview: formValues.CancelledCheck || null, loading: false },
     Logo: { progress: 0, preview: formValues.Logo || null, loading: false },
+    mou: { progress: 0, preview: formValues.mou || null, loading: false },
+    registration: { progress: 0, preview: formValues.registration || null, loading: false },
   });
 
   const [errors, setErrors] = useState({});
@@ -93,14 +98,32 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     );
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formValues.name?.trim()) newErrors.name = "Name is required";
-    if (!formValues.email?.trim()) newErrors.email = "Email is required";
-    if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = "Contact number is required";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+const validateForm = () => {
+  const newErrors = {};
+
+  if (!formValues.name?.trim()) {
+    newErrors.name = "Name is required";
+  }
+
+  if (!formValues.email?.trim()) {
+    newErrors.email = "Email is required";
+  }
+
+  if (!formValues.ContactNumber?.trim()) {
+    newErrors.ContactNumber = "Contact number is required";
+  }
+
+  // 🔐 Password validation (only when creating OR when user enters password)
+  if (!ele?._id || formValues.password) {
+    if (!formValues.password || formValues.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
 
   const handleSubmit = async () => {
     // if (!validateForm()) {
@@ -109,23 +132,23 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     // }
 
     try {
-      
+
       // send formValues to your create/update action
       // console.log(formValues);
-      
+
+      console.log(formValues, "++++++++++++++++++++++++++++++++++++")
       if (ele && ele._id) {
         const res = await dispatch(updatePartner({ id: ele._id, data: formValues }));
         // console.log(res);
         if (updatePartner.fulfilled.match(res)) {
           toast.success("Partner updated");
-          // handleClose();
+          handleClose();
           fetchData?.();
         } else {
           toast.error("Update failed");
         }
       } else {
-        console.log(formValues,"++++++++++++++++++++++++++++++++++++")
-        const res = await dispatch(createPartner(formValues));  
+        const res = await dispatch(createPartner(formValues));
         console.log(res.payload)
         if (res?.type?.endsWith("/fulfilled")) {
           toast.success("Partner created");
@@ -179,10 +202,10 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
                 <div className="col-md-6">
                   <label className="form-label">WhatsApp Number</label>
-                  <input name="WhatsAppNumber"  maxLength={10} value={formValues.WhatsAppNumber} onChange={handleInputChange} className="form-control" />
+                  <input name="WhatsAppNumber" maxLength={10} value={formValues.WhatsAppNumber} onChange={handleInputChange} className="form-control" />
                 </div>
 
-             
+
                 <div className="col-md-4">
                   <label className="form-label">Center Code</label>
                   <input name="CenterCode" maxLength={8} value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
@@ -196,7 +219,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                 </div>
 
 
-                 <div className="col-md-6">
+                <div className="col-md-6">
                   <label className="form-label">Type</label>
 
                   <select
@@ -210,26 +233,33 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                   </select>
                 </div>
 
-                <div className="col-md-6">
+                <div className="col-m d-6" style={{ width: "100%" }}>
                   <label className="form-label">Email</label>
-                  <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
+                  <input name="email" style={{ width: "100%" }} value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
                   {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label">Password</label>
-                    <input
-                      type="password"
-                      name="password"
-                      className="form-control"
-                      placeholder={ele ? ele?.passwordTracker : ""}
-                      readOnly={!!ele}
-                    />
+                <div className="input-group">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                   className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                    value={formValues.passwordTracker || formValues.password}
+                     minLength={8}
+                    onChange={handleInputChange}
+                    placeholder="Enter password"
+                  />
 
-                  {errors.password && <div className="invalid-feedback">{errors.password}</div>}
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => setShowPassword(prev => !prev)}
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
                 </div>
 
-{/* 
+                {/* 
                 <div className="col-md-6">
                   <label className="form-label">Name</label>
                   <input name="name" value={formValues.name} onChange={handleInputChange} className={`form-control ${errors.name ? "is-invalid" : ""}`} />
@@ -244,7 +274,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
 
 
-             
+
 
                 <div className="col-md-4">
                   <label className="form-label">City</label>
@@ -256,7 +286,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                 </div>
                 <div className="col-md-4">
                   <label className="form-label">Zip Code</label>
-                  <input name="zipCode" maxLength={6} type="number"  value={formValues.zipCode} onChange={handleInputChange} className="form-control" />
+                  <input name="zipCode" maxLength={6} type="number" value={formValues.zipCode} onChange={handleInputChange} className="form-control" />
                 </div>
 
                 <div className="col-12">
@@ -282,7 +312,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                 </div> */}
 
                 {/* File uploads */}
-                {[ "FrontAadhar","BackAadhar", "OfficePhoto", "OwnerPhoto","VisitOffice","MOU", "PanCard", "Registration"].map((f) => (
+                {["FrontAdhar", "BackAdhar", "OfficePhoto", "OwnerPhoto", "VisitOffice", "MOU", "PanCard", "Registration"].map((f) => (
                   <div className="col-md-6" key={f}>
                     <label className="form-label">{f}</label>
                     <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, f)} className="form-control" />

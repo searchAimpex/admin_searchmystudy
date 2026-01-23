@@ -19,22 +19,22 @@ const PopupManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingCounsellor, setEditingCounsellor] = useState(null);
+  console.log(counsellor, "-----------------------------------");
 
   // Fetch Counsellor
   const loadCounsellors = async () => {
     const res = await dispatch(fetchPopup());
-    // console.log(res, "-----------------------------------");
     if (res?.meta?.requestStatus === "fulfilled") {
       setCounsellor(res.payload);
     }
   };
 
 
-  const filterCounsellor = counsellor.filter((ele)=>{
-    if(ele.target === "main"){
-      return ele
-    }
-  })
+    const filterCounsellor = counsellor.filter((ele)=>{
+      if(ele.target === "partner"){
+        return ele
+      }
+    })
 
 
     // Handle checkbox (select blogs)

@@ -10,7 +10,8 @@ const storage = getStorage(app);
 
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
-  // console.log(ele,"-----------------------");
+  console.log(ele, "-----------------------");
+  const [showPassword, setShowPassword] = useState(false);
 
   const initial = {
     name: ele?.name || ele?.OwnerName || "demo",
@@ -116,21 +117,34 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     );
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formValues.OwnerName?.trim()) newErrors.OwnerName = "Owner name is required";
-    if (!formValues.email?.trim()) newErrors.email = "Email is required";
-    if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = "Contact number is required";
-    // zipCode must be numeric if provided
-    if (formValues.zipCode !== undefined && String(formValues.zipCode).trim() !== "") {
-      const zip = String(formValues.zipCode).trim();
-      if (!/^\d+$/.test(zip)) {
-        newErrors.zipCode = "Zip Code must be numeric";
-      }
+ const validateForm = () => {
+  const newErrors = {};
+
+  if (!formValues.name?.trim()) {
+    newErrors.name = "Name is required";
+  }
+
+  if (!formValues.email?.trim()) {
+    newErrors.email = "Email is required";
+  }
+
+  if (!formValues.ContactNumber?.trim()) {
+    newErrors.ContactNumber = "Contact number is required";
+  }
+
+  // 🔐 Password validation (only when creating OR when user enters password)
+  if (!ele?._id || formValues.password) {
+    if (!formValues.password || formValues.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+
+
   const [errors, setErrors] = useState({});
 
   const fileFields = [
@@ -220,7 +234,10 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       toast.error("Unexpected error");
     }
   };
-
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toISOString().split('T')[0];
+  };
   return (
     <>
       <ToastContainer />
@@ -287,21 +304,26 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                     {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </div>
 
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Password <span style={{ color: "red" }}>*</span>
-                    </label>
-
+                  <div className="input-group">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       name="password"
-                      className="form-control"
-                       onChange={handleInputChange}
-                      placeholder={ele ? ele?.passwordTracker : ""}
-                      readOnly={!!ele}
+                       className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                      value={formValues.passwordTracker || formValues.password}
+                      onChange={handleInputChange}
+                      //  minLength={8} 
+                      placeholder="Enter password"
                     />
 
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={() => setShowPassword(prev => !prev)}
+                    >
+                      {showPassword ? "🙈" : "👁️"}
+                    </button>
                   </div>
+
 
 
                   <div className="col-md-4">

@@ -16,6 +16,21 @@ export const FetchTicket = createAsyncThunk(
     }
 )
 
+
+export const deleteTicket = createAsyncThunk(
+    "ticket/deleteTicket",
+    async (ids,{rejectWithValue})=>{
+      try {
+          const res = await axios.delete("https://searchmystudy.com/api/admin/ticket",{
+            data:{ids}
+        })
+        return res.data;
+      } catch (error) {
+        console.log(error)
+      }
+    }
+)
+
 export const updateTicketStatus = createAsyncThunk(
   "ticket/updateTicketStatus",
   async ({ id, data }, { rejectWithValue }) => {
@@ -58,6 +73,20 @@ const ticketSlice = createSlice({
                 state.loading = false;
                 state.error = action.error.message;
             })
+
+            .addCase(deleteTicket.pending,(state)=>{
+                state.loading = true
+            })
+            .addCase(deleteTicket.rejected, (state)=>{
+                state.loading = true;
+            })
+                .addCase(deleteTicket.fulfilled, (state, action) => {
+                    const idsToDelete = action.meta.arg;
+                    state.ticket = state.ticket.filter(
+                        (ticket) => !idsToDelete.includes(ticket._id)
+                    );
+                });
+
     }
 })
 

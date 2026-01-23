@@ -20,14 +20,14 @@ const PartnerManager = () => {
   const dispatch = useDispatch();
   const partners = useSelector((state) => state.partner.partner || []);
 
+  /* ================= STATE ================= */
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPartner, setEditingPartner] = useState(null);
 
-  /* ================= FILTER STATE ================= */
   const [filters, setFilters] = useState({
-    status: "",
     centerCode: "",
+    status: "",
   });
 
   /* ================= PAGINATION ================= */
@@ -42,24 +42,27 @@ const PartnerManager = () => {
   /* ================= FILTER HANDLER ================= */
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    setFilters((p) => ({ ...p, [name]: value }));
     setCurrentPage(1);
   };
 
   /* ================= FILTER LOGIC ================= */
   const filteredPartners = useMemo(() => {
-    return partners.filter((p) => {
-      const statusMatch =
-        filters.status === "" ? true : String(p.status) === filters.status;
+    return partners.filter((ele) => {
+      if (!ele) return false;
 
-      const centerMatch =
-        filters.centerCode.trim() === ""
-          ? true
-          : p.CenterCode?.toLowerCase().includes(
-              filters.centerCode.trim().toLowerCase()
-            );
+      const centerOk = filters.centerCode.trim()
+        ? ele.CenterCode?.toLowerCase().includes(
+            filters.centerCode.trim().toLowerCase()
+          )
+        : true;
 
-      return statusMatch && centerMatch;
+      const statusOk =
+        filters.status !== ""
+          ? String(ele.status) === filters.status
+          : true;
+
+      return centerOk && statusOk;
     });
   }, [partners, filters]);
 
@@ -97,14 +100,14 @@ const PartnerManager = () => {
     }
   };
 
-  /* ================= STATUS UPDATE ================= */
+  /* ================= STATUS ================= */
   const statusHandler = async (id, status) => {
     try {
       await dispatch(updateStatus({ id, status })).unwrap();
       toast.success("Status updated");
       dispatch(fetchPartner());
     } catch {
-      toast.error("Failed to update status");
+      toast.error("Status update failed");
     }
   };
 
@@ -113,16 +116,14 @@ const PartnerManager = () => {
     const zip = new JSZip();
 
     const documents = [
-      { name: "BackAdhar", url: ele?.BackAdhar },
-      { name: "CancelledCheck", url: ele?.CancelledCheck },
       { name: "FrontAdhar", url: ele?.FrontAdhar },
-      { name: "Logo", url: ele?.Logo },
-      { name: "OfficePhoto", url: ele?.OfficePhoto },
+      { name: "BackAdhar", url: ele?.BackAdhar },
       { name: "PanCard", url: ele?.PanCard },
       { name: "OwnerPhoto", url: ele?.OwnerPhoto },
+      { name: "OfficePhoto", url: ele?.OfficePhoto },
+      { name: "CancelledCheck", url: ele?.CancelledCheck },
+      { name: "Logo", url: ele?.Logo },
       { name: "MOU", url: ele?.mou },
-      { name: "Profile", url: ele?.Profile },
-      { name: "PhotoRegistration", url: ele?.Photoregistration },
     ];
 
     try {
@@ -131,8 +132,8 @@ const PartnerManager = () => {
       for (const doc of documents) {
         if (!doc.url) continue;
 
-        const response = await fetch(doc.url);
-        const blob = await response.blob();
+        const res = await fetch(doc.url);
+        const blob = await res.blob();
         const ext = doc.url.split(".").pop().split("?")[0];
 
         zip.file(`${doc.name}.${ext}`, blob);
@@ -147,126 +148,165 @@ const PartnerManager = () => {
       const zipBlob = await zip.generateAsync({ type: "blob" });
       saveAs(zipBlob, `${ele.CenterCode || "documents"}.zip`);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to download documents");
+      toast.error("Download failed");
     }
   };
 
-  /* ================= EXCEL DOWNLOAD ================= */
+  /* ================= EXCEL ================= */
   const downloadExcel = () => {
     if (!filteredPartners.length) {
-      toast.warning("No data to download");
+      toast.warning("No data available");
       return;
     }
 
-    const data = filteredPartners.map((p) => ({
+    const data = filteredPartners.map((p, i) => ({
+      "S.No": i + 1,
       "Center Name": p.InsitutionName,
       "Owner Name": p.OwnerName,
       "Center Code": p.CenterCode,
       Email: p.email,
       Status: p.status ? "Active" : "Inactive",
       City: p.city,
-      "Created At": new Date(p.createdAt).toLocaleDateString("en-IN"),
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Partners");
 
-    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([buffer]), "partners.xlsx");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([buf]), "partners.xlsx");
   };
 
   return (
     <div className="card">
+      {/* HEADER */}
       <div className="card-header d-flex justify-content-between">
-        <h5 className="mb-0">Partner Table</h5>
-
+        <h5>Partner Table</h5>
         <div>
           <button className="btn btn-primary mx-1" onClick={() => setShowModal(true)}>
             Add Partner
           </button>
           <button className="btn btn-danger mx-1" onClick={handleDelete}>
-            Delete Selected
+            Delete
           </button>
           <button className="btn btn-success mx-1" onClick={downloadExcel}>
-            Download Excel
+            Excel
           </button>
         </div>
       </div>
 
+      {/* BODY */}
       <div className="card-body">
+        {/* FILTERS */}
+        <div className="row mb-3">
+          <div className="col-md-4">
+            <input
+              className="form-control form-control-sm"
+              placeholder="Filter by Center Code"
+              name="centerCode"
+              value={filters.centerCode}
+              onChange={handleFilterChange}
+            />
+          </div>
+
+          <div className="col-md-4">
+            <select
+              className="form-select form-select-sm"
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+            >
+              <option value="">All Status</option>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <p className="text-muted">
+          Showing {filteredPartners.length} / {partners.length}
+        </p>
+
+        {/* TABLE */}
         <div className="table-responsive">
-          <table className="table bordered-table mb-0">
+          <table className="table table-bordered">
             <thead>
               <tr>
-                <th>Check</th>
-                <th>Center Name</th>
-                <th>Owner Name</th>
-                <th>Center Code</th>
+                <th>#</th>
+                <th>Center</th>
+                <th>Owner</th>
+                <th>Code</th>
                 <th>Email</th>
-                <th>Status</th>
-                <th>Contact</th>
                 <th>Password</th>
-                <th>City</th>
-                <th>Created</th>
-                <th>Download DOCs</th>
+                <th>Status</th>
+                <th>Docs</th>
                 <th>Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {currentRows.map((ele) => (
-                <tr key={ele._id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                       className='form-check-input'
-                      checked={selectedIds.includes(ele._id)}
-                      onChange={() => handleCheckboxChange(ele._id)}
-                    />
-                  </td>
-                  <td>{ele.InsitutionName}</td>
-                  <td>{ele.OwnerName}</td>
-                  <td>{ele.CenterCode}</td>
-                  <td>{ele.email}</td>
-                  <td>
-                    <Switch statusHandler={statusHandler} ele={ele} />
-                  </td>
-                  <td>{ele.ContactNumber}</td>
-                  <td>{ele.passwordTracker || "Null"}</td>
-                  <td>{ele.city}</td>
-                  <td>{new Date(ele.createdAt).toLocaleDateString("en-IN")}</td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-success"
-                      onClick={() => downloadDocumentsAsZip(ele)}
-                    >
-                      ↓
-                    </button>
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-success"
-                      onClick={() => {
-                        setEditingPartner(ele);
-                        setShowModal(true);
-                      }}
-                    >
-                      <Icon icon="lucide:edit" />
-                    </button>
+              {currentRows.length ? (
+                currentRows.map((ele) => (
+                  <tr key={ele._id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        checked={selectedIds.includes(ele._id)}
+                        onChange={() => handleCheckboxChange(ele._id)}
+                      />
+                    </td>
+                    <td>{ele.InsitutionName}</td>
+                    <td>{ele.OwnerName}</td>
+                    <td>{ele.CenterCode}</td>
+                    <td>{ele.email}</td>
+                    <td>{ele.passwordTracker || "—"}</td>
+                    <td>
+                      <Switch statusHandler={statusHandler} ele={ele} />
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => downloadDocumentsAsZip(ele)}
+                      >
+                        ↓
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => {
+                          setEditingPartner(ele);
+                          setShowModal(true);
+                        }}
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="9" className="text-center text-muted py-4">
+                    ❌ No data found
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* PAGINATION (Optional UI later) */}
+        <p className="text-muted mt-2">
+          Page {currentPage} of {totalPages || 1}
+        </p>
       </div>
 
+      {/* MODAL */}
       {showModal && (
         <CreatePartner
-          fetchData={() => dispatch(fetchPartner())}
           ele={editingPartner}
+          fetchData={() => dispatch(fetchPartner())}
           handleClose={() => {
             setShowModal(false);
             setEditingPartner(null);

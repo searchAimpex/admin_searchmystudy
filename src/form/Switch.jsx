@@ -2,29 +2,38 @@ import React from 'react';
 import styled from 'styled-components';
 
 const Switch = ({ statusHandler, ele }) => {
-  console.log(ele?.block, "||||||||||||||||||||||||||||||||||");
-
   return (
     <StyledWrapper>
-      <div className="checkbox">
+      <div className="checkbox tooltip-wrapper">
         <input
           id={`cbx-${ele._id}`}
           type="checkbox"
           checked={!!ele?.block}
           onChange={(e) => statusHandler(ele._id, e.target.checked)}
         />
+
         <label className="toggle" htmlFor={`cbx-${ele._id}`}>
           <span />
         </label>
+
+        {/* Hover Remark */}
+        <div className="tooltip">
+          {ele?.block ? 'Block' : 'Unblock'}
+        </div>
       </div>
     </StyledWrapper>
   );
 };
 
 const StyledWrapper = styled.div`
-  .checkbox input[type="checkbox"] {
+  .checkbox input[type='checkbox'] {
     visibility: hidden;
     display: none;
+  }
+
+  .checkbox {
+    position: relative;
+    display: inline-block;
   }
 
   .checkbox .toggle {
@@ -34,36 +43,35 @@ const StyledWrapper = styled.div`
     height: 20px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    transform: translate3d(0, 0, 0);
   }
+
   .checkbox .toggle:before {
-    content: "";
-    position: relative;
+    content: '';
+    position: absolute;
     top: 3px;
     left: 3px;
     width: 34px;
     height: 14px;
-    display: block;
     background: #9a9999;
     border-radius: 8px;
     transition: background 0.2s ease;
   }
+
   .checkbox .toggle span {
     position: absolute;
     top: 0;
     left: 0;
     width: 20px;
     height: 20px;
-    display: block;
-    background: white;
+    background: #ffffff;
     border-radius: 10px;
     box-shadow: 0 3px 8px rgba(154, 153, 153, 0.5);
     transition: all 0.2s ease;
   }
+
   .checkbox .toggle span:before {
-    content: "";
+    content: '';
     position: absolute;
-    display: block;
     margin: -18px;
     width: 56px;
     height: 56px;
@@ -74,20 +82,42 @@ const StyledWrapper = styled.div`
     pointer-events: none;
   }
 
-  /* Updated CSS selectors to target any checkbox input */
-  .checkbox input[type="checkbox"]:checked + .toggle:before {
+  /* Checked state */
+  .checkbox input[type='checkbox']:checked + .toggle:before {
     background: #947ada;
   }
-  .checkbox input[type="checkbox"]:checked + .toggle span {
+
+  .checkbox input[type='checkbox']:checked + .toggle span {
     background: #4f2edc;
     transform: translateX(20px);
-    transition: all 0.2s cubic-bezier(0.8, 0.4, 0.3, 1.25), background 0.15s ease;
     box-shadow: 0 3px 8px rgba(79, 46, 220, 0.2);
   }
-  .checkbox input[type="checkbox"]:checked + .toggle span:before {
+
+  .checkbox input[type='checkbox']:checked + .toggle span:before {
     transform: scale(1);
     opacity: 0;
     transition: all 0.4s ease;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .tooltip-wrapper:hover .tooltip {
+    opacity: 1;
   }
 `;
 
