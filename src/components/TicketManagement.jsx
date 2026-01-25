@@ -154,6 +154,7 @@ const TicketManagement = () => {
                 <th scope="col">Title</th>
                 <th scope="col">Category</th>
                 <th>Status</th>
+                <th>Description</th>
                 <th>Created By</th>
                 <th>Remark</th>
                   <th>Priority</th>
@@ -184,6 +185,7 @@ const TicketManagement = () => {
                     {ele?.category}
                   </td>
                  
+                 
                   <td
 
 
@@ -199,6 +201,10 @@ const TicketManagement = () => {
 </p>
 
 
+                  </td>
+
+                   <td>
+                    {ele?.description}
                   </td>
                    <td>
                     {ele?.createdBy?.CenterCode}
