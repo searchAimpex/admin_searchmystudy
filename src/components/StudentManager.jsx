@@ -42,7 +42,8 @@ const StudentManager = () => {
 
   /* ================= fetch ================= */
   const fetchData = async () => {
-    await dispatch(FetchStudent());
+    const a = await dispatch(FetchStudent());
+    // console.log(a,"=============")
   };
 
   useEffect(() => {

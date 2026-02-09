@@ -143,12 +143,12 @@ const FrenchiseLayout = ({ children }) => {
       >
         <button
           onClick={mobileMenuControl}
-          type='button'
+          type='button'f
           className='sidebar-close-btn'
         >
           <Icon icon='radix-icons:cross-2' />
         </button>
-        <div>
+        <div>d
           <Link to='/' className='sidebar-logo'>
             <img
               src={logo}
@@ -175,7 +175,7 @@ const FrenchiseLayout = ({ children }) => {
             <li className="bg-primary rounded">
               <NavLink to="/dashboard">
                 <Icon icon="solar:home-smile-angle-outline" className="menu-icon text-white" />
-                <span className="text-white">Dashboard</span>
+                <span className="text-white">D  ashboard</span>
               </NavLink>
             </li>
 

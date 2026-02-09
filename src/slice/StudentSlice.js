@@ -7,15 +7,13 @@ export const FetchStudent = createAsyncThunk(
   'student/FetchStudent',
   async (_, { rejectWithValue }) => {
     try {
+      console.log("=============");
       const response = await axios.get("https://searchmystudy.com/api/admin/student");
-      // console.log(response);
       return response.data; // returned data will be available in fulfilled reducer
 
     } catch (error) {
       toast.error("Failed to fetch lead")
-      return rejectWithValue(
-        error.response?.data?.message || 'Something went wrong'
-      );
+    console.log(error)
     }
   }
 );
