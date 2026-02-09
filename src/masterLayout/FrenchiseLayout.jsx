@@ -143,7 +143,7 @@ const FrenchiseLayout = ({ children }) => {
       >
         <button
           onClick={mobileMenuControl}
-          type='button'f
+          type='button'
           className='sidebar-close-btn'
         >
           <Icon icon='radix-icons:cross-2' />
