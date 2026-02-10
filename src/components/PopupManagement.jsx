@@ -157,7 +157,7 @@ const PopupManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {filterCounsellor?.map((ele, ind) => (
+              {[...filterCounsellor].reverse().map((ele, ind) => (
                 <tr key={ele._id || ind}>
                   <td>
                   <div className="form-check style-check d-flex align-items-center">

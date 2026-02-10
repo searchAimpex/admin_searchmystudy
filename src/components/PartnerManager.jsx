@@ -246,45 +246,46 @@ const PartnerManager = () => {
 
             <tbody>
               {currentRows.length ? (
-                currentRows.map((ele) => (
-                  <tr key={ele._id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={selectedIds.includes(ele._id)}
-                        onChange={() => handleCheckboxChange(ele._id)}
-                      />
-                    </td>
-                    <td>{ele.InsitutionName}</td>
-                    <td>{ele.OwnerName}</td>
-                    <td>{ele.CenterCode}</td>
-                    <td>{ele.email}</td>
-                    <td>{ele.passwordTracker || "—"}</td>
-                    <td>
-                      <Switch statusHandler={statusHandler} ele={ele} />
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-success"
-                        onClick={() => downloadDocumentsAsZip(ele)}
-                      >
-                        ↓
-                      </button>
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-success"
-                        onClick={() => {
-                          setEditingPartner(ele);
-                          setShowModal(true);
-                        }}
-                      >
-                        <Icon icon="lucide:edit" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+            [...currentRows].reverse().map((ele) => (
+  <tr key={ele._id}>
+    <td>
+      <input
+        type="checkbox"
+        className="form-check-input"
+        checked={selectedIds.includes(ele._id)}
+        onChange={() => handleCheckboxChange(ele._id)}
+      />
+    </td>
+    <td>{ele.InsitutionName}</td>
+    <td>{ele.OwnerName}</td>
+    <td>{ele.CenterCode}</td>
+    <td>{ele.email}</td>
+    <td>{ele.passwordTracker || "—"}</td>
+    <td>
+      <Switch statusHandler={statusHandler} ele={ele} />
+    </td>
+    <td>
+      <button
+        className="btn btn-sm btn-success"
+        onClick={() => downloadDocumentsAsZip(ele)}
+      >
+        ↓
+      </button>
+    </td>
+    <td>
+      <button
+        className="btn btn-sm btn-success"
+        onClick={() => {
+          setEditingPartner(ele);
+          setShowModal(true);
+        }}
+      >
+        <Icon icon="lucide:edit" />
+      </button>
+    </td>
+  </tr>
+))
+
               ) : (
                 <tr>
                   <td colSpan="9" className="text-center text-muted py-4">

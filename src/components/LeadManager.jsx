@@ -281,7 +281,7 @@ const LeadManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {assessment?.map((ele) => (
+                        {[...assessment].reverse().map((ele) => (
                             <tr key={ele._id}>
                                 <td>
                                     <input

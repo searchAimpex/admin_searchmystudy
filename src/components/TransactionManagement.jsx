@@ -162,7 +162,7 @@ const TransactionManagement = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredTransaction?.map((ele) => (
+                                [...filteredTransaction].reverse().map((ele) => (
                                      <tr key={ele._id}>
                                     <td>
                                         <input

@@ -157,7 +157,7 @@ const NavManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {comission?.map((ele, ind) => (
+                        {[...comission].reverse().map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
                                     <div 

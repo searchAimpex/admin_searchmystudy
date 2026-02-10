@@ -210,7 +210,7 @@ const FrenchiseManager = () => {
 
           <tbody>
             {filteredWebinars.length ? (
-              filteredWebinars.map((e) => (
+              [...filteredWebinars].reverse().map((e) => (
                 <tr key={e._id}>
                   <td>
                     <input

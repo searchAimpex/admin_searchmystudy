@@ -187,7 +187,7 @@ const CountryManager = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((c) => (
+                [...paginatedData].reverse().map((c) => (
                   <tr key={c._id}>
                     <td>
                       <input

@@ -194,7 +194,7 @@ const FileManager = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedFiles.map((ele) => (
+                [...paginatedFiles].reverse().map((ele) => (
                   <tr key={ele._id}>
                     <td>
                       <input

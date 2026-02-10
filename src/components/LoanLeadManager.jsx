@@ -201,7 +201,7 @@ const LoanLeadManager = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedLoan.map((ele) => (
+                [...paginatedLoan].reverse().map((ele) => (
                   <tr key={ele._id}>
                     <td>
                       <input

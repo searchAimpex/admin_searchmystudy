@@ -287,7 +287,7 @@ const CounselorManagement = () => {
           </thead>
 
           <tbody>
-            {filteredCounsellors.map((ele, i) => (
+            {[...filteredCounsellors].reverse().map((ele, i) => (
               <tr key={ele._id}>
                 <td>
                   <input

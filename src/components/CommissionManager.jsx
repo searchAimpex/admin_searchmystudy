@@ -171,7 +171,7 @@ const CommissionManager = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedCommission.map((ele) => (
+                [...paginatedCommission].reverse().map((ele) => (
                   <tr key={ele._id}>
                     <td>
                       <input
