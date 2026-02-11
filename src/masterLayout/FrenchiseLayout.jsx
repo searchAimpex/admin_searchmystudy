@@ -252,6 +252,13 @@ const FrenchiseLayout = ({ children }) => {
             </li>
 
             <li>
+              <NavLink to="/usefull-information">
+                <Icon icon="mdi:clipboard-text-outline" className="menu-icon" />
+                <span>Usefull Information</span>
+              </NavLink>
+            </li>
+
+            <li>
               <NavLink to="/loan-lead-management">
                 <Icon icon="mdi:bank-outline" className="menu-icon" />
                 <span>Loan Leads</span>

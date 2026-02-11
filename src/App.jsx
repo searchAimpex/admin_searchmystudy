@@ -139,6 +139,7 @@ import PopupManagements from "./pages/PopupManagements";
 import TicketManagements from "./pages/TicketManagements";
 import TransactionManagements from "./pages/TransactionManagements";
 import CounselorManagements from "./pages/CounselorManagements";
+import UsefullInformation from "./pages/UsefullInformation";
 function App() {
 
   const navigate = useNavigate();
@@ -362,7 +363,7 @@ function App() {
         <Route exact path='/transaction-management' element={<TransactionManagements />} />
 
         <Route exact path='/counselor-management' element={<CounselorManagements/>}/>
-      
+        <Route exact path='/usefull-information' element={<UsefullInformation/>}/>
 
         <Route exact path='*' element={<ErrorPage />} />
       </Routes>

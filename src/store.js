@@ -29,6 +29,8 @@ import ContactSliceReducer from './slice/contact'
 import TicketSliceReducer from './slice/ticket'
 import transactionReducer from './slice/transaction'
 import counsellorReducer from './slice/CounselorManagerSlice'
+import informationReducer from './slice/UsefullInfocatiion'
+
 import { Nav } from 'react-bootstrap';
 const store = configureStore({
   reducer: {
@@ -61,7 +63,8 @@ const store = configureStore({
       contact:ContactSliceReducer,
       ticket:TicketSliceReducer,
       transaction:transactionReducer,
-      counsellors:counsellorReducer
+      counsellors:counsellorReducer,
+      information:informationReducer
   },
  
 });
