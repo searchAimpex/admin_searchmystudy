@@ -16,7 +16,7 @@ import {
 import CreateCounselor from "../form/CreateCounselor";
 import Createtestemonial from "../form/CreateTestemonials";
 import CreateCounsellorCoursefinder from "../form/CreateCounsellorCoursefinder";
-import { fetchInformation } from "../slice/UsefullInfocatiion";
+import { deleteInformation, fetchInformation } from "../slice/UsefullInfocatiion";
 import UsefullInformation from "../form/UsefullInformation";
 
 /* ================= HELPERS ================= */
@@ -55,12 +55,12 @@ const UsefullManagement = () => {
   });
 
   /* ================= FETCH ================= */
-  const loadCounsellors = async () => {
+  const loadData = async () => {
     const data = await dispatch(fetchInformation());
   };
 
   useEffect(() => {
-    loadCounsellors();
+    loadData();
   }, []);
 
   /* ================= FILTER LOGIC ================= */
@@ -127,12 +127,12 @@ const UsefullManagement = () => {
     )
       return;
 
-    const res = await dispatch(deleteCounselorCoursefinder(idsToDelete));
+    const res = await dispatch(deleteInformation(idsToDelete));
 
     if (res?.meta?.requestStatus === "fulfilled") {
       toast.success("Deleted successfully");
       setSelectedIds([]);
-      loadCounsellors();
+      loadData();
     } else {
       toast.error("Delete failed");
     }
@@ -267,7 +267,7 @@ const UsefullManagement = () => {
       {showModal && (
         <UsefullInformation
           ele={editingCounsellor}
-          fetchData={loadCounsellors}
+          fetchData={loadData}
           handleClose={() => {
             setShowModal(false);
             setEditingCounsellor(null);

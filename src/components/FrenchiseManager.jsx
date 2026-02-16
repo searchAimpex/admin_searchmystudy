@@ -170,7 +170,7 @@ const FrenchiseManager = () => {
               placeholder="Filter by Center Code"
               name="centerCode"
               value={filters.centerCode}
-              onChange={handleFilterChange}
+              onChangewebinars={handleFilterChange}
             />
           </div>
 
@@ -199,6 +199,8 @@ const FrenchiseManager = () => {
               <th>#</th>
               <th>Center</th>
               <th>Owner</th>
+                <th>Whatsapp</th>
+                <th>Contact</th>
               <th>Code</th>
               <th>Email</th>
               <th>Password</th>
@@ -228,6 +230,8 @@ const FrenchiseManager = () => {
                   </td>
                   <td>{e.InsitutionName}</td>
                   <td>{e.OwnerName}</td>
+                  <td>{e?.WhatappNumber}</td>
+                 <td>{e?.ContactNumber}</td>
                   <td>{e.CenterCode}</td>
                   <td>{e.email}</td>
                   <td>{e.passwordTracker}</td>

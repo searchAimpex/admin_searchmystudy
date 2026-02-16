@@ -15,11 +15,14 @@ import { saveAs } from "file-saver";
 import { FetchStudent, deleteStudent } from "../slice/StudentSlice";
 import CreateLead from "../form/CreateLead";
 import StudentStatus from "../form/StudentStatus";
+import CreateStudent from "../form/CreateStudent";
 
 const StudentManager = () => {
   const dispatch = useDispatch();
   const { student = [] } = useSelector((state) => state.student || {});
-  console.log(student);
+  console.log(StudentManager,"+++++++++++++++++");
+ const data = useSelector((state) => state.student?.student || {});
+  console.log(data,"+++++++++++++++++");
 
   /* ================= refs for DataTable ================= */
   const tableRef = useRef(null);
@@ -421,7 +424,7 @@ const StudentManager = () => {
         </table>
 
         {showModal && (
-          <CreateLead
+          <CreateStudent
             ele={editingStudent}
             fetchData={fetchData}
             handleClose={() => setShowModal(false)}

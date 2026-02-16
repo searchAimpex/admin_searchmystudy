@@ -34,13 +34,13 @@ export const fetchInformation = createAsyncThunk(
 );
 
 export const deleteInformation = createAsyncThunk(
-    'information/deleteCounselorInformation',
+    'information/deleteInformation',
     async(ids,{ rejectWithValue })=>{
         if (!ids || ids.length === 0) {
             return rejectWithValue({ message: "No blog IDs provided" });
           }
         try {
-            const response = await axios.delete(`https://searchmystudy.com/api/admin/deleteExtrauser`,{
+            const response = await axios.delete(`https://searchmystudy.com/api/admin/upload`,{
                 data: { ids },
             })
             return response?.data;
@@ -51,8 +51,8 @@ export const deleteInformation = createAsyncThunk(
 );
 
 
-export const updateCounselor = createAsyncThunk(
-    'counsellor/updateCounsellor',
+export const updateInformation = createAsyncThunk(
+    'information/updateInformation',
     async({id,data},{ rejectWithValue })=>{
         try {
             const response = await axios.put(`https://searchmystudy.com/api/admin//upload/${id}`,data)

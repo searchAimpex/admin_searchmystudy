@@ -40,7 +40,7 @@ const categories = [
   'Artificial Intelligence'
 ];
 
-const CreateLead = ({ ele, handleClose, fetchData }) => {
+const CreateStudent = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
   const { allCountries } = useSelector(state => state.abroadStudy);
   console.log(ele, "???????????????????????????????????");
@@ -811,4 +811,4 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
   );
 };
 
-export default CreateLead;
+export default CreateStudent;

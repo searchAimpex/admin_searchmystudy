@@ -6,13 +6,11 @@ import "datatables.net-buttons/js/buttons.html5";
 
 import JSZip from "jszip";
 window.JSZip = JSZip;
-
-/* ================= ADDED ================= */
-import { saveAs } from "file-saver";
-/* ========================================= */
-
-import { Icon } from "@iconify/react";
 import { Link } from "react-router-dom";
+
+
+import { saveAs } from "file-saver";
+import { Icon } from "@iconify/react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteLead, FetchAssessment } from "../slice/AssessmentSlice";
 import CreateLead from "../form/CreateLead";
@@ -20,238 +18,165 @@ import AssissmentStatus from "../form/AssissmentStatus";
 import { toast } from "react-toastify";
 
 const LeadManager = () => {
-    const dispatch = useDispatch();
-    const { assessment } = useSelector((state) => state.assessment);
+  const dispatch = useDispatch();
+  const { assessment } = useSelector((state) => state.assessment);
 
-    const tableRef = useRef(null);
+  const tableRef = useRef(null);
 
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [editingWebinar, setEditingWebinar] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [editingWebinar, setEditingWebinar] = useState(null);
 
-    /* ================= FETCH ================= */
-    const fetchData = async () => {
-        await dispatch(FetchAssessment());
+  /* ================= FETCH ================= */
+  const fetchData = async () => {
+    await dispatch(FetchAssessment());
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  /* ================= DATATABLE INIT ================= */
+  useEffect(() => {
+    if (!assessment?.length) return;
+
+    if ($.fn.DataTable.isDataTable("#dataTable")) {
+      $("#dataTable").DataTable().destroy();
+    }
+
+    tableRef.current = $("#dataTable").DataTable({
+      paging: true,
+      searching: true,
+      pageLength: 5,
+      lengthMenu: [5, 10, 20, 50],
+      dom: "Bfrtip",
+      buttons: [
+        {
+          extend: "excelHtml5",
+          title: "Lead_Report",
+        },
+      ],
+    });
+
+    return () => {
+      tableRef.current?.destroy();
     };
+  }, [assessment]);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+  /* ================= DELETE ================= */
+  const handleDelete = async () => {
+    if (!selectedIds.length) {
+      toast.warning("Select at least one lead");
+      return;
+    }
 
-    /* ================= DATATABLE INIT ================= */
-    useEffect(() => {
-        if (!assessment?.length) return;
+    if (!window.confirm("Are you sure you want to delete?")) return;
 
-        if ($.fn.DataTable.isDataTable("#dataTable")) {
-            $("#dataTable").DataTable().destroy();
-        }
+    await dispatch(deleteLead(selectedIds));
+    toast.success("Deleted successfully");
+    fetchData();
+    setSelectedIds([]);
+  };
 
-        tableRef.current = $("#dataTable").DataTable({
-            paging: true,
-            searching: true,
-            pageLength: 5,
-            lengthMenu: [5, 10, 20, 50],
-            dom: "Bfrtip",
-            buttons: [
-                {
-                    extend: "excelHtml5",
-                    title: "Lead_Report",
-                    exportOptions: {
-                        columns: [1, 2, 3, 4, 5, 6, 7, 9, 10, 11],
-                        modifier: {
-                            search: "applied",
-                            order: "applied",
-                        },
-                    },
-                },
-            ],
-            language: {
-                emptyTable: "No data available",
-                zeroRecords: "Data not found",
-            },
+  /* ================= DOWNLOAD DOCUMENTS ================= */
+  const handleDownloadDocuments = async (ele) => {
+    const toastId = toast.loading("Preparing documents...");
+
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder(ele.trackingId || "Documents");
+
+      const documents = {
+        acadmics: ele.acadmics,
+        englishTestDoc: ele.englishTestDoc,
+        englishTestScorecard: ele.englishTestScorecard,
+        qualifiedTestImage: ele.qualifiedTestImage,
+        resume: ele.resume,
+        workExperienceDoc: ele.workExperienceDoc,
+      };
+
+      const availableDocs = Object.entries(documents).filter(
+        ([_, url]) => url
+      );
+
+      if (!availableDocs.length) {
+        toast.update(toastId, {
+          render: "No documents available",
+          type: "warning",
+          isLoading: false,
+          autoClose: 2000,
         });
+        return;
+      }
 
-        return () => {
-            tableRef.current?.destroy();
-        };
-    }, [assessment]);
+      await Promise.all(
+        availableDocs.map(async ([name, url]) => {
+          const res = await fetch(url);
+          const blob = await res.blob();
 
-    /* ================= FILTER HELPERS ================= */
-    const searchColumn = (index, value) => {
-        tableRef.current?.column(index).search(value).draw();
-    };
+          const extMatch = url.match(/\.(\w+)(\?|$)/);
+          const ext = extMatch ? extMatch[1] : "file";
 
-    const filterDate = (value) => {
-        if (!value) {
-            searchColumn(11, "");
-            return;
-        }
-        const formatted = new Date(value).toLocaleDateString();
-        searchColumn(11, formatted);
-    };
+          folder.file(`${name}.${ext}`, blob);
+        })
+      );
 
-    /* ================= DELETE ================= */
-    const handleDelete = async () => {
-        if (!selectedIds.length) {
-            toast.warning("Select at least one lead");
-            return;
-        }
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `${ele.trackingId}_Documents.zip`);
 
-        if (!window.confirm("Are you sure you want to delete?")) return;
+      toast.update(toastId, {
+        render: "Documents downloaded successfully 🎉",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+      });
 
-        await dispatch(deleteLead(selectedIds));
-        toast.success("Deleted successfully");
-        fetchData();
-        setSelectedIds([]);
-    };
+    } catch (error) {
+      console.error(error);
 
-    /* ================= ROLE DROPDOWN ================= */
-    const roles = [
-        ...new Set(assessment?.map((a) => a?.User?.role).filter(Boolean)),
-    ];
+      toast.update(toastId, {
+        render: "Download failed ❌",
+        type: "error",
+        isLoading: false,
+        autoClose: 2000,
+      });
+    }
+  };
 
-    /* ================= ADDED: ZIP DOWNLOAD ================= */
-    const handleDownloadDocuments = async (ele) => {
-        try {
-            const zip = new JSZip();
-            const folder = zip.folder(ele.trackingId); // folder = trackingId
+  return (
+    <div className="card">
+      <div className="card-header d-flex justify-content-between">
+        <h5>Lead Manager</h5>
 
-            const documents = {
-                applicationFeeReceipt: ele.applicationFeeReceipt,
-                passport: ele.passport,
-                photo: ele.photo,
-                resume: ele.resume,
-                marksheet10: ele.marksheet10,
-                marksheet12: ele.marksheet12,
-                graduationMarksheet: ele.graduationMarksheet,
-                experienceLetter: ele.experienceLetter,
-                offerLetter: ele.offerLetter,
-            };
-
-            const tasks = Object.entries(documents)
-                .filter(([_, url]) => url)
-                .map(async ([name, url]) => {
-                    const res = await fetch(url);
-                    const blob = await res.blob();
-                    const ext = url.split(".").pop().split("?")[0];
-                    folder.file(`${name}.${ext}`, blob);
-                });
-
-            if (!tasks.length) {
-                toast.warning("No documents available");
-                return;
+        <div>
+          <button
+            className="btn btn-success mx-2"
+            onClick={() =>
+              tableRef.current?.button(".buttons-excel").trigger()
             }
+          >
+            Download Excel
+          </button>
 
-            await Promise.all(tasks);
+          <button
+            className="btn btn-primary mx-2"
+            onClick={() => setShowModal(true)}
+          >
+            Create Lead
+          </button>
 
-            const zipBlob = await zip.generateAsync({ type: "blob" });
-            saveAs(zipBlob, `${ele.trackingId}.zip`);
-        } catch (err) {
-            console.error(err);
-            toast.error("Document download failed");
-        }
-    };
-    /* ===================================================== */
+          <button
+            className="btn btn-danger mx-2"
+            onClick={handleDelete}
+          >
+            Delete Selected
+          </button>
+        </div>
+      </div>
 
-    return (
-        <div className="card basic-data-table">
-            <div className="card-header d-flex justify-content-between">
-                <h5>Lead Manager</h5>
-                <div>
-                    <button
-                        className="btn btn-success mx-2"
-                        onClick={() =>
-                            tableRef.current
-                                .button(".buttons-excel")
-                                .trigger()
-                        }
-                    >
-                        Download Excel
-                    </button>
-
-                    <button
-                        className="btn btn-primary mx-2"
-                        onClick={() => setShowModal(true)}
-                    >
-                        Create Lead
-                    </button>
-
-                    <button
-                        className="btn btn-danger mx-2"
-                        onClick={handleDelete}
-                    >
-                        Delete Selected
-                    </button>
-                </div>
-            </div>
-
-            <div className="card-body">
-                {/* ================= FILTERS ================= */}
-                <div className="row mb-3">
-                    <div className="col-md-2">
-                        <input
-                            className="form-control"
-                            placeholder="Tracking ID"
-                            onKeyUp={(e) =>
-                                searchColumn(1, e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="col-md-2">
-                        <select
-                            className="form-control"
-                            onChange={(e) =>
-                                searchColumn(3, e.target.value)
-                            }
-                        >
-                            <option value="">All Roles</option>
-                            {roles.map((role) => (
-                                <option key={role} value={role}>
-                                    {role}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="col-md-2">
-                        <input
-                            className="form-control"
-                            placeholder="Center Code"
-                            onKeyUp={(e) =>
-                                searchColumn(9, e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="col-md-2">
-                        <select
-                            className="form-control"
-                            onChange={(e) =>
-                                searchColumn(10, e.target.value)
-                            }
-                        >
-                            <option value="">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
-
-                    <div className="col-md-2">
-                        <input
-                            type="date"
-                            className="form-control"
-                            onChange={(e) =>
-                                filterDate(e.target.value)
-                            }
-                        />
-                    </div>
-                </div>
-
-                {/* ================= TABLE ================= */}
-               <table
+      <div className="card-body">
+      <table
   className="
     // table
     // table-bordered
@@ -357,25 +282,25 @@ const LeadManager = () => {
                         ))}
                     </tbody>
                 </table>
-            </div>
+      </div>
 
-            {showModal && (
-                <CreateLead
-                    ele={editingWebinar}
-                    fetchData={fetchData}
-                    handleClose={() => setShowModal(false)}
-                />
-            )}
+      {showModal && (
+        <CreateLead
+          ele={editingWebinar}
+          fetchData={fetchData}
+          handleClose={() => setShowModal(false)}
+        />
+      )}
 
-            {showStatusModal && (
-                <AssissmentStatus
-                    ele={editingWebinar}
-                    fetchData={fetchData}
-                    handleClose={() => setShowStatusModal(false)}
-                />
-            )}
-        </div>
-    );
+      {showStatusModal && (
+        <AssissmentStatus
+          ele={editingWebinar}
+          fetchData={fetchData}
+          handleClose={() => setShowStatusModal(false)}
+        />
+      )}
+    </div>
+  );
 };
 
 export default LeadManager;

@@ -19,7 +19,7 @@ import Switch from "../form/Switch";
 const PartnerManager = () => {
   const dispatch = useDispatch();
   const partners = useSelector((state) => state.partner.partner || []);
-
+console.log(partners,"////////////////////////////////////////");
   /* ================= STATE ================= */
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -237,6 +237,8 @@ const PartnerManager = () => {
                 <th>Owner</th>
                 <th>Code</th>
                 <th>Email</th>
+                <th>Whatsapp</th>
+                <th>Contact</th>
                 <th>Password</th>
                 <th>Status</th>
                 <th>Docs</th>
@@ -260,6 +262,8 @@ const PartnerManager = () => {
     <td>{ele.OwnerName}</td>
     <td>{ele.CenterCode}</td>
     <td>{ele.email}</td>
+    <td>{ele?.WhatappNumber}</td>
+    <td>{ele?.ContactNumber}</td>
     <td>{ele.passwordTracker || "—"}</td>
     <td>
       <Switch statusHandler={statusHandler} ele={ele} />

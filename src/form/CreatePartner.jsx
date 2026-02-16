@@ -17,6 +17,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     name: ele?.name || ele?.OwnerName || "demo",
     email: ele?.email || "",
     password: "",
+    mou:ele?.mou || "",
     passwordTracker: ele?.passwordTracker || "",
     role: ele?.role || "partner",
     OwnerName: ele?.OwnerName || ele?.name || "",
@@ -213,7 +214,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
           toast.error(msg);
         }
       } else {
-        console.log(payload, "//////////------------/////////////////////");
+        // console.log(payload, "//////////------------/////////////////////");
 
         const res = await dispatch(createPartner(payload));
         console.log(res)
@@ -238,6 +239,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     if (!dateString) return '';
     return new Date(dateString).toISOString().split('T')[0];
   };
+  // console.log(initial.mou,"???????????????????????????????????");
   return (
     <>
       <ToastContainer />
