@@ -343,6 +343,13 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                       ))}
                     </select>
                   </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">Course Level</label>
+                    <input name="courselevel" value={formValues.courselevel} onChange={handleInputChange} className="form-control" placeholder="Course Level" />
+                  </div>
+
+
                   <div className="col-md-6">
                     <label className="form-label">Enter Course Level (Category)</label>
                     <select value={formValues?.category ?? ''} name="category" id="category" className="form-select">
@@ -385,14 +392,14 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
 
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">Course Name</label>
+                    <label className="form-label">Intake</label>
                     <input name="Course" value={formValues.Course} onChange={handleInputChange} className="form-control" placeholder="Course Name" />
                   </div>
 
-                  <div className="col-md-6">
+                  {/* <div className="col-md-6">
                     <label className="form-label">Specialization Name</label>
                     <input name="specialization" value={formValues.specialization} onChange={handleInputChange} className="form-control" placeholder="Specialization Name" />
-                  </div>
+                  </div> */}
                   <div className="col-md-6">
                     <label className="form-label">Country</label>
                     <select name="Country" value={formValues.Country} onChange={handleInputChange} className="form-control">
@@ -402,10 +409,6 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                       ))}
                     </select>
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Course Level</label>
-                    <input name="courselevel" value={formValues.courselevel} onChange={handleInputChange} className="form-control" placeholder="Course Level" />
-                  </div>
 
 
                   {/* ——— Latest Qualification ——— */}
@@ -414,10 +417,10 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                       Latest Qualification
                     </h6>
                   </div>
-                  <div className="col-md-6">
+                  <div className="">
                     <label className="form-label">Select Last Qualification</label>
-                    <select name="lastEdu" value={formValues.lastEdu} onChange={handleInputChange} className="form-control">
-                      <option value="">Select Last Qualification</option>
+                    <select name="specialization" value={formValues.specialization} onChange={handleInputChange} className="form-control">
+                      <option value="">Select Program Level</option>
                       <option value="10th">10th</option>
                       <option value="12th">12th</option>
                       <option value="DIPLOMA 10+3">Diploma 10+3</option>
@@ -427,6 +430,16 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                       <option value="MASTER IN TECHNOLOGY">Master in Technology</option>
                       <option value="POST GRADUATE">Post Graduate</option>
                     </select>
+                    {/* <div className="">
+                      <label className="form-label">Specialization Name</label>
+                      <input name="lastQualificationSpecialization" value={formValues.lastQualificationSpecialization} onChange={handleInputChange} className="form-control" placeholder="Specialization Name" />
+                    </div> */}
+
+
+                    <div className="">
+                    <label className="form-label">Course Level</label>
+                    <input name="lastQualificationCourseName" value={formValues.lastQualificationCourseName} onChange={handleInputChange} className="form-control" placeholder="Course Name" />
+                  </div>
                   </div>
 
                   <div>
@@ -442,19 +455,15 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                   </div>
 
 
-                  <div className="col-md-6">
-                    <label className="form-label">Enter Course Name</label>
-                    <input name="lastQualificationCourseName" value={formValues.lastQualificationCourseName} onChange={handleInputChange} className="form-control" placeholder="Course Name" />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Specialization Name</label>
-                    <input name="lastQualificationSpecialization" value={formValues.lastQualificationSpecialization} onChange={handleInputChange} className="form-control" placeholder="Specialization Name" />
-                  </div>
-
                   <div className="col-md-4">
                     <label className="form-label">Year of Passing</label>
                     <input name="yearOfPassing" value={formValues.yearOfPassing} onChange={handleInputChange} className="form-control" placeholder="Passing Year" />
                   </div>
+
+
+
+
+
                   <div className="col-md-4">
                     <label className="form-label">Result Type</label>
                     <select name="lastQualificationResultType" value={formValues.lastQualificationResultType} onChange={handleInputChange} className="form-control">
