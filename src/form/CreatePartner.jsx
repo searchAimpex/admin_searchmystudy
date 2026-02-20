@@ -83,9 +83,17 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
 
   const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
 
+  const requiredMark = <span style={{ color: "red" }}>*</span>;
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setFormValues(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   };
 
   const handleFileChange = (e, fieldName) => {
@@ -113,36 +121,48 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
         setFormValues(prev => ({ ...prev, [fieldName]: url }));
         setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } }));
+        setErrors(prev => {
+          const next = { ...prev };
+          delete next[fieldName];
+          return next;
+        });
         toast.success(`${fieldName} uploaded`);
       }
     );
   };
 
- const validateForm = () => {
-  const newErrors = {};
+  const REQUIRED_MSG = "This field is required";
 
-  if (!formValues.name?.trim()) {
-    newErrors.name = "Name is required";
-  }
+  const validateForm = () => {
+    const newErrors = {};
 
-  if (!formValues.email?.trim()) {
-    newErrors.email = "Email is required";
-  }
+    if (!formValues.OwnerName?.trim()) newErrors.OwnerName = REQUIRED_MSG;
+    if (!formValues.OwnerFatherName?.trim()) newErrors.OwnerFatherName = REQUIRED_MSG;
+    if (!formValues.InsitutionName?.trim()) newErrors.InsitutionName = REQUIRED_MSG;
+    if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = REQUIRED_MSG;
+    if (!formValues.WhatappNumber?.trim()) newErrors.WhatappNumber = REQUIRED_MSG;
+    if (!formValues.CenterCode?.trim()) newErrors.CenterCode = REQUIRED_MSG;
+    if (!formValues.DateOfBirth?.trim()) newErrors.DateOfBirth = REQUIRED_MSG;
+    if (!formValues.role?.trim()) newErrors.role = REQUIRED_MSG;
+    if (!formValues.email?.trim()) newErrors.email = REQUIRED_MSG;
+    if (!formValues.city?.trim()) newErrors.city = REQUIRED_MSG;
+    if (!formValues.state?.trim()) newErrors.state = REQUIRED_MSG;
+    if (formValues.zipCode === undefined || formValues.zipCode === "" || String(formValues.zipCode).trim() === "") newErrors.zipCode = REQUIRED_MSG;
+    if (!formValues.address?.trim()) newErrors.address = REQUIRED_MSG;
 
-  if (!formValues.ContactNumber?.trim()) {
-    newErrors.ContactNumber = "Contact number is required";
-  }
-
-  // 🔐 Password validation (only when creating OR when user enters password)
-  if (!ele?._id || formValues.password) {
-    if (!formValues.password || formValues.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+    if (!ele?._id) {
+      if (!formValues.password || formValues.password.length < 8) {
+        newErrors.password = "Password must be at least 8 characters";
+      }
     }
-  }
 
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+    fileFields.forEach((f) => {
+      if (!formValues[f]?.trim()) newErrors[f] = REQUIRED_MSG;
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
 
 
@@ -255,102 +275,107 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
               <div className="modal-body">
                 <div className="row g-3">
                   <div className="col-md-6">
-                    <label className="form-label">Owner Name</label>
+                    <label className="form-label">Owner Name {requiredMark}</label>
                     <input name="OwnerName" value={formValues.OwnerName} onChange={handleInputChange} className={`form-control ${errors.OwnerName ? "is-invalid" : ""}`} />
-                    {errors.OwnerName && <div className="invalid-feedback">{errors.OwnerName}</div>}
+                    {errors.OwnerName && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.OwnerName}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Owner Father's Name</label>
-                    <input name="OwnerFatherName" value={formValues.OwnerFatherName} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">Owner Father's Name {requiredMark}</label>
+                    <input name="OwnerFatherName" value={formValues.OwnerFatherName} onChange={handleInputChange} className={`form-control ${errors.OwnerFatherName ? "is-invalid" : ""}`} />
+                    {errors.OwnerFatherName && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.OwnerFatherName}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Institution Name</label>
-                    <input name="InsitutionName" value={formValues.InsitutionName} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">Institution Name {requiredMark}</label>
+                    <input name="InsitutionName" value={formValues.InsitutionName} onChange={handleInputChange} className={`form-control ${errors.InsitutionName ? "is-invalid" : ""}`} />
+                    {errors.InsitutionName && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.InsitutionName}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Contact Number <span style={{ color: "red" }}>*</span></label>
+                    <label className="form-label">Contact Number {requiredMark}</label>
                     <input name="ContactNumber" maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
-                    {errors.ContactNumber && <div className="invalid-feedback">{errors.ContactNumber}</div>}
+                    {errors.ContactNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.ContactNumber}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">WhatsApp Number <span style={{ color: "red" }}>*</span></label>
-                    <input maxLength={10} name="WhatappNumber" value={formValues.WhatappNumber} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">WhatsApp Number {requiredMark}</label>
+                    <input maxLength={10} name="WhatappNumber" value={formValues.WhatappNumber} onChange={handleInputChange} className={`form-control ${errors.WhatappNumber ? "is-invalid" : ""}`} />
+                    {errors.WhatappNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.WhatappNumber}</div>}
                   </div>
 
                   <div className="col-md-4">
-                    <label className="form-label">Center Code <span style={{ color: "red" }}>*</span></label>
-                    <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">Center Code {requiredMark}</label>
+                    <input name="CenterCode" value={formValues.CenterCode} onChange={handleInputChange} className={`form-control ${errors.CenterCode ? "is-invalid" : ""}`} />
+                    {errors.CenterCode && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.CenterCode}</div>}
                   </div>
 
                   <div className="col-md-4">
-                    <label className="form-label">Date Of Birth <span style={{ color: "red" }}>*</span></label>
-                    <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">Date Of Birth {requiredMark}</label>
+                    <input type="date" name="DateOfBirth" value={formValues.DateOfBirth} onChange={handleInputChange} className={`form-control ${errors.DateOfBirth ? "is-invalid" : ""}`} />
+                    {errors.DateOfBirth && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.DateOfBirth}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Type</label>
-                    <select name="role" value={formValues.role} onChange={handleInputChange} className="form-control">
-                      <option value="partner" selected>Partner</option>
+                    <label className="form-label">Type {requiredMark}</label>
+                    <select name="role" value={formValues.role} onChange={handleInputChange} className={`form-control ${errors.role ? "is-invalid" : ""}`}>
+                      <option value="partner">Partner</option>
                       <option value="franchise" disabled>Franchise</option>
-                      {/* <option value="admin">Admin</option> */}
                     </select>
+                    {errors.role && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.role}</div>}
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label">Email <span style={{ color: "red" }}>*</span></label>
+                    <label className="form-label">Email {requiredMark}</label>
                     <input name="email" value={formValues.email} onChange={handleInputChange} className={`form-control ${errors.email ? "is-invalid" : ""}`} />
-                    {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                    {errors.email && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.email}</div>}
                   </div>
 
-                  <div className="input-group">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                       className={`form-control ${errors.password ? "is-invalid" : ""}`}
-                      value={formValues.passwordTracker || formValues.password}
-                      onChange={handleInputChange}
-                      //  minLength={8} 
-                      placeholder="Enter password"
-                    />
-
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={() => setShowPassword(prev => !prev)}
-                    >
-                      {showPassword ? "🙈" : "👁️"}
-                    </button>
+                  <div className="col-md-6">
+                    <label className="form-label">Password {!ele?._id && requiredMark}</label>
+                    <div className="input-group">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                        value={formValues.passwordTracker || formValues.password}
+                        onChange={handleInputChange}
+                        placeholder={ele?._id ? "Leave blank to keep current" : "Enter password (min 8 characters)"}
+                      />
+                      <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword(prev => !prev)}>
+                        {showPassword ? "🙈" : "👁️"}
+                      </button>
+                    </div>
+                    {errors.password && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.password}</div>}
                   </div>
-
-
 
                   <div className="col-md-4">
-                    <label className="form-label">City</label>
-                    <input name="city" value={formValues.city} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">City {requiredMark}</label>
+                    <input name="city" value={formValues.city} onChange={handleInputChange} className={`form-control ${errors.city ? "is-invalid" : ""}`} />
+                    {errors.city && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.city}</div>}
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label">State</label>
-                    <input name="state" value={formValues.state} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">State {requiredMark}</label>
+                    <input name="state" value={formValues.state} onChange={handleInputChange} className={`form-control ${errors.state ? "is-invalid" : ""}`} />
+                    {errors.state && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.state}</div>}
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label">Zip Code</label>
+                    <label className="form-label">Zip Code {requiredMark}</label>
                     <input name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
-                    {errors.zipCode && <div className="invalid-feedback">{errors.zipCode}</div>}
+                    {errors.zipCode && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.zipCode}</div>}
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label">Address</label>
-                    <textarea name="address" value={formValues.address} onChange={handleInputChange} className="form-control" />
+                    <label className="form-label">Address {requiredMark}</label>
+                    <textarea name="address" value={formValues.address} onChange={handleInputChange} className={`form-control ${errors.address ? "is-invalid" : ""}`} />
+                    {errors.address && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.address}</div>}
                   </div>
 
                   {fileFields.map((f) => (
                     <div className="col-md-6" key={f}>
-                      <label className="form-label">{f}</label>
-                      <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, f)} className="form-control" />
+                      <label className="form-label">{f} {requiredMark}</label>
+                      <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, f)} className={`form-control ${errors[f] ? "is-invalid" : ""}`} />
+                      {errors[f] && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors[f]}</div>}
                       {uploads[f]?.preview && (
                         <div className="mt-2">
                           <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
