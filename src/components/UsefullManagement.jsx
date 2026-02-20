@@ -57,6 +57,7 @@ const UsefullManagement = () => {
   /* ================= FETCH ================= */
   const loadData = async () => {
     const data = await dispatch(fetchInformation());
+    console.log(data,"+++++++++++++++++")
   };
 
   useEffect(() => {
@@ -128,7 +129,7 @@ const UsefullManagement = () => {
       return;
 
     const res = await dispatch(deleteInformation(idsToDelete));
-
+    console.log(res,"+++++++++++++++++")
     if (res?.meta?.requestStatus === "fulfilled") {
       toast.success("Deleted successfully");
       setSelectedIds([]);
@@ -218,7 +219,8 @@ const UsefullManagement = () => {
               </th>
               <th>#</th>
               <th>Title</th>
-              <th>Target</th>
+              <th>Frenchise</th>
+              <th>Partner</th>
               <th>Icon Link</th>
               <th>Image Link</th>
               <th>Created</th>
@@ -239,7 +241,8 @@ const UsefullManagement = () => {
                 </td>
                 <td>{i + 1}</td>
                 <td>{ele?.title}</td>
-                <td>{ele?.target}</td>
+                <td>{ele?.target?"Available":"Unavailable"}</td>
+                <td>{ele?.target1?"Available":"Unavailable"}</td>
                 <td>
                   <a href={ele?.iconURL} target="_blank">Link</a>
                 </td>

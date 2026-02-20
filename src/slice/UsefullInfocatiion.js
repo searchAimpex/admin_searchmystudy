@@ -40,9 +40,11 @@ export const deleteInformation = createAsyncThunk(
             return rejectWithValue({ message: "No blog IDs provided" });
           }
         try {
-            const response = await axios.delete(`https://searchmystudy.com/api/admin/upload`,{
+            const response = await axios.delete(`http://localhost:5001/api/admin/upload`,{
                 data: { ids },
             })
+            // const response = await axios.delete("http://localhost:5001/api/admin/upload",data);
+
             return response?.data;
         } catch (error) {
             return rejectWithValue(error?.response?.data || error.message)

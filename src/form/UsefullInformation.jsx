@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { createTestemonial, fetchTestemonial, updateTestemonial } from "../slice/testemonialsManagementSlice";
 import { app } from "../firebase";
 import { ToastContainer, toast } from "react-toastify";
@@ -16,6 +16,7 @@ import {
 } from 'react-bootstrap';
 import TextEditor from "./TextEditor";
 import { createInformation, fetchInformation, updateInformation } from "../slice/UsefullInfocatiion";
+import { fetchCountry } from "../slice/CountrySlicr";
 const storage = getStorage(app);
 
 const UsefullInformation = ({ ele, handleClose, loadData }) => {
@@ -40,10 +41,41 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
   const [imageValid, setImageValid] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const countries = useSelector(
+    (state) => state.country.country||[]
+  );
+  const fetchCountryData = async ()=>{
+    const a = await dispatch(fetchCountry());
+  // console.log(a,"+++++++++++++++++++++++++++++");  
+  }
+  useEffect(() => {
+    fetchCountryData();
+  }, []);
+
+  // Sync form from ele when opening edit (so iconURL and other fields show correctly)
+  useEffect(() => {
+    if (!ele) return;
+    setForm((prev) => ({
+      ...prev,
+      title: ele.title ?? prev.title,
+      target1: ele.target1 ?? prev.target1,
+      target: ele.target ?? prev.target,
+      iconURL: ele.iconURL ?? prev.iconURL,
+      imageURL: ele.imageURL ?? prev.imageURL,
+      description: ele.description ?? prev.description,
+      imageFile: null,
+      iconFile: null,
+    }));
+    setUploads((prev) => ({
+      ...prev,
+      image: { ...prev.image, preview: ele.imageURL || null },
+      icon: { ...prev.icon, preview: ele.iconURL || null },
+    }));
+  }, [ele?._id]);
 
   // File change handler – updates form state for both image and icon
   const handleFileChange = (e, field) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const previewURL = URL.createObjectURL(file);
@@ -137,7 +169,6 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
 
 const handleSubmit = async () => {
   if (loading) return;
-console.log(form)
   setLoading(true);
   const toastId = toast.loading(
     ele ? "Updating information..." : "Creating information..."
@@ -150,7 +181,6 @@ console.log(form)
       target: form.target,
       description: form.description,
     };
-
     // Image upload
     if (form?.imageFile) {
       formData.imageURL = await uploadFile(form.imageFile, "image");
@@ -166,19 +196,19 @@ console.log(form)
     } else if (form?.iconURL) {
       formData.iconURL = form.iconURL;
     }
-
+    
     let res;
-
+    
     if (ele && ele._id) {
       // UPDATE
       res = await dispatch(
         updateInformation({ id: ele._id, data: formData })
       );
-
+      
       if (res.meta.requestStatus !== "fulfilled") {
         throw new Error("Failed to update information alert");
       }
-
+      
       toast.success("Information updated successfully!", { id: toastId });
       dispatch(fetchInformation());
     } else {
@@ -186,8 +216,9 @@ console.log(form)
       if (!validateForm()) {
         throw new Error("Please fill all required fields.");
       }
-
+      
       res = await dispatch(createInformation(formData));
+      console.log(formData,"+++++++++++++++++")
 
       if (res.meta.requestStatus !== "fulfilled") {
         throw new Error("Failed to create information alert");
@@ -559,21 +590,24 @@ console.log(form)
               </div>
 
                 <div className="mb-3">
-                <label className="form-label">Icon</label>
-                {/* <p className="text-[10px]">Image size should be 300x250 px</p> */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "iconURL")}
-                  className={`form-control ${errors.iconURL ? "is-invalid" : ""}`}
+                <label className="form-label">Country (Icon URL)</label>
+                <select
+                  name="iconURL"
+                  value={form.iconURL || ""}
+                  onChange={(e) => setForm((prev) => ({ ...prev, iconURL: e.target.value }))}
+                  className="form-control"
                   disabled={loading}
-                />
-                {(uploads.icon.preview || form.iconURL) && (
+                >
+                  <option value="">Select Country</option>
+                  {(countries || []).map((c) => (
+                    <option key={c._id} value={c.flagURL || ""}>{c.name}</option>
+                  ))}
+                </select>
+                {form.iconURL && (
                   <div className="mt-2">
-                    <img src={uploads.icon.preview || form.iconURL} alt="icon preview" style={{ width: "150px" }} />
+                    <img src={form.iconURL} alt="Flag" style={{ width: "32px", height: "auto" }} />
                   </div>
                 )}
-                {errors.iconURL && <div className="invalid-feedback">{errors.iconURL}</div>}
               </div>
           </div>
 
