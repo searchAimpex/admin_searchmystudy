@@ -15,7 +15,7 @@ import CreateNav from "../form/CreateNav";
 const NavManager = () => {
     const dispatch = useDispatch();
     // const {  } = useSelector((state) => state?.comission);
-    const comission  = useSelector((state) => state?.nav?.nav);
+    const comission  = useSelector((state) => state?.nav?.nav || []);
 
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -24,6 +24,7 @@ const NavManager = () => {
 
     const fetchData = async () => {
         const a = await dispatch(fetchNav())
+        // console.log(a)
     };
 
     useEffect(() => {
@@ -157,7 +158,7 @@ const NavManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {[...comission].reverse().map((ele, ind) => (
+                        {comission.map((ele, ind) => (
                             <tr key={ele._id || ind}>
                                 <td>
                                     <div 

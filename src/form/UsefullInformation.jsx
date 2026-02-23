@@ -25,6 +25,7 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
   const [form, setForm] = useState({
     title: ele?.title || "",
     target1: ele?.target1 || false,
+    countryName:ele?.countryName || "",
     target: ele?.target || false,
     iconURL: ele?.iconURL || "",
     imageURL: ele?.imageURL || "",
@@ -610,6 +611,23 @@ const handleSubmit = async () => {
                     <img src={form.iconURL} alt="Flag" style={{ width: "32px", height: "auto" }} />
                   </div>
                 )}
+              </div>
+
+                <div className="mb-3">
+                <label className="form-label">Country</label>
+                <select
+                  name="iconURL"
+                  value={form.countryName || ""}
+                  onChange={(e) => setForm((prev) => ({ ...prev, countryName: e.target.value }))}
+                  className="form-control"
+                  disabled={loading}
+                >
+                  <option value="">Select Country</option>
+                  {(countries || []).map((c) => (
+                    <option key={c._id} value={c.name || ""}>{c.name}</option>
+                  ))} 
+                </select>
+                
               </div>
           </div>
 

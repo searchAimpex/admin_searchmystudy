@@ -11,7 +11,7 @@ const storage = getStorage(app);
 
 const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
-  console.log(ele);
+  // console.log(ele);
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -24,7 +24,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     OwnerFatherName: ele?.OwnerFatherName || '',
     InsitutionName: ele?.InsitutionName || '',
     ContactNumber: ele?.ContactNumber || '',
-    WhatsAppNumber: ele?.WhatappNumber || '',
+    WhatappNumber: ele?.WhatappNumber || '',
     CenterCode: ele?.CenterCode || '',
     DateOfBirth: ele?.DateOfBirth || '',
     city: ele?.city || '',
@@ -125,7 +125,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     if (!formValues.OwnerFatherName?.trim()) newErrors.OwnerFatherName = REQUIRED_MSG;
     if (!formValues.InsitutionName?.trim()) newErrors.InsitutionName = REQUIRED_MSG;
     if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = REQUIRED_MSG;
-    if (!formValues.WhatsAppNumber?.trim()) newErrors.WhatsAppNumber = REQUIRED_MSG;
+    if (!formValues.WhatappNumber?.trim()) newErrors.WhatappNumber = REQUIRED_MSG;
     if (!formValues.CenterCode?.trim()) newErrors.CenterCode = REQUIRED_MSG;
     if (!formValues.DateOfBirth?.trim()) newErrors.DateOfBirth = REQUIRED_MSG;
     if (!formValues.role?.trim()) newErrors.role = REQUIRED_MSG;
@@ -152,6 +152,8 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
+    console.log(formValues)
+        const res = await dispatch(updatePartner({ id: ele._id, data: formValues }));
 
     if (!validateForm()) {
       toast.error("Please fix validation errors.");
@@ -160,7 +162,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
     try {
       if (ele && ele._id) {
-        const res = await dispatch(updatePartner({ id: ele._id, data: formValues }));
+        console.log(formValues)
         // console.log(res);
         if (updatePartner.fulfilled.match(res)) {
           toast.success("Partner updated");
@@ -227,8 +229,8 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
                 <div className="col-md-6">
                   <label className="form-label">WhatsApp Number {requiredMark}</label>
-                  <input name="WhatsAppNumber" maxLength={10} value={formValues.WhatsAppNumber} onChange={handleInputChange} className={`form-control ${errors.WhatsAppNumber ? "is-invalid" : ""}`} />
-                  {errors.WhatsAppNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.WhatsAppNumber}</div>}
+                  <input type="number" name="WhatappNumber" maxLength={10} value={formValues.WhatappNumber} onChange={handleInputChange} className={`form-control ${errors.WhatappNumber ? "is-invalid" : ""}`} />
+                  {errors.WhatappNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.WhatappNumber}</div>}
                 </div>
 
                 <div className="col-md-4">
@@ -295,7 +297,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                 </div>
                 <div className="col-md-4">
                   <label className="form-label">Zip Code {requiredMark}</label>
-                  <input name="zipCode" maxLength={6} type="number" value={formValues.zipCode} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
+                  <input name="zipCode" type="number" maxLength={6} value={formValues.zipCode} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
                   {errors.zipCode && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.zipCode}</div>}
                 </div>
 
