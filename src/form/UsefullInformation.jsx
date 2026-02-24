@@ -181,7 +181,8 @@ const handleSubmit = async () => {
       target1: form.target1,
       target: form.target,
       description: form.description,
-      iconURL: form.iconURL 
+      iconURL: form.iconURL,
+      countryName: form.countryName
     };
     console.log(formData,"::::::::::::::::::::::::::::::::::::::::::::");
     // Image upload
@@ -220,8 +221,8 @@ const handleSubmit = async () => {
         throw new Error("Please fill all required fields.");
       }
       
-      res = await dispatch(createInformation(formData));
       console.log(formData,"+++++++++++++++++")
+      res = await dispatch(createInformation(formData));
 
       if (res.meta.requestStatus !== "fulfilled") {
         throw new Error("Failed to create information alert");
@@ -593,7 +594,7 @@ const handleSubmit = async () => {
               </div>
 
                 <div className="mb-3">
-                <label className="form-label">Country</label>
+                <label className="form-label">Country Icon</label>
                 <select
                   name="iconURL"
                   value={form.iconURL || ""}

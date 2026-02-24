@@ -221,6 +221,7 @@ const UsefullManagement = () => {
               <th>Title</th>
               <th>Frenchise</th>
               <th>Partner</th>
+               <th>Country </th>
               <th>Icon Link</th>
               <th>Image Link</th>
               <th>Created</th>
@@ -243,6 +244,7 @@ const UsefullManagement = () => {
                 <td>{ele?.title}</td>
                 <td>{ele?.target?"Available":"Unavailable"}</td>
                 <td>{ele?.target1?"Available":"Unavailable"}</td>
+                <td>{ele?.countryName || "—"}</td>
                 <td>
                   <a href={ele?.iconURL} target="_blank">Link</a>
                 </td>
