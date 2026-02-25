@@ -11,10 +11,10 @@ const storage = getStorage(app);
 const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
+  const [createPassword, setCreatePassword] = useState("");
 
   const [formValues, setFormValues] = useState({
     email: ele?.email || '',
-    password: ele?._id ? '' : (ele?.password || ''),
     role: ele?.role || 'franchise',
     name: ele?.name || 'Null',
     OwnerName: ele?.OwnerName || '',
@@ -40,7 +40,6 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     accountedDetails: ele?.accountedDetails || '',
     IFSC: ele?.IFSC || '',
     bankName: ele?.bankName || '',
-    passwordTracker: ele?.passwordTracker || '',
     mou: ele?.mou || '',
     registration: ele?.registration || '',
   });
@@ -140,8 +139,8 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     if (!formValues.address?.trim()) newErrors.address = REQUIRED_MSG;
 
     if (!ele?._id) {
-      if (!formValues.password || formValues.password.length < 8) {
-        newErrors.password = "Password must be at least 8 characters";
+      if (!createPassword || createPassword.length < 8) {
+        newErrors.createPassword = "Password must be at least 8 characters";
       }
     }
 
@@ -164,12 +163,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
     try {
       if (ele && ele._id) {
-        const data = { ...formValues };
-        if (!data.password || String(data.password).trim() === "") {
-          delete data.password;
-          delete data.passwordTracker;
-        }
-        const res = await dispatch(updatePartner({ id: ele._id, data }));
+        const res = await dispatch(updatePartner({ id: ele._id, data: formValues }));
         if (updatePartner.fulfilled.match(res)) {
           toast.success("Partner updated");
           handleClose();
@@ -179,7 +173,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
           toast.error(typeof msg === "string" ? msg : "Update failed");
         }
       } else {
-        const res = await dispatch(createPartner(formValues));
+        const res = await dispatch(createPartner({ ...formValues, password: createPassword }));
         if (res?.type?.endsWith("/fulfilled")) {
           toast.success("Partner created");
           handleClose();
@@ -265,26 +259,31 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                   {errors.email && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.email}</div>}
                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label">Password {!ele?._id && requiredMark}</label>
-                  <div className="input-group">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      className={`form-control ${errors.password ? "is-invalid" : ""}`}
-                      value={formValues.password}
-                      onChange={handleInputChange}
-                      placeholder={ele?._id ? "Leave blank to keep current" : "Enter password (min 8 characters)"}
-                    />
-                    <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword(prev => !prev)}>
-                      {showPassword ? "🙈" : "👁️"}
-                    </button>
+                {!ele?._id && (
+                  <div className="col-md-6">
+                    <label className="form-label">Password {requiredMark}</label>
+                    <div className="input-group">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={createPassword}
+                        onChange={(e) => {
+                          setCreatePassword(e.target.value);
+                          setErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.createPassword;
+                            return next;
+                          });
+                        }}
+                        className={`form-control ${errors.createPassword ? "is-invalid" : ""}`}
+                        placeholder="Enter password (min 8 characters)"
+                      />
+                      <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword((prev) => !prev)}>
+                        {showPassword ? "🙈" : "👁️"}
+                      </button>
+                    </div>
+                    {errors.createPassword && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.createPassword}</div>}
                   </div>
-                  {errors.password && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.password}</div>}
-                </div>
-
-
-
+                )}
 
 
 
