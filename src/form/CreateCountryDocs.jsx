@@ -228,25 +228,35 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                         <input name="currency" value={formValues.currency} onChange={handleInputChange} className="form-control" />
                                     </div>
 
-                                    <div className="col-md-6">
-                                        <label className="form-label">VFS</label>
-                                        <input name="vfs" value={formValues.vfs} onChange={handleInputChange} className="form-control" />
-                                    </div>
-
                                     <div className="col-12">
-                                        <label className="form-label">Step (upload file)</label>
-                                        <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'step')} className="form-control" />
-                                        {uploads.step?.preview && (
+                                        <label className="form-label">VFS (upload file)</label>
+                                        <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'vfs')} className="form-control" />
+                                        {uploads.vfs?.preview && (
                                             <div className="mt-2">
-                                                {String(uploads.step.preview).toLowerCase().includes('.pdf') ? (
-                                                    <a href={uploads.step.preview} target="_blank" rel="noreferrer">View file</a>
+                                                {String(uploads.vfs.preview).toLowerCase().includes('.pdf') ? (
+                                                    <a href={uploads.vfs.preview} target="_blank" rel="noreferrer">View file</a>
                                                 ) : (
-                                                    <img src={uploads.step.preview} alt="step" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={uploads.vfs.preview} alt="vfs" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                 )}
-                                                <div>Progress: {Math.round(uploads.step.progress)}%</div>
+                                                <div>Progress: {Math.round(uploads.vfs.progress)}%</div>
                                             </div>
                                         )}
                                     </div>
+
+                                        <div className="col-12">
+                                            <label className="form-label">Step (upload file)</label>
+                                            <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'step')} className="form-control" />
+                                            {uploads.step?.preview && (
+                                                <div className="mt-2">
+                                                    {String(uploads.step.preview).toLowerCase().includes('.pdf') ? (
+                                                        <a href={uploads.step.preview} target="_blank" rel="noreferrer">View file</a>
+                                                    ) : (
+                                                        <img src={uploads.step.preview} alt="step" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    )}
+                                                    <div>Progress: {Math.round(uploads.step.progress)}%</div>
+                                                </div>
+                                            )}
+                                        </div>
 
                                     <div className="col-12 mt-2">
                                         <label className="form-label">Why This Country (upload file)</label>

@@ -211,6 +211,7 @@ const CreateContact = ({ ele, handleClose, fetchData }) => {
                                         <label className="form-label">Phone</label>
                                         <input
                                             name="phone"
+                                            type="number"
                                             value={formValues?.phone || ""}
                                             onChange={handleInputChange}
                                             className="form-control"

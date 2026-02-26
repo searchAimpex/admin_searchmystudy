@@ -294,15 +294,15 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Aadhar Number</label>
-                    <input name="adhaar" value={formValues.adhaar} onChange={handleInputChange} className="form-control" placeholder="Aadhar Number" />
+                    <input name="adhaar" type="number" value={formValues.adhaar} onChange={handleInputChange} className="form-control" placeholder="Aadhar Number" />
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Passport Number</label>
-                    <input name="passportNumber" value={formValues.passportNumber} onChange={handleInputChange} className="form-control" placeholder="Passport Number" />
+                    <input name="passportNumber" type="number" value={formValues.passportNumber} onChange={handleInputChange} className="form-control" placeholder="Passport Number" />
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Mobile Number</label>
-                    <input name="mobileNumber" value={formValues.mobileNumber} onChange={handleInputChange} className="form-control" placeholder="Mobile Number" />
+                    <input name="mobileNumber" type="number" value={formValues.mobileNumber} onChange={handleInputChange} className="form-control" placeholder="Mobile Number" />
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Email Address</label>
@@ -318,7 +318,7 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Pincode</label>
-                    <input name="pincode" value={formValues.pincode} onChange={handleInputChange} className="form-control" placeholder="Pincode" />
+                    <input name="pincode" type="number" value={formValues.pincode} onChange={handleInputChange} className="form-control" placeholder="Pincode" />
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Date of Birth</label>

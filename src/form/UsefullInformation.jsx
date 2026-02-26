@@ -25,11 +25,12 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
   const [form, setForm] = useState({
     title: ele?.title || "",
     target1: ele?.target1 || false,
+    countryName:ele?.countryName || "",
     target: ele?.target || false,
     iconURL: ele?.iconURL || "",
     imageURL: ele?.imageURL || "",
     description: ele?.description || "",
-    imageFile: null,
+     imageFile: null,
     iconFile: null
   });
 
@@ -173,14 +174,17 @@ const handleSubmit = async () => {
   const toastId = toast.loading(
     ele ? "Updating information..." : "Creating information..."
   );
-
+  
   try {
     let formData = {
       title: form.title,
       target1: form.target1,
       target: form.target,
       description: form.description,
+      iconURL: form.iconURL,
+      countryName: form.countryName
     };
+    console.log(formData,"::::::::::::::::::::::::::::::::::::::::::::");
     // Image upload
     if (form?.imageFile) {
       formData.imageURL = await uploadFile(form.imageFile, "image");
@@ -217,8 +221,8 @@ const handleSubmit = async () => {
         throw new Error("Please fill all required fields.");
       }
       
-      res = await dispatch(createInformation(formData));
       console.log(formData,"+++++++++++++++++")
+      res = await dispatch(createInformation(formData));
 
       if (res.meta.requestStatus !== "fulfilled") {
         throw new Error("Failed to create information alert");
@@ -498,7 +502,7 @@ const handleSubmit = async () => {
       <div className="professional-modal-overlay">
         <div className="professional-modal-content">
           <div className="profesional-modal-header">
-            <h5 className="professioal-modal-title">
+            <h5 style={{textAlign: "black"}} className="professioal-modal-title">
               {ele?._id ? "📝 Update Information" : "Add Information"}
             </h5>
             <button 
@@ -590,7 +594,7 @@ const handleSubmit = async () => {
               </div>
 
                 <div className="mb-3">
-                <label className="form-label">Country (Icon URL)</label>
+                <label className="form-label">Country Icon</label>
                 <select
                   name="iconURL"
                   value={form.iconURL || ""}
@@ -601,13 +605,30 @@ const handleSubmit = async () => {
                   <option value="">Select Country</option>
                   {(countries || []).map((c) => (
                     <option key={c._id} value={c.flagURL || ""}>{c.name}</option>
-                  ))}
+                  ))} 
                 </select>
                 {form.iconURL && (
                   <div className="mt-2">
                     <img src={form.iconURL} alt="Flag" style={{ width: "32px", height: "auto" }} />
                   </div>
                 )}
+              </div>
+
+                <div className="mb-3">
+                <label className="form-label">Country</label>
+                <select
+                  name="iconURL"
+                  value={form.countryName || ""}
+                  onChange={(e) => setForm((prev) => ({ ...prev, countryName: e.target.value }))}
+                  className="form-control"
+                  disabled={loading}
+                >
+                  <option value="">Select Country</option>
+                  {(countries || []).map((c) => (
+                    <option key={c._id} value={c.name || ""}>{c.name}</option>
+                  ))} 
+                </select>
+                
               </div>
           </div>
 

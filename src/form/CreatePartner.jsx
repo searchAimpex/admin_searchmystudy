@@ -24,7 +24,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     OwnerFatherName: ele?.OwnerFatherName || "",
     InsitutionName: ele?.InsitutionName || "",
     ContactNumber: ele?.ContactNumber || "",
-    WhatappNumber: ele?.WhatappNumber || ele?.WhatsAppNumber || "",
+    WhatappNumber: ele?.WhatappNumber || ele?.WhatappNumber || "",
     CenterCode: ele?.CenterCode || "",
     DateOfBirth: ele?.DateOfBirth ? ele.DateOfBirth.split("T")[0] : "",
     city: ele?.city || "",
@@ -294,13 +294,13 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
 
                   <div className="col-md-6">
                     <label className="form-label">Contact Number {requiredMark}</label>
-                    <input name="ContactNumber" maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
+                    <input name="ContactNumber" type="number" maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
                     {errors.ContactNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.ContactNumber}</div>}
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">WhatsApp Number {requiredMark}</label>
-                    <input maxLength={10} name="WhatappNumber" value={formValues.WhatappNumber} onChange={handleInputChange} className={`form-control ${errors.WhatappNumber ? "is-invalid" : ""}`} />
+                    <input maxLength={10} type="number" name="WhatappNumber" value={formValues.WhatappNumber} onChange={handleInputChange} className={`form-control ${errors.WhatappNumber ? "is-invalid" : ""}`} />
                     {errors.WhatappNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.WhatappNumber}</div>}
                   </div>
 
@@ -361,7 +361,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Zip Code {requiredMark}</label>
-                    <input name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
+                    <input type="number" name="zipCode" value={formValues.zipCode} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
                     {errors.zipCode && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.zipCode}</div>}
                   </div>
 

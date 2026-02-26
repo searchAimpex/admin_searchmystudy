@@ -18,7 +18,7 @@ const CountryManager = () => {
 
   /* ================= REDUX ================= */
   const countries = useSelector((state) => state.country.country || []);
-
+    console.log(countries,"|||||||||||||||||||||||||")
   /* ================= STATE ================= */
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -200,7 +200,7 @@ const CountryManager = () => {
                       />
                     </td>
 
-                    <td>{c.name}</td>
+                    <td>{c.country.name}</td>
                     <td>{c.code}</td>
 
                     <td>

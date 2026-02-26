@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { createWebinar, updateWebinar } from "../slice/webinarSlice";
 import { app } from "../firebase";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
@@ -11,20 +10,18 @@ const storage = getStorage(app);
 
 const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
-  console.log(ele);
-
   const [showPassword, setShowPassword] = useState(false);
+  const [createPassword, setCreatePassword] = useState("");
 
   const [formValues, setFormValues] = useState({
     email: ele?.email || '',
-    password: ele?.password || '',
     role: ele?.role || 'franchise',
     name: ele?.name || 'Null',
     OwnerName: ele?.OwnerName || '',
     OwnerFatherName: ele?.OwnerFatherName || '',
     InsitutionName: ele?.InsitutionName || '',
     ContactNumber: ele?.ContactNumber || '',
-    WhatsAppNumber: ele?.WhatappNumber || '',
+    WhatappNumber: ele?.WhatappNumber || '',
     CenterCode: ele?.CenterCode || '',
     DateOfBirth: ele?.DateOfBirth || '',
     city: ele?.city || '',
@@ -43,11 +40,10 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     accountedDetails: ele?.accountedDetails || '',
     IFSC: ele?.IFSC || '',
     bankName: ele?.bankName || '',
-    passwordTracker: ele?.passwordTracker || '',
     mou: ele?.mou || '',
     registration: ele?.registration || '',
   });
-  // console.log(formValues)
+
   const [uploads, setUploads] = useState({
     FrontAdhar: { progress: 0, preview: formValues.FrontAdhar || null, loading: false },
     BackAdhar: { progress: 0, preview: formValues.BackAdhar || null, loading: false },
@@ -93,14 +89,21 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
         setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], progress } }));
       },
       (error) => {
-        console.error("Upload error:", error);
         toast.error("Failed to upload " + fieldName);
-        setUploads(prev => ({ ...prev, [fieldName]: { progress: 0, preview: null, loading: false } }));
+        setUploads(prev => {
+          const prevPreview = prev[fieldName]?.preview;
+          if (prevPreview && prevPreview.startsWith("blob:")) URL.revokeObjectURL(prevPreview);
+          return { ...prev, [fieldName]: { progress: 0, preview: null, loading: false } };
+        });
       },
       async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
         setFormValues(prev => ({ ...prev, [fieldName]: url }));
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } }));
+        setUploads(prev => {
+          const prevPreview = prev[fieldName]?.preview;
+          if (prevPreview && prevPreview.startsWith("blob:")) URL.revokeObjectURL(prevPreview);
+          return { ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } };
+        });
         setErrors(prev => {
           const next = { ...prev };
           delete next[fieldName];
@@ -125,7 +128,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     if (!formValues.OwnerFatherName?.trim()) newErrors.OwnerFatherName = REQUIRED_MSG;
     if (!formValues.InsitutionName?.trim()) newErrors.InsitutionName = REQUIRED_MSG;
     if (!formValues.ContactNumber?.trim()) newErrors.ContactNumber = REQUIRED_MSG;
-    if (!formValues.WhatsAppNumber?.trim()) newErrors.WhatsAppNumber = REQUIRED_MSG;
+    if (!formValues.WhatappNumber?.trim()) newErrors.WhatappNumber = REQUIRED_MSG;
     if (!formValues.CenterCode?.trim()) newErrors.CenterCode = REQUIRED_MSG;
     if (!formValues.DateOfBirth?.trim()) newErrors.DateOfBirth = REQUIRED_MSG;
     if (!formValues.role?.trim()) newErrors.role = REQUIRED_MSG;
@@ -136,8 +139,8 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     if (!formValues.address?.trim()) newErrors.address = REQUIRED_MSG;
 
     if (!ele?._id) {
-      if (!formValues.password || formValues.password.length < 8) {
-        newErrors.password = "Password must be at least 8 characters";
+      if (!createPassword || createPassword.length < 8) {
+        newErrors.createPassword = "Password must be at least 8 characters";
       }
     }
 
@@ -161,28 +164,26 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     try {
       if (ele && ele._id) {
         const res = await dispatch(updatePartner({ id: ele._id, data: formValues }));
-        // console.log(res);
         if (updatePartner.fulfilled.match(res)) {
           toast.success("Partner updated");
           handleClose();
           fetchData?.();
         } else {
-          toast.error("Update failed");
+          const msg = res?.payload?.message ?? res?.payload ?? "Update failed";
+          toast.error(typeof msg === "string" ? msg : "Update failed");
         }
       } else {
-        const res = await dispatch(createPartner(formValues));
-        console.log(res.payload)
+        const res = await dispatch(createPartner({ ...formValues, password: createPassword }));
         if (res?.type?.endsWith("/fulfilled")) {
           toast.success("Partner created");
           handleClose();
           fetchData?.();
         } else {
-
-          toast.error(res?.payload?.message);
+          const msg = res?.payload?.message ?? res?.payload ?? "Failed to create";
+          toast.error(typeof msg === "string" ? msg : "Failed to create");
         }
       }
     } catch (err) {
-      console.error(err);
       toast.error("Unexpected error");
     }
   };
@@ -221,14 +222,14 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
 
                 <div className="col-md-6">
                   <label className="form-label">Contact Number {requiredMark}</label>
-                  <input name="ContactNumber" maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
+                  <input name="ContactNumber" type="text" inputMode="numeric" maxLength={10} value={formValues.ContactNumber} onChange={handleInputChange} className={`form-control ${errors.ContactNumber ? "is-invalid" : ""}`} />
                   {errors.ContactNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.ContactNumber}</div>}
                 </div>
 
                 <div className="col-md-6">
                   <label className="form-label">WhatsApp Number {requiredMark}</label>
-                  <input name="WhatsAppNumber" maxLength={10} value={formValues.WhatsAppNumber} onChange={handleInputChange} className={`form-control ${errors.WhatsAppNumber ? "is-invalid" : ""}`} />
-                  {errors.WhatsAppNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.WhatsAppNumber}</div>}
+                  <input type="text" inputMode="numeric" name="WhatappNumber" maxLength={10} value={formValues.WhatappNumber} onChange={handleInputChange} className={`form-control ${errors.WhatappNumber ? "is-invalid" : ""}`} />
+                  {errors.WhatappNumber && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.WhatappNumber}</div>}
                 </div>
 
                 <div className="col-md-4">
@@ -258,26 +259,31 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                   {errors.email && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.email}</div>}
                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label">Password {!ele?._id && requiredMark}</label>
-                  <div className="input-group">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      className={`form-control ${errors.password ? "is-invalid" : ""}`}
-                      value={formValues.passwordTracker || formValues.password}
-                      onChange={handleInputChange}
-                      placeholder={ele?._id ? "Leave blank to keep current" : "Enter password (min 8 characters)"}
-                    />
-                    <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword(prev => !prev)}>
-                      {showPassword ? "🙈" : "👁️"}
-                    </button>
+                {!ele?._id && (
+                  <div className="col-md-6">
+                    <label className="form-label">Password {requiredMark}</label>
+                    <div className="input-group">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={createPassword}
+                        onChange={(e) => {
+                          setCreatePassword(e.target.value);
+                          setErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.createPassword;
+                            return next;
+                          });
+                        }}
+                        className={`form-control ${errors.createPassword ? "is-invalid" : ""}`}
+                        placeholder="Enter password (min 8 characters)"
+                      />
+                      <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword((prev) => !prev)}>
+                        {showPassword ? "🙈" : "👁️"}
+                      </button>
+                    </div>
+                    {errors.createPassword && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.createPassword}</div>}
                   </div>
-                  {errors.password && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.password}</div>}
-                </div>
-
-
-
+                )}
 
 
 
@@ -295,7 +301,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                 </div>
                 <div className="col-md-4">
                   <label className="form-label">Zip Code {requiredMark}</label>
-                  <input name="zipCode" maxLength={6} type="number" value={formValues.zipCode} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
+                  <input name="zipCode" type="text" inputMode="numeric" maxLength={6} value={formValues.zipCode ?? ""} onChange={handleInputChange} className={`form-control ${errors.zipCode ? "is-invalid" : ""}`} />
                   {errors.zipCode && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors.zipCode}</div>}
                 </div>
 
@@ -312,7 +318,11 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                     {errors[f] && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors[f]}</div>}
                     {uploads[f]?.preview && (
                       <div className="mt-2">
-                        <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
+                        {(f === "mou" || f === "registration") ? (
+                          <a href={uploads[f].preview} target="_blank" rel="noopener noreferrer" className="me-2">Document uploaded</a>
+                        ) : (
+                          <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
+                        )}
                         <div>Progress: {Math.round(uploads[f].progress)}%</div>
                       </div>
                     )}
