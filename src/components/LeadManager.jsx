@@ -20,7 +20,7 @@ import { toast } from "react-toastify";
 const LeadManager = () => {
   const dispatch = useDispatch();
   const { assessment } = useSelector((state) => state.assessment);
-
+console.log(assessment)
   const tableRef = useRef(null);
 
   const [selectedIds, setSelectedIds] = useState([]);
@@ -196,6 +196,8 @@ const LeadManager = () => {
                             <th>Role</th>
                             <th>Country</th>
                             <th>Course</th>
+                              <th>Speicialization</th>
+                            <th>Course Level</th>
                             <th>Email</th>
                             <th>Phone</th>
                             <th>DOB</th>
@@ -233,7 +235,10 @@ const LeadManager = () => {
                                 <td>{ele?.User?.role}</td>
                                 <td>{ele?.Country?.name || "—"}</td>
                                 <td>{ele.Course}</td>
+                                 <td>{ele.programLevel || "—"}</td>
+                                 <td>{ele.courselevel || "—"}</td>
                                 <td>{ele.emailID}</td>
+
                                 <td>{ele.mobileNumber}</td>
                                 <td>{ele.dob}</td>
                                 <td>{ele?.User?.CenterCode}</td>

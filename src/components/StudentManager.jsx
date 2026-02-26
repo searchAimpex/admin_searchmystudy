@@ -344,6 +344,7 @@ const StudentManager = () => {
               <th>Punched By</th>
               <th>Country</th>
               <th>Course Name</th>
+              <th>Specialization</th>
               <th>State</th>
               <th>Email</th>
               <th>Phone</th>
@@ -373,7 +374,8 @@ const StudentManager = () => {
                 </td>
                 <td>{ele?.User?.role}</td>
                 <td>{ele?.Country?.name || "—"}</td>
-                <td>{ele?.Course?.ProgramName}</td>
+                <td>{ele?.Course}</td>
+                <td>{ele.programLevel || "—"}</td>
                 <td>{ele.state || "—"}</td>
                 <td>{ele.emailID}</td>
                 <td>{ele.mobileNumber}</td>
