@@ -119,11 +119,13 @@ console.log(partners,"////////////////////////////////////////");
       { name: "FrontAdhar", url: ele?.FrontAdhar },
       { name: "BackAdhar", url: ele?.BackAdhar },
       { name: "PanCard", url: ele?.PanCard },
+      { name: "ProfilePhoto", url: ele?.ProfilePhoto },
       { name: "OwnerPhoto", url: ele?.OwnerPhoto },
       { name: "OfficePhoto", url: ele?.OfficePhoto },
       { name: "CancelledCheck", url: ele?.CancelledCheck },
       { name: "Logo", url: ele?.Logo },
       { name: "MOU", url: ele?.mou },
+      { name: "Registration", url: ele?.registration },
     ];
 
     try {

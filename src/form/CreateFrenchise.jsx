@@ -42,8 +42,8 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     bankName: ele?.bankName || '',
     mou: ele?.mou || '',
     registration: ele?.registration || '',
-  });
-
+  }); 
+ 
   const [uploads, setUploads] = useState({
     FrontAdhar: { progress: 0, preview: formValues.FrontAdhar || null, loading: false },
     BackAdhar: { progress: 0, preview: formValues.BackAdhar || null, loading: false },
@@ -53,9 +53,13 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     OfficePhoto: { progress: 0, preview: formValues.OfficePhoto || null, loading: false },
     CancelledCheck: { progress: 0, preview: formValues.CancelledCheck || null, loading: false },
     Logo: { progress: 0, preview: formValues.Logo || null, loading: false },
-    mou: { progress: 0, preview: formValues.mou || null, loading: false },
+        mou: { progress: 0, preview: formValues.mou || null, loading: false },
     registration: { progress: 0, preview: formValues.registration || null, loading: false },
+
+    // mou: { progress: 0, preview: formValues.mou || null, loading: false },       
+    // registration: { progress: 0, preview: formValues.registration || null, loading: false },
   });
+ console.log(uploads)
 
   const [errors, setErrors] = useState({});
 
@@ -318,10 +322,30 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                     {errors[f] && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors[f]}</div>}
                     {uploads[f]?.preview && (
                       <div className="mt-2">
-                        {(f === "mou" || f === "registration") ? (
-                          <a href={uploads[f].preview} target="_blank" rel="noopener noreferrer" className="me-2">Document uploaded</a>
+                        {/*
+                          Previously we treated `mou` and `registration` as generic documents
+                          and only rendered a link. This prevented image previews from showing
+                          even when the uploaded file was an image, which is why the user
+                          reported that those two fields didn’t display. Instead of hard-coding
+                          field names, determine the rendering based on the file URL itself.
+                          If the preview URL looks like an image, render an <img>. Otherwise
+                          fall back to a downloadable link (useful for PDFs or other docs).
+                        */}
+                        {uploads[f].preview.match(/\.(jpe?g|png|gif|bmp|webp)(\?|$)/i) ? (
+                          <img
+                            src={uploads[f].preview}
+                            alt={f}
+                            style={{ maxWidth: 200, maxHeight: 120 }}
+                          />
                         ) : (
-                          <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
+                          <a
+                            href={uploads[f].preview}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="me-2"
+                          >
+                            Document uploaded
+                          </a>
                         )}
                         <div>Progress: {Math.round(uploads[f].progress)}%</div>
                       </div>

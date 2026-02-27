@@ -80,16 +80,16 @@ const FrenchiseManager = () => {
     const zip = new JSZip();
 
     const documents = [
-      { name: "BackAdhar", url: ele?.BackAdhar },
-      { name: "CancelledCheck", url: ele?.CancelledCheck },
       { name: "FrontAdhar", url: ele?.FrontAdhar },
-      { name: "Logo", url: ele?.Logo },
-      { name: "OfficePhoto", url: ele?.OfficePhoto },
+      { name: "BackAdhar", url: ele?.BackAdhar },
       { name: "PanCard", url: ele?.PanCard },
+      { name: "ProfilePhoto", url: ele?.ProfilePhoto },
       { name: "OwnerPhoto", url: ele?.OwnerPhoto },
+      { name: "OfficePhoto", url: ele?.OfficePhoto },
+      { name: "CancelledCheck", url: ele?.CancelledCheck },
+      { name: "Logo", url: ele?.Logo },
       { name: "MOU", url: ele?.mou },
-      { name: "Profile", url: ele?.Profile },
-      { name: "PhotoRegistration", url: ele?.Photoregistration },
+      { name: "Registration", url: ele?.registration },
     ];
 
     
