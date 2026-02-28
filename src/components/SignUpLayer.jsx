@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
@@ -6,37 +6,30 @@ import { toast } from 'react-toastify';
 import * as yup from 'yup';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import png from '../assets/SearchMyStudy.png';
-import bgImage from '../assets/bg.jpg';
-import { loginUser } from '../slice/authSlice'; // Confirm correct path!
+import { loginUser } from '../slice/authSlice';
 
 const Schema = yup.object({
   email: yup.string().email('Enter a valid email').required('Email is required'),
-  // password: yup.string().min(8, 'Password must be at least 8 chars').required('Password is required'),
+  password: yup.string().min(1, 'Password is required').required('Password is required'),
 });
 
 const SignInLayer = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { userInfo, loading, error } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
+  const [loginSuccess, setLoginSuccess] = useState(false);
+
   const formik = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema: Schema,
     onSubmit: async (values) => {
       const res = await dispatch(loginUser(values));
-      console.log(res);
-
       if (loginUser.rejected.match(res)) {
         toast.error(res.payload || 'Login failed');
         return;
       }
-
-      if (loginUser.fulfilled.match(res)) {
-        if (!res.payload.isVarified) {
-          console.log("your account is not verified!!!")
-          return;
-        }
-        toast.success('Login Successful');
-        navigate('/index-6');  // Redirect immediately after success
+      if (res?.meta?.requestStatus === 'fulfilled') {
+        setLoginSuccess(true);
       }
     },
   });
@@ -45,14 +38,17 @@ const SignInLayer = () => {
   const { errors, touched, values, handleChange, handleSubmit } = formik;
 
   useEffect(() => {
-    if (userInfo) {
+    if (loginSuccess) {
       toast.success('Login Successful');
       navigate('/frenchise-dashboard');
     }
+  }, [loginSuccess, navigate]);
+
+  useEffect(() => {
     if (error) {
       toast.error(error);
     }
-  }, [userInfo, error, navigate]);
+  }, [error]);
 
   return (
     <section className='d-flex flex-column justify-content-center align-items-center auth bg-base d-flex flex-wrap' >
