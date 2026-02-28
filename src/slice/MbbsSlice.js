@@ -19,7 +19,24 @@ export const fetchMbbsStudy = createAsyncThunk(
     }
     }
 );
-
+export const fetchAllCountry = createAsyncThunk(
+  'all/fetchAllCountry',
+    async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("https://searchmystudy.com/api/admin/countries");
+    //   console.log(response?.data,"++++++++++++==");
+      
+    return response.data
+      // return Array.isArray(response.data)
+      //   ? response.data.filter(item => item?.mbbsAbroad === true)
+      //   : [];   // returned data will be available in fulfilled reducer
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+    }
+);
 export const deleteMbbsStudy = createAsyncThunk(
   'abroad/deleteMbbsStudy',
     async (ids, { rejectWithValue }) => {

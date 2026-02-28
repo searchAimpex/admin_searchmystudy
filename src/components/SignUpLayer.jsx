@@ -17,6 +17,7 @@ const SignInLayer = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
+  const [userInfo, setUserInfo] = useState(null);
   const [loginSuccess, setLoginSuccess] = useState(false);
 
   const formik = useFormik({
@@ -29,6 +30,7 @@ const SignInLayer = () => {
         return;
       }
       if (res?.meta?.requestStatus === 'fulfilled') {
+        setUserInfo(res.payload); // { email, name, role, _id }
         setLoginSuccess(true);
       }
     },
@@ -38,11 +40,19 @@ const SignInLayer = () => {
   const { errors, touched, values, handleChange, handleSubmit } = formik;
 
   useEffect(() => {
-    if (loginSuccess) {
+    if (!loginSuccess || !userInfo?.role) return;
+
+    const role = userInfo.role;
+    if (role === 'admin') {
+      toast.success('Login Successful');
+      navigate('/dashboard'); // admin dashboard
+    } else if (role === 'partner' || role === 'franchise') {
       toast.success('Login Successful');
       navigate('/frenchise-dashboard');
+    } else {
+      toast.error('You are not authorized to access this page!');
     }
-  }, [loginSuccess, navigate]);
+  }, [loginSuccess, userInfo, navigate]);
 
   useEffect(() => {
     if (error) {

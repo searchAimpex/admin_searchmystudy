@@ -10,18 +10,21 @@ import { useSelector } from "react-redux";
 import { createFile, fetchCountry, updateFile } from "../slice/CountrySlicr";
 import { fetchAllUni } from "../slice/AbroadUniversitySlice";
 import { toast, ToastContainer } from "react-toastify";
+import { fetchAllCountry } from "../slice/MbbsSlice";
 
 const storage = getStorage(app);
 
 const CreateFile = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
-    const  {country}  = useSelector(state => state?.country);
+    const [country, setCountry] = useState([]);
+    // const  {country}  = useSelector(state => state?.country);
     const {AllUniversity}     = useSelector(state => state?.abroadUniversity)
-    console.log(AllUniversity,"++++++++++++++++++++++++++++++");
+    // console.log(country,"++++++++++++++++++++++++++++++");
     const fetchAllCountries = async () => {
-        const res = await dispatch(fetchCountry())
+        const res = await dispatch(fetchAllCountry())
         const res1 = await dispatch(fetchAllUni())
-        console.log(res1,"==================");
+        setCountry(res.payload)
+        // console.log(res.payload,"==================");
     }
     // align keys with your Mongoose schema (accept common variants from older code)
     const initial = {
