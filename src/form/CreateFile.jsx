@@ -19,7 +19,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     const [country, setCountry] = useState([]);
     // const  {country}  = useSelector(state => state?.country);
     const {AllUniversity}     = useSelector(state => state?.abroadUniversity)
-    // console.log(country,"++++++++++++++++++++++++++++++");
+    console.log(country,"++++++++++++++++++++++++++++++");
     const fetchAllCountries = async () => {
         const res = await dispatch(fetchAllCountry())
         const res1 = await dispatch(fetchAllUni())
@@ -28,7 +28,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     }
     // align keys with your Mongoose schema (accept common variants from older code)
     const initial = {
-            SecondCountry: ele?.SecondCountry?._id || ele?.SecondCountry || "",
+        SecondCountry: ele?.SecondCountry?._id || ele?.SecondCountry || "",
         type: ele?.type || "",
         name: ele?.name || "",
         template: ele?.template || "",
@@ -45,7 +45,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     }, [ele]);
 
     const [uploads, setUploads] = useState({
-        // Only template is needed for this form — keep structure similar to other forms
+        // Only template is neended for this form — keep structure similar to other forms
         template: { progress: 0, preview: initial.template || null, loading: false },
     });
 
@@ -165,10 +165,10 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                     toast.error(msg);
                 }
             } else {
-                console.log(payload);
+                // console.log(payload);
                 
                 const res = await dispatch(createFile(payload));
-                // console.log(res,"|||||||||||||||||||||||||||||||");
+                console.log(res,"|||||||||||||||||||||||||||||||");
                 
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("File created");

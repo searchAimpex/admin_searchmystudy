@@ -16,6 +16,8 @@ const FileManager = () => {
     (state) => state.country?.file?.data || []
   );
 
+  console.log(files,"**************");
+
   /* ================= STATE ================= */
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -32,7 +34,8 @@ const FileManager = () => {
   /* ================= FETCH ================= */
   const fetchData = async () => {
     await dispatch(fetchCountry());
-    await dispatch(fetchFile());
+    const res = await dispatch(fetchFile());
+    console.log(res,"**************");
   };
 
   useEffect(() => {
@@ -187,14 +190,14 @@ const FileManager = () => {
             </thead>
 
             <tbody>
-              {paginatedFiles.length === 0 ? (
+              {files.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="text-center">
                     No data found
                   </td>
                 </tr>
               ) : (
-                [...paginatedFiles].reverse().map((ele) => (
+                [...files].reverse().map((ele) => (
                   <tr key={ele._id}>
                     <td>
                       <input

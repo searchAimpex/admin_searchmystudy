@@ -173,9 +173,9 @@ const FrenchiseLayout = ({ children }) => {
             {/* ===== DASHBOARD ===== */}
             <SectionTitle title="Dashboard" />
             <li className="bg-primary rounded">
-              <NavLink to="/dashboard">
+              <NavLink to="/frenchise-dashboard">
                 <Icon icon="solar:home-smile-angle-outline" className="menu-icon text-white" />
-                <span className="text-white">D  ashboard</span>
+                <span className="text-white">D ashboard</span>
               </NavLink>
             </li>
 

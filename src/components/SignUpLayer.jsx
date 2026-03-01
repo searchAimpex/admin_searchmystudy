@@ -31,6 +31,8 @@ const SignInLayer = () => {
       }
       if (res?.meta?.requestStatus === 'fulfilled') {
         setUserInfo(res.payload); // { email, name, role, _id }
+        // console.log(res);
+        
         setLoginSuccess(true);
       }
     },
@@ -43,12 +45,14 @@ const SignInLayer = () => {
     if (!loginSuccess || !userInfo?.role) return;
 
     const role = userInfo.role;
+    console.log(role);
+    
     if (role === 'admin') {
       toast.success('Login Successful');
-      navigate('/dashboard'); // admin dashboard
+      navigate('/frenchise-dashboard'); // admin dashboard
     } else if (role === 'partner' || role === 'franchise') {
-      toast.success('Login Successful');
-      navigate('/frenchise-dashboard');
+      toast.error('You are not authorized to access this page!');
+      // navigate('/frenchise-dashboard');
     } else {
       toast.error('You are not authorized to access this page!');
     }

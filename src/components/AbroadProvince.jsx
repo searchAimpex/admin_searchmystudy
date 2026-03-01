@@ -17,7 +17,6 @@ const AbroadProvince = () => {
   const [province, setProvince] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingProvince, setEditingProvince] = useState(null);
-
   const [search, setSearch] = useState(""); // Province name filter
   const [countrySearch, setCountrySearch] = useState(""); // ✅ NEW country filter
 
@@ -25,6 +24,7 @@ const AbroadProvince = () => {
     setLoading(true);
     try {
       const res = await dispatch(fetchAbroadProvince());
+      
       if (res?.meta?.requestStatus === "fulfilled") {
         setProvince(res.payload);
       }
