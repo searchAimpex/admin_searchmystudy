@@ -24,29 +24,28 @@ const PopupManagement = () => {
   // Fetch Counsellor
   const loadCounsellors = async () => {
     const res = await dispatch(fetchPopup());
+    console.log(res,":::::::::::::::::::::::");
+    
     if (res?.meta?.requestStatus === "fulfilled") {
       setCounsellor(res.payload);
     }
   };
 
+const filterCounsellor = counsellor.filter(
+  ({ target }) => ["partner", "franchise"].includes(target)
+);
 
-    const filterCounsellor = counsellor.filter((ele)=>{
-      if(ele.target === "partner"){
-        return ele
+console.log(filterCounsellor,"===============================");
+  // Handle checkbox (select blogs)
+  const handleCheckboxChange = (id) => {
+    setSelectedIds((prevSelected) => {
+      if (prevSelected.includes(id)) {
+        return prevSelected.filter((item) => item !== id);
+      } else {
+        return [...prevSelected, id];
       }
-    })
-
-
-    // Handle checkbox (select blogs)
-    const handleCheckboxChange = (id) => {
-      setSelectedIds((prevSelected) => {
-        if (prevSelected.includes(id)) {
-          return prevSelected.filter((item) => item !== id);
-        } else {
-          return [...prevSelected, id];
-        }
-      });
-    };
+    });
+  };
 
   // Delete single OR multiple blogs
   const handleDelete = async (id) => {
@@ -92,7 +91,13 @@ const PopupManagement = () => {
       <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
         <h5 className="card-title mb-0">Popup Table</h5>
         <div>
-        
+          <button
+            type="button"
+            className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
+            onClick={() => setShowModal(true)}
+          >
+            Create Lead
+          </button>
 
           {selectedIds.length > 0 && (
             <button
@@ -101,13 +106,15 @@ const PopupManagement = () => {
             >
               Delete Selected ({selectedIds.length})
             </button>
-          )}   <button
+          )}   
+          
+          {/* <button
             type="button"
             className="btn rounded-pill text-primary radius-8 px-4 py-2"
             onClick={() => setShowModal(true)}
           >
             Add University
-          </button>
+          </button> */}
 
 
           {showModal && <Popup loadCounsellors={loadCounsellors} ele={editingCounsellor} handleClose={() => {
@@ -145,9 +152,9 @@ const PopupManagement = () => {
             <thead>
               <tr>
                 <th scope="col"><div className="form-check style-check d-flex align-items-center">
-                      <input className="form-check-input" type="checkbox" />
-                      <label className="form-check-label">S.L</label>
-                    </div>
+                  <input className="form-check-input" type="checkbox" />
+                  <label className="form-check-label">S.L</label>
+                </div>
                 </th>
                 <th scope="col">Title</th>
                 <th scope="col">Target</th>
@@ -160,26 +167,28 @@ const PopupManagement = () => {
               {[...filterCounsellor].reverse().map((ele, ind) => (
                 <tr key={ele._id || ind}>
                   <td>
-                  <div className="form-check style-check d-flex align-items-center">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          checked={selectedIds.includes(ele._id)}
-                          onChange={() => handleCheckboxChange(ele._id)}
-                        />
-                        <label className="form-check-label">{ind + 1}</label>
-                      </div>
+                    <div className="form-check style-check d-flex align-items-center">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        checked={selectedIds.includes(ele._id)}
+                        onChange={() => handleCheckboxChange(ele._id)}
+                      />
+                      <label className="form-check-label">{ind + 1}</label>
+                    </div>
                   </td>
                   <td>
                     {ele?.title}
                   </td>
-                    <td>
+
+                  <td>
                     {ele?.target}
                   </td>
-                    <td>
-                      <a target="_blank" href={ele?.imageURL}>Click To View</a>
+
+                  <td>
+                    <a target="_blank" href={ele?.imageURL}>Click To View</a>
                   </td>
-                    
+
                   <td>
                     <Link
                       onClick={() => {
@@ -191,7 +200,7 @@ const PopupManagement = () => {
                     >
                       <Icon icon="lucide:edit" />
                     </Link>
-             
+
                   </td>
                 </tr>
               ))}

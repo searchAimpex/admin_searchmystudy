@@ -27,7 +27,6 @@ export const createPopup = createAsyncThunk(
 
       const data = await response.json();
       console.log("Success response data:", data);
-      fetchWebinar();
       return data;
 
     } catch (error) {

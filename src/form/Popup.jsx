@@ -152,7 +152,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
     console.log("Final formData to dispatch:", formData);
 
     try { 
-        console.log( formData,"-------------------------");
+      console.log( formData,"-------------------------");
       const res = await dispatch(createPopup(formData));
       console.log( res,"-------------------------");
 
@@ -245,7 +245,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
                 >
                   <option value="partner">Partner</option>
                   <option value="Searchmystudy">Searchmystudy</option>
-                  <option value="Coursefinder">Coursefinder</option>
+                  <option value="franchise">Franchise</option>
                 </select>
                 {errors.target && (
                   <div className="invalid-feedback">{errors.target}</div>
