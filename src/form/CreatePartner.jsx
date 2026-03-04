@@ -1,17 +1,40 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createPartner, updatePartner } from "../slice/PartnerSlice";
 
-const storage = getStorage(app);
+const FILE_FIELDS_LIST = [
+  "ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "CounsellorCode",
+  "OwnerPhoto", "OfficePhoto", "mou", "registration", "VistOffice",
+  "CancelledCheck", "Logo", "accountedDetails",
+];
+
+// Must match backend multer .fields([{ name: "FrontAdhar" }, ...]) exactly.
+// If you get "Unexpected field", check your backend and keep only the names it allows.
+const MULTER_FILE_FIELD_NAMES = [
+  "FrontAdhar", "BackAdhar", "PanCard", "ProfilePhoto", "CounsellorCode",
+  "OwnerPhoto", "OfficePhoto", "mou", "registration", "VisitOffice",
+  "CancelledCheck", "Logo", "accountedDetails",
+];
+
+const formFileKeyToMulterName = (key) => (key === "VistOffice" ? "VisitOffice" : key);
+
+function getFileNameFromUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  try {
+    const path = url.split("?")[0];
+    const segment = path.split("/").filter(Boolean).pop() || "";
+    return segment || url;
+  } catch {
+    return url;
+  }
+}
 
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
-  console.log(ele, "-----------------------");
   const [showPassword, setShowPassword] = useState(false);
+  const uploadsRef = useRef({});
 
   const initial = {
     name: ele?.name || ele?.OwnerName || "demo",
@@ -31,18 +54,19 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     state: ele?.state || "",
     zipCode: ele?.zipCode || "",
     address: ele?.address || "",
-    FrontAdhar: ele?.FrontAdhar || ele?.FrontAadhar || "",
-    BackAdhar: ele?.BackAdhar || ele?.BackAadhar || "",
-    PanCard: ele?.PanCard || "",
-    ProfilePhoto: ele?.ProfilePhoto || "",
-    OwnerPhoto: ele?.OwnerPhoto || "",
-    OfficePhoto: ele?.OfficePhoto || "",
-    VistOffice: ele?.VistOffice || ele?.VisitOffice || "",
-    CancelledCheck: ele?.CancelledCheck || "",
-    Logo: ele?.Logo || "",
-    mou: ele?.mou || ele?.MOU || "",
-    registration: ele?.registration || ele?.Registration || "",
-    accountedDetails: ele?.accountedDetails || "",
+    FrontAdhar: getFileNameFromUrl(ele?.FrontAdhar || ele?.FrontAadhar || ""),
+    BackAdhar: getFileNameFromUrl(ele?.BackAdhar || ele?.BackAadhar || ""),
+    PanCard: getFileNameFromUrl(ele?.PanCard || ""),
+    ProfilePhoto: getFileNameFromUrl(ele?.ProfilePhoto || ""),
+    OwnerPhoto: getFileNameFromUrl(ele?.OwnerPhoto || ""),
+    OfficePhoto: getFileNameFromUrl(ele?.OfficePhoto || ""),
+    VistOffice: getFileNameFromUrl(ele?.VistOffice || ele?.VisitOffice || ""),
+    CancelledCheck: getFileNameFromUrl(ele?.CancelledCheck || ""),
+    Logo: getFileNameFromUrl(ele?.Logo || ""),
+    mou: getFileNameFromUrl(ele?.mou || ele?.MOU || ""),
+    registration: getFileNameFromUrl(ele?.registration || ele?.Registration || ""),
+    accountedDetails: getFileNameFromUrl(ele?.accountedDetails || ""),
+    CounsellorCode: getFileNameFromUrl(ele?.CounsellorCode || ""),
     IFSC: ele?.IFSC || "",
     bankName: ele?.bankName || "",
     bio: ele?.bio || "",
@@ -50,38 +74,56 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
 
   const [formValues, setFormValues] = useState(initial);
 
+  const [uploads, setUploads] = useState({
+    FrontAdhar: { progress: 0, preview: initial.FrontAdhar || null, file: null },
+    BackAdhar: { progress: 0, preview: initial.BackAdhar || null, file: null },
+    PanCard: { progress: 0, preview: initial.PanCard || null, file: null },
+    ProfilePhoto: { progress: 0, preview: initial.ProfilePhoto || null, file: null },
+    CounsellorCode: { progress: 0, preview: initial.CounsellorCode || null, file: null },
+    OwnerPhoto: { progress: 0, preview: initial.OwnerPhoto || null, file: null },
+    OfficePhoto: { progress: 0, preview: initial.OfficePhoto || null, file: null },
+    mou: { progress: 0, preview: initial.mou || null, file: null },
+    registration: { progress: 0, preview: initial.registration || null, file: null },
+    VistOffice: { progress: 0, preview: initial.VistOffice || null, file: null },
+    CancelledCheck: { progress: 0, preview: initial.CancelledCheck || null, file: null },
+    Logo: { progress: 0, preview: initial.Logo || null, file: null },
+    accountedDetails: { progress: 0, preview: initial.accountedDetails || null, file: null },
+  });
+
+  uploadsRef.current = uploads;
+
   useEffect(() => {
-    setFormValues(prev => ({ ...prev, ...(ele || {}) }));
-    // populate upload previews from ele if available
+    if (!ele) return;
+    setFormValues(prev => {
+      const next = { ...prev, ...ele };
+      FILE_FIELDS_LIST.forEach(f => {
+        if (uploadsRef.current[f]?.file) {
+          next[f] = uploadsRef.current[f].file.name;
+        } else {
+          const src = f === "VistOffice" ? (ele.VisitOffice || ele.VistOffice) : ele[f];
+          next[f] = getFileNameFromUrl(src || "");
+        }
+      });
+      return next;
+    });
     // eslint-disable-next-line
   }, [ele]);
 
-  const [uploads, setUploads] = useState({
-    FrontAdhar: { progress: 0, preview: initial.FrontAdhar || null, loading: false },
-    BackAdhar: { progress: 0, preview: initial.BackAdhar || null, loading: false },
-    PanCard: { progress: 0, preview: initial.PanCard || null, loading: false },
-    ProfilePhoto: { progress: 0, preview: initial.ProfilePhoto || null, loading: false },
-    OwnerPhoto: { progress: 0, preview: initial.OwnerPhoto || null, loading: false },
-    OfficePhoto: { progress: 0, preview: initial.OfficePhoto || null, loading: false },
-    CancelledCheck: { progress: 0, preview: initial.CancelledCheck || null, loading: false },
-    Logo: { progress: 0, preview: initial.Logo || null, loading: false },
-    mou: { progress: 0, preview: initial.mou || null, loading: false },
-    registration: { progress: 0, preview: initial.registration || null, loading: false },
-  });
-
-  // keep uploads previews in sync when ele changes
+  // keep uploads previews in sync when ele changes (don't overwrite if user just selected a new file)
   useEffect(() => {
     if (!ele) return;
     setUploads(prev => {
       const next = { ...prev };
       Object.keys(next).forEach(k => {
-        if (ele[k]) next[k].preview = ele[k];
+        if (prev[k]?.file) return;
+        const src = k === "VistOffice" ? (ele.VisitOffice || ele.VistOffice) : ele[k];
+        if (src) next[k] = { ...next[k], preview: src };
       });
       return next;
     });
   }, [ele]);
 
-  const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
+  const anyUploading = () => false;
 
   const requiredMark = <span style={{ color: "red" }}>*</span>;
 
@@ -99,36 +141,14 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const handleFileChange = (e, fieldName) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const previewURL = URL.createObjectURL(file);
-    setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL, progress: 0 } }));
-
-    const storageRef = ref(storage, `partners/${fieldName}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], progress } }));
-      },
-      (error) => {
-        console.error("Upload error:", error);
-        toast.error("Failed to upload " + fieldName);
-        setUploads(prev => ({ ...prev, [fieldName]: { progress: 0, preview: null, loading: false } }));
-      },
-      async () => {
-        const url = await getDownloadURL(uploadTask.snapshot.ref);
-        setFormValues(prev => ({ ...prev, [fieldName]: url }));
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } }));
-        setErrors(prev => {
-          const next = { ...prev };
-          delete next[fieldName];
-          return next;
-        });
-        toast.success(`${fieldName} uploaded`);
-      }
-    );
+    setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], preview: previewURL, file, progress: 100 } }));
+    setFormValues(prev => ({ ...prev, [fieldName]: file.name }));
+    setErrors(prev => {
+      const next = { ...prev };
+      delete next[fieldName];
+      return next;
+    });
   };
 
   const REQUIRED_MSG = "This field is required";
@@ -147,7 +167,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     if (!formValues.email?.trim()) newErrors.email = REQUIRED_MSG;
     if (!formValues.city?.trim()) newErrors.city = REQUIRED_MSG;
     if (!formValues.state?.trim()) newErrors.state = REQUIRED_MSG;
-    if (formValues.zipCode === undefined || formValues.zipCode === "" || String(formValues.zipCode).trim() === "") newErrors.zipCode = REQUIRED_MSG;
+    if (!formValues.zipCode === undefined || formValues.zipCode === "" || String(formValues.zipCode).trim() === "") newErrors.zipCode = REQUIRED_MSG;
     if (!formValues.address?.trim()) newErrors.address = REQUIRED_MSG;
 
     if (!ele?._id) {
@@ -156,8 +176,11 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       }
     }
 
-    fileFields.forEach((f) => {
-      if (!formValues[f]?.trim()) newErrors[f] = REQUIRED_MSG;
+    const requiredFileFields = ["ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "OwnerPhoto", "OfficePhoto", "CancelledCheck", "Logo", "mou", "registration"];
+    requiredFileFields.forEach((f) => {
+      const hasFile = uploads[f]?.file;
+      const hasValue = formValues[f]?.trim?.();
+      if (!hasFile && !hasValue) newErrors[f] = REQUIRED_MSG;
     });
 
     setErrors(newErrors);
@@ -169,89 +192,122 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const [errors, setErrors] = useState({});
 
   const fileFields = [
-    "ProfilePhoto",
-    "FrontAdhar",
-    "BackAdhar",
-    "PanCard",
-    "OwnerPhoto",
-    "OfficePhoto",
-    "CancelledCheck",
-    "Logo",
-    "mou",
-    "registration",
+    "ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "CounsellorCode",
+    "OwnerPhoto", "OfficePhoto", "mou", "registration", "VistOffice",
+    "CancelledCheck", "Logo", "accountedDetails",
   ];
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (anyUploading()) {
-      toast.error("Please wait for file uploads to finish.");
-      return;
-    }
-
-    if (!validateForm()) {
-      console.log(formValues)
-      toast.error("Please fix validation errors.");
-      return;
-    }
-
+  
     try {
-      const payload = { ...formValues };
-
-      // ensure there's a 'name' field. backend may require name; prefer explicit name or OwnerName
-      if ((!payload.name || String(payload.name).trim() === "") && payload.OwnerName) {
-        payload.name = payload.OwnerName;
-      }
-
-      // remove empty-string fields to avoid backend validation failures for optional fields
-      Object.keys(payload).forEach((k) => {
-        if (payload[k] === "" || payload[k] === undefined) delete payload[k];
+      const formData = new FormData();
+  
+      // FILE FIELDS
+      fileFields.forEach((formKey) => {
+        const multerName = formFileKeyToMulterName(formKey);
+  
+        // backend multer allowed fields check
+        if (!MULTER_FILE_FIELD_NAMES.includes(multerName)) return;
+  
+        // new file selected
+        if (uploads[formKey]?.file) {
+          formData.append(multerName, uploads[formKey].file);
+        }
+        // existing file URL
+        else if (
+          uploads[formKey]?.preview &&
+          !String(uploads[formKey].preview).startsWith("blob:")
+        ) {
+          formData.append(multerName, uploads[formKey].preview);
+        }
       });
-
-      // coerce zipCode to number if present and numeric
-      if (payload.zipCode !== undefined) {
-        const z = Number(payload.zipCode);
-        if (!Number.isNaN(z)) payload.zipCode = z;
-        else delete payload.zipCode;
-      }
-
-      if (payload.DateOfBirth) {
-        payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
-      }
-
-      // don't overwrite password with empty value on update
-      if (ele && ele._id && !payload.password) delete payload.password;
-
+  
+      // TEXT FIELDS
+      const name =
+        (formValues.name && String(formValues.name).trim()) ||
+        formValues.OwnerName ||
+        "";
+  
+      const dateOfBirth = formValues.DateOfBirth
+        ? new Date(formValues.DateOfBirth).toISOString()
+        : "";
+  
+      const password =
+        ele && ele._id && !formValues.password
+          ? undefined
+          : formValues.password;
+  
+      if (name) formData.append("name", name);
+      if (formValues.email) formData.append("email", formValues.email);
+      if (password !== undefined && password !== "")
+        formData.append("password", password);
+      if (formValues.role) formData.append("role", formValues.role);
+      if (formValues.OwnerName)
+        formData.append("OwnerName", formValues.OwnerName);
+      if (formValues.OwnerFatherName)
+        formData.append("OwnerFatherName", formValues.OwnerFatherName);
+      if (formValues.InsitutionName)
+        formData.append("InsitutionName", formValues.InsitutionName);
+      if (formValues.ContactNumber)
+        formData.append("ContactNumber", formValues.ContactNumber);
+      if (formValues.WhatappNumber)
+        formData.append("WhatappNumber", formValues.WhatappNumber);
+      if (formValues.CenterCode)
+        formData.append("CenterCode", formValues.CenterCode);
+      if (dateOfBirth) formData.append("DateOfBirth", dateOfBirth);
+      if (formValues.city) formData.append("city", formValues.city);
+      if (formValues.state) formData.append("state", formValues.state);
+      if (formValues.zipCode !== "" && formValues.zipCode !== undefined)
+        formData.append("zipCode", formValues.zipCode);
+      if (formValues.address) formData.append("address", formValues.address);
+      if (formValues.IFSC) formData.append("IFSC", formValues.IFSC);
+      if (formValues.bankName) formData.append("bankName", formValues.bankName);
+      if (formValues.bio) formData.append("bio", formValues.bio);
+  
+      // DEBUG
+      const sentKeys = [];
+      formData.forEach((_, key) => {
+        if (!sentKeys.includes(key)) sentKeys.push(key);
+      });
+  
+      console.log("FormData keys sent:", sentKeys);
+  
+      // UPDATE
       if (ele && ele._id) {
-        console.log(payload, "-------------------------")
-        const res = await dispatch(updatePartner({ id: ele._id, data: payload }));
+        const res = await dispatch(updatePartner({ id: ele._id, data: formData }));
+  
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner updated");
           fetchData?.();
           handleClose?.();
         } else {
-          const msg = res?.payload?.message || res?.error?.message || "Update failed";
+          const msg =
+            res?.payload?.message ||
+            res?.error?.message ||
+            "Update failed";
           toast.error(msg);
         }
-      } else {
-        // console.log(payload, "//////////------------/////////////////////");
-
-        const res = await dispatch(createPartner(payload));
-        console.log(res)
+      }
+  
+      // CREATE
+      else {
+        const res = await dispatch(createPartner(formData));
+        console.log(res,"???????????????????????????????????");
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner created");
           fetchData?.();
-          handleClose?.();
+          handleClose?.();c
         } else {
-          // surface full server error for easier debugging
-          const msg = res?.payload || res?.error || res;
-          console.error("createPartner failed:", msg);
-          const userMsg = (res?.payload && res.payload.message) || (res?.error && res.error.message) || "Creation failed";
-          toast.error(userMsg);
+          const msg =
+            res?.payload?.message ||
+            res?.error?.message ||
+            "Creation failed";
+  
+          toast.error(msg);
         }
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       toast.error("Unexpected error");
     }
   };
@@ -376,10 +432,13 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                       <label className="form-label">{f} {requiredMark}</label>
                       <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, f)} className={`form-control ${errors[f] ? "is-invalid" : ""}`} />
                       {errors[f] && <div className="invalid-feedback d-block" style={{ color: "red" }}>{errors[f]}</div>}
-                      {uploads[f]?.preview && (
+                      {(uploads[f]?.preview || formValues[f]) && (
                         <div className="mt-2">
-                          <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
-                          <div>Progress: {Math.round(uploads[f].progress)}%</div>
+                          {uploads[f]?.preview && (
+                            <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
+                          )}
+                          {formValues[f] && <div className="small text-muted">{formValues[f]}</div>}
+                          <div>Progress: {Math.round(uploads[f]?.progress ?? 0)}%</div>
                         </div>
                       )}
                     </div>
@@ -390,7 +449,9 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={handleClose}>Close</button>
-                <button type="submit" className="btn btn-primary" disabled={anyUploading()}>
+                <button type="submit" className="btn btn-primary" 
+                // disabled={anyUploading()}
+                >
                   {anyUploading() ? "Uploading..." : (ele && ele._id ? "Update Partner" : "Create Partner")}
                 </button>
               </div>

@@ -3,32 +3,21 @@ import axios from 'axios';
 
 
 
+const API_BASE = 'http://localhost:5001/api/users';
+
 export const createPartner = createAsyncThunk(
   'blogs/createPartner',
-  async (partnerData, thunkAPI) => {
+  async (partnerData, { rejectWithValue }) => {
     try {
-      console.log("Sending Webinar data:", partnerData);
-      const response = await fetch("https://searchmystudy.com/api/users", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(partnerData),
-      });
-
-      // console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        // console.error("Error response data:", errorData);
-        return thunkAPI.rejectWithValue(errorData);
-      }
-
-      const data = await response.json();
-      return data;
+      const isFormData = partnerData instanceof FormData;
+      const config = isFormData
+        ? {} // let browser set Content-Type with boundary for FormData
+        : { headers: { 'Content-Type': 'application/json' } };
+      const response = await axios.post(`${API_BASE}`, partnerData, config);
+      return response.data;
     } catch (error) {
-      console.error("Fetch error:", error);
-      return thunkAPI.rejectWithValue(error.message);
+      const message = error.response?.data?.message ?? error.response?.data ?? error.message;
+      return rejectWithValue(typeof message === 'string' ? message : 'Request failed');
     }
   }
 );
@@ -76,17 +65,21 @@ export const deletePartner = createAsyncThunk(
 );
 export const updatePartner = createAsyncThunk(
   'blogs/updateWebinar',
-  async ({id, data}, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue }) => {
     if (!id) {
-      return rejectWithValue({ message: "No Webinar ID provided" });
+      return rejectWithValue({ message: "No User ID provided" });
     }
     try {
-      const response = await axios.put(`https://searchmystudy.com/api/users/updateUser/${id}`,data);
-      // fetchWebinar();     
-      // console.log("Update response:", response.data);
+      const isFormData = data instanceof FormData;
+      const config = {
+        withCredentials: true,
+        ...(isFormData ? {} : { headers: { 'Content-Type': 'application/json' } }),
+      };
+      const response = await axios.put(`${API_BASE}/updateUser/${id}`, data, config);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      const msg = error.response?.data?.message ?? error.response?.data ?? error.message;
+      return rejectWithValue(typeof msg === 'string' ? msg : 'Update failed');
     }
   }
 );
