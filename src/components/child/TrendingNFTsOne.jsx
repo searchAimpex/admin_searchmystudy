@@ -74,7 +74,7 @@ const TrendingNFTsOne = () => {
                     />
                   </div>
                   <div className="p-10">
-                    <h6 className="text-md fw-bold text-primary-light">
+                    <h6 className="text-md fw-bold text-primary-light"> 
                       {ele?.name || "Unnamed NFT"}
                     </h6>
                     <div className="d-flex align-items-center gap-8">
@@ -82,34 +82,34 @@ const TrendingNFTsOne = () => {
                         src={ele?.template || "/placeholder.png"}
                         className="w-28-px h-28-px rounded-circle object-fit-cover"
                         alt={ele?.name || "NFT"}
-                      />
+                      />   
                       <span className="text-sm text-secondary-light fw-medium">
                         {ele?.type || "Unknown"}
-                      </span>
+                      </span>   
                     </div>
                     <div className="mt-10 d-flex align-items-center justify-content-between gap-8 flex-wrap">
                       <span className="text-sm text-secondary-light fw-medium">
-                        <b>Country:</b> {ele?.SecondCountry?.name || "N/A"}
-                      </span>
+                        <b>Country:</b> {ele?.SecondCountry?.name || "N/A"}  
+                      </span>         
                       <span className="text-sm fw-semibold text-primary-600">
                         {ele?.createdAt
                           ? new Date(ele.createdAt).toLocaleDateString("en-GB")
                           : "N/A"}
-                      </span>
+                      </span>   
                     </div>
                     <div className="d-flex align-items-center flex-wrap mt-12 gap-8">
-                      <Link
+                      {/* <Link
                         to="#"
                         className="btn rounded-pill border text-neutral-500 border-neutral-500 radius-8 px-12 py-6 bg-hover-neutral-500 text-hover-white flex-grow-1"
                       >
                         History
-                      </Link>
-                      <Link
+                      </Link>    */}
+                      {/* <Link
                         to="#"
                         className="btn rounded-pill btn-primary-600 radius-8 px-12 py-6 flex-grow-1"
                       >
                         Buy Now
-                      </Link>
+                      </Link>   */}
                     </div>
                   </div>
                 </div>
