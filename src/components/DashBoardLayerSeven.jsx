@@ -36,7 +36,7 @@ const DashBoardLayerSeven = () => {
             <TrendingBidsOne />
 
             {/* TrendingNFTsOne */}
-            <TrendingNFTsOne />
+            {/* <TrendingNFTsOne /> */}
 
             {/* RecentBidOne */}
             <RecentBidOne />
