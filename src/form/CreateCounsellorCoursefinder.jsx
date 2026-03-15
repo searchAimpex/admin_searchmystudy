@@ -1,172 +1,291 @@
-import React, { useState } from "react";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { useDispatch } from "react-redux";
-import { createTestemonial, fetchTestemonial, updateTestemonial } from "../slice/testemonialsManagementSlice";
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { app } from "../firebase";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const storage = getStorage(app);
 
-const CreateCounsellorCoursefinder = ({ ele, handleClose, loadCounsellors }) => {
-  const dispatch = useDispatch();
+const FILE_FIELDS = [
+  "FrontAdhar",
+  "BackAdhar",
+  "PanCard",
+  "ProfilePhoto",
+  "OwnerPhoto",
+  "OfficePhoto",
+  "mou",
+  "registration",
+  "VistOffice",
+  "CancelledCheck",
+  "Logo",
+];
 
-  const [form, setForm] = useState({
-    title: ele?.title || "",
-    name: ele?.name || "",
-    location: ele?.location || "",
-    role: ele?.role || "",
-    degree: ele?.degree || "",
-    experience: ele?.experience || "",
-    description: ele?.description || "",
-    rating: ele?.rating || 5,
-    imageURL: ele?.imageURL || "",
-    imageFile: null,
-  });
+const FILE_LABELS = {
+  FrontAdhar: "Front Adhar",
+  BackAdhar: "Back Adhar",
+  PanCard: "Pan Card",
+  ProfilePhoto: "Profile Photo",
+  OwnerPhoto: "Owner Photo",
+  OfficePhoto: "Office Photo",
+  mou: "MOU",
+  registration: "Registration",
+  VistOffice: "Visit Office",
+  CancelledCheck: "Cancelled Check",
+  Logo: "Logo",
+};
 
-  const [uploads, setUploads] = useState({
-    image: { progress: 0, preview: null, loading: false },
-  });
+const createInitialForm = (ele) => ({
+  name: ele?.name || "",
+  email: ele?.email || "",
+  password: "",
+  role: ele?.role || "counsellor",
+  createdBy: ele?.createdBy?._id || ele?.createdBy || "",
+  block: ele?.block || false,
+  OwnerName: ele?.OwnerName || "",
+  OwnerFatherName: ele?.OwnerFatherName || "",
+  InsitutionName: ele?.InsitutionName || "",
+  ContactNumber: ele?.ContactNumber || "",
+  status: ele?.status || false,
+  WhatappNumber: ele?.WhatappNumber || "",
+  CenterCode: ele?.CenterCode || "",
+  DateOfBirth: ele?.DateOfBirth ? ele.DateOfBirth.split("T")[0] : "",
+  city: ele?.city || "",
+  state: ele?.state || "",
+  zipCode: ele?.zipCode || "",
+  address: ele?.address || "",
+  FrontAdhar: ele?.FrontAdhar || "",
+  BackAdhar: ele?.BackAdhar || "",
+  PanCard: ele?.PanCard || "",
+  ProfilePhoto: ele?.ProfilePhoto || "",
+  CounsellorCOde: ele?.CounsellorCOde || "",
+  OwnerPhoto: ele?.OwnerPhoto || "",
+  OfficePhoto: ele?.OfficePhoto || "",
+  mou: ele?.mou || "",
+  registration: ele?.registration || "",
+  VistOffice: ele?.VistOffice || "",
+  CancelledCheck: ele?.CancelledCheck || "",
+  Logo: ele?.Logo || "",
+  accountedDetails: ele?.accountedDetails || "",
+  IFSC: ele?.IFSC || "",
+  bankName: ele?.bankName || "",
+  bio: ele?.bio || "",
+});
 
-  const [imageValid, setImageValid] = useState(false);
+const CreateCounsellorCoursefinder = ({
+  ele,
+  handleClose,
+  fetchData,
+  loadCounsellors,
+}) => {
+  const [form, setForm] = useState(() => createInitialForm(ele));
   const [errors, setErrors] = useState({});
+  const [uploads, setUploads] = useState(() =>
+    FILE_FIELDS.reduce((acc, field) => {
+      acc[field] = {
+        progress: 0,
+        preview: ele?.[field] || null,
+        loading: false,
+      };
+      return acc;
+    }, {})
+  );
 
-  // File change handler
-  const handleFileChange = (e, field) => {
-    const file = e.target.files[0];
+  const refreshList = fetchData || loadCounsellors;
+
+  useEffect(() => {
+    setForm(createInitialForm(ele));
+    setUploads(
+      FILE_FIELDS.reduce((acc, field) => {
+        acc[field] = {
+          progress: 0,
+          preview: ele?.[field] || null,
+          loading: false,
+        };
+        return acc;
+      }, {})
+    );
+  }, [ele]);
+
+  const anyUploading = useMemo(
+    () => Object.values(uploads).some((item) => item.loading),
+    [uploads]
+  );
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  };
+
+  const handleFileChange = (e, fieldName) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const previewURL = URL.createObjectURL(file);
-    setForm((prev) => ({ ...prev, imageFile: file, imageURL: "" }));
     setUploads((prev) => ({
       ...prev,
-      image: { ...prev.image, preview: previewURL, progress: 0, loading: false },
+      [fieldName]: {
+        ...prev[fieldName],
+        preview: previewURL,
+        progress: 0,
+        loading: true,
+      },
     }));
-    validateImage(file);
-    setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
 
-  // Validate image dimensions
-  const validateImage = (file) => {
-    const img = new Image();
-    const reader = new FileReader();
+    const storageRef = ref(
+      storage,
+      `counsellors/${fieldName}/${Date.now()}_${file.name}`
+    );
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-    reader.onload = (e) => {
-      img.src = e.target.result;
-    };
-
-    img.onload = () => {
-      if (img.width === 300 && img.height === 250) {
-        setImageValid(true);
-        toast.success("Valid image uploaded!");
-      } else {
-        setImageValid(false);
-        toast.error("Image dimensions must be 300x250 pixels.");
-        toast.error("Image dimensions must be 300x250 pixels.");
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploads((prev) => ({
+          ...prev,
+          [fieldName]: { ...prev[fieldName], progress },
+        }));
+      },
+      (error) => {
+        console.error("Upload error:", error);
+        toast.error(`Failed to upload ${FILE_LABELS[fieldName]}`);
+        setUploads((prev) => ({
+          ...prev,
+          [fieldName]: {
+            ...prev[fieldName],
+            progress: 0,
+            loading: false,
+          },
+        }));
+      },
+      async () => {
+        const url = await getDownloadURL(uploadTask.snapshot.ref);
+        setForm((prev) => ({ ...prev, [fieldName]: url }));
+        setUploads((prev) => ({
+          ...prev,
+          [fieldName]: {
+            ...prev[fieldName],
+            preview: url,
+            progress: 100,
+            loading: false,
+          },
+        }));
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[fieldName];
+          return next;
+        });
+        toast.success(`${FILE_LABELS[fieldName]} uploaded`);
       }
-    };
-
-    img.onerror = () => {
-      setImageValid(false);
-      toast.error("Invalid image file.");
-    };
-
-    reader.readAsDataURL(file);
+    );
   };
 
-  // Validate form
   const validateForm = () => {
     const newErrors = {};
-    if (!form.title.trim()) newErrors.title = "Title is required";
+
     if (!form.name.trim()) newErrors.name = "Name is required";
-    if (!form.imageFile && !form.imageURL) newErrors.imageURL = "Image is required";
-    if (form.rating < 1 || form.rating > 5) newErrors.rating = "Rating must be between 1 and 5";
-    if (!imageValid && form.imageFile) newErrors.imageURL = "Image dimensions are invalid";
+    if (!form.email.trim()) newErrors.email = "Email is required";
+    if (!form.role.trim()) newErrors.role = "Role is required";
+    if (!form.WhatappNumber.trim()) {
+      newErrors.WhatappNumber = "WhatsApp number is required";
+    }
+
+    if (!ele?._id && (!form.password || form.password.length < 8)) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
+      newErrors.email = "Enter a valid email";
+    }
+
+    if (form.zipCode && Number.isNaN(Number(form.zipCode))) {
+      newErrors.zipCode = "Zip code must be a number";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Upload image to Firebase
-  const uploadImage = async (file) => {
-    return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, `counsellors/${file?.name}`);
-      const metadata = {
-        contentType: file?.type,
-        contentDisposition: "inline",
-      };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
+    if (anyUploading) {
+      toast.error("Please wait for file uploads to finish.");
+      return;
+    }
 
-      setUploads((prev) => ({ ...prev, image: { ...prev.image, loading: true } }));
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploads((prev) => ({ ...prev, image: { ...prev.image, progress } }));
-        },
-        (error) => {
-          setUploads((prev) => ({ ...prev, image: { ...prev.image, loading: false, progress: 0 } }));
-          reject(error);
-        },
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          setUploads((prev) => ({ ...prev, image: { ...prev.image, loading: false, progress: 100 } }));
-          resolve(url);
-        }
-      );
-    });
-  };
-
-  // Submit handler
-  const handleSubmit = async () => {
-    let formData = {};
-    if (form?.imageFile) {
-      const imageUrl = await uploadImage(form.imageFile);
-      formData = { ...form, imageURL: imageUrl };
-    } else if (form?.imageURL) {
-      formData = { ...form, imageURL: form.imageURL };
-    } else {
-      toast.error("Please upload an image");
+    if (!validateForm()) {
+      toast.error("Please fix the form errors.");
       return;
     }
 
     try {
-      if (ele && ele._id) {
-        // Updatecons
-        // console.log(formData,"---------------------")
-        const res = await dispatch(updateTestemonial({ id: ele._id, data: formData }));
-        console.log(res);
-        
-        if (updateTestemonial.fulfilled.match(res)) {
-          toast.success("Counsellor updated successfully!");
-          dispatch(fetchTestemonial());
-          handleClose();
-          loadCounsellors();
-        } else {
-          toast.error("Failed to update Counsellor");
-        }
+      const payload = { ...form };
+
+      if (payload.password) {
+        payload.passwordTracker = payload.password;
       } else {
-        // Create
-        if (!validateForm()) {
-          toast.error("Please fill in all required fields with valid image.");
-          return;
-        }
-        console.log(formData,":::::::::::::::::::::::::::;");
-        
-        const res = await dispatch(createTestemonial(formData));
-        console.log(res);
-        
-        if (res?.meta?.requestStatus == "fulfilled") {
-          toast.success("Counsellor created successfully!!");
-          loadCounsellors();
-          handleClose();
-        } else {
-          toast.error("Failed to create Counsellor");
-        }
+        delete payload.password;
       }
+
+      if (!payload.createdBy) delete payload.createdBy;
+      if (!payload.DateOfBirth) {
+        delete payload.DateOfBirth;
+      } else {
+        payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
+      }
+
+      if (payload.zipCode === "" || payload.zipCode === null) {
+        delete payload.zipCode;
+      } else {
+        payload.zipCode = Number(payload.zipCode);
+      }
+
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] === "") delete payload[key];
+      });
+
+      let response;
+      if (ele?._id) {
+        if (!form.password) delete payload.passwordTracker;
+        response = await axios.put(
+          `https://searchmystudy.com/api/users/updateUser/${ele._id}`,
+          payload
+        );
+        toast.success(response?.data?.message || "Counsellor updated successfully");
+      } else {
+        delete payload.CounsellorCOde;
+        response = await axios.post(
+          "https://searchmystudy.com/api/admin/extrauser",
+          payload
+        );
+        toast.success(response?.data?.message || "Counsellor created successfully");
+      }
+
+      refreshList?.();
+      handleClose?.();
     } catch (error) {
-      toast.error("Unexpected error: " + error.message);
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        error.message ||
+        "Something went wrong";
+      toast.error(String(message));
     }
   };
 
@@ -174,132 +293,140 @@ const CreateCounsellorCoursefinder = ({ ele, handleClose, loadCounsellors }) => 
     <>
       <ToastContainer />
       <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
-        <div className="modal-dialog" style={{ maxWidth: "800px" }}>
+        <div className="modal-dialog modal-dialog-scrollable" style={{ maxWidth: "1100px" }}>
           <div className="modal-content p-4">
             <div className="modal-header">
-              <h5 className="modal-title">{ele?._id ? "Update Counselor" : "Add Counselor"}</h5>
+              <h5 className="modal-title">
+                {ele?._id ? "Update Counselor" : "Add Counselor"}
+              </h5>
               <button type="button" className="btn-close" onClick={handleClose}></button>
             </div>
-
-            <div className="modal-body grid grid-cols-2 gap-3">
-              {/* Title */}
-              <div className="mb-3 col-span-2">
-                <label className="form-label">Title *</label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                  className={`form-control ${errors.title ? "is-invalid" : ""}`}
-                />
-                {errors.title && <div className="invalid-feedback">{errors.title}</div>}
-              </div>
-
-              {/* Name */}
-              <div className="mb-3">
-                <label className="form-label">Name *</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className={`form-control ${errors.name ? "is-invalid" : ""}`}
-                />
-                {errors.name && <div className="invalid-feedback">{errors.name}</div>}
-              </div>
-
-              {/* Location */}
-              <div className="mb-3">
-                <label className="form-label">Location</label>
-                <input
-                  type="text"
-                  value={form.location}
-                  onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-                  className="form-control"
-                />
-              </div>
-
-              {/* Role */}
-              <div className="mb-3">
-                <label className="form-label">Role</label>
-                <input
-                  type="text"
-                  value={form.role}
-                  onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}
-                  className="form-control"
-                />
-              </div>
-
-              {/* Degree */}
-              <div className="mb-3">
-                <label className="form-label">Degree</label>
-                <input
-                  type="text"
-                  value={form.degree}
-                  onChange={(e) => setForm((prev) => ({ ...prev, degree: e.target.value }))}
-                  className="form-control"
-                />
-              </div>
-
-              {/* Experience */}
-              <div className="mb-3">
-                <label className="form-label">Experience</label>
-                <input
-                  type="text"
-                  value={form.experience}
-                  onChange={(e) => setForm((prev) => ({ ...prev, experience: e.target.value }))}
-                  className="form-control"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="mb-3 col-span-2">
-                <label className="form-label">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                  className="form-control"
-                  rows="3"
-                />
-              </div>
-
-              {/* Rating */}
-              <div className="mb-3">
-                <label className="form-label">Rating *</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={5}
-                  value={form.rating}
-                  onChange={(e) => setForm((prev) => ({ ...prev, rating: e.target.value }))}
-                  className={`form-control ${errors.rating ? "is-invalid" : ""}`}
-                />
-                {errors.rating && <div className="invalid-feedback">{errors.rating}</div>}
-              </div>
-
-              {/* Image */}
-              <div className="mb-3">
-                <label className="form-label">Image *</label>
-                <p className="text-[10px]">Image size should be 300x250 px</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "imageURL")}
-                  className={`form-control ${errors.imageURL ? "is-invalid" : ""}`}
-                />
-                {ele?.imageURL && (
-                  <div className="mt-2">
-                    <img src={ele?.imageURL} alt="preview" style={{ width: "150px" }} />
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body">
+                <div className="row g-3">
+                  <div className="col-12">
+                    <h6 className="border-bottom pb-2 mb-0">Basic Details</h6>
                   </div>
-                )}
-                {errors.imageURL && <div className="invalid-feedback">{errors.imageURL}</div>}
-              </div>
-            </div>
 
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={handleClose}>Close</button>
-              <button className="btn btn-primary" onClick={handleSubmit}>
-                {ele && ele._id ? "Update" : "Create"}
-              </button>
-            </div>
+                  <div className="col-md-6">
+                    <label className="form-label">Name *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleInputChange}
+                      className={`form-control ${errors.name ? "is-invalid" : ""}`}
+                    />
+                    {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">Email *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleInputChange}
+                      className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                    />
+                    {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Password {ele?._id ? "" : "*"}
+                    </label>
+                    <input
+                      type="text"
+                      name="password"
+                      value={form.password}
+                      onChange={handleInputChange}
+                      className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                      placeholder={ele?._id ? "Leave blank to keep existing password" : ""}
+                    />
+                    {errors.password && (
+                      <div className="invalid-feedback">{errors.password}</div>
+                    )}
+                  </div>
+
+                  <div className="col-md-3">
+                    <label className="form-label">Role *</label>
+                    <select
+                      name="role"
+                      value={form.role}
+                      onChange={handleInputChange}
+                      className={`form-select ${errors.role ? "is-invalid" : ""}`}
+                    >
+                      <option value="counsellor">Counsellor</option>
+                      <option value="partner">Partner</option>
+                      <option value="franchise">Franchise</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    {errors.role && <div className="invalid-feedback">{errors.role}</div>}
+                  </div>
+
+                  <div className="col-md-3">
+                    <label className="form-label">Counsellor Code</label>
+                    <input
+                      type="text"
+                      name="CounsellorCOde"
+                      value={form.CounsellorCOde}
+                      onChange={handleInputChange}
+                      className="form-control"
+                      disabled={!ele?._id}
+                      placeholder={ele?._id ? "" : "Auto generated"}
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label">Created By</label>
+                    <input
+                      type="text"
+                      name="createdBy"
+                      value={form.createdBy}
+                      onChange={handleInputChange}
+                      className="form-control"
+                      placeholder="User ID of parent account"
+                    />
+                  </div>
+
+                  <div className="col-md-3">
+                    <label className="form-label">WhatsApp Number *</label>
+                    <input
+                      type="text"
+                      name="WhatappNumber"
+                      value={form.WhatappNumber}
+                      onChange={handleInputChange}
+                      className={`form-control ${errors.WhatappNumber ? "is-invalid" : ""}`}
+                    />
+                    {errors.WhatappNumber && (
+                      <div className="invalid-feedback">{errors.WhatappNumber}</div>
+                    )}
+                  </div>
+
+                  <div className="col-md-3">
+                    <label className="form-label">Contact Number</label>
+                    <input
+                      type="text"
+                      name="ContactNumber"
+                      value={form.ContactNumber}
+                      onChange={handleInputChange}
+                      className="form-control"
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button className="btn btn-secondary" type="button" onClick={handleClose}>
+                  Close
+                </button>
+                <button className="btn btn-primary" type="submit" disabled={anyUploading}>
+                  {ele?._id ? "Update" : "Create"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

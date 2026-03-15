@@ -96,7 +96,7 @@ console.log(filterCounsellor,"===============================");
             className="mx-4 btn rounded-pill text-primary radius-8 px-4 py-2"
             onClick={() => setShowModal(true)}
           >
-            Create Lead
+            Create Popup
           </button>
 
           {selectedIds.length > 0 && (
@@ -120,7 +120,7 @@ console.log(filterCounsellor,"===============================");
           {showModal && <Popup loadCounsellors={loadCounsellors} ele={editingCounsellor} handleClose={() => {
             setShowModal(false);
             setEditingCounsellor();
-          }} />}
+          }} />}   
         </div>
       </div>
       <div className="card-body overflow-x-auto">

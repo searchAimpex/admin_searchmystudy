@@ -17,13 +17,24 @@ const storage = getStorage(app);
 const CreateFile = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
     const [country, setCountry] = useState([]);
+    const [loading, setLoading] = useState(false);
     // const  {country}  = useSelector(state => state?.country);
-    const {AllUniversity}     = useSelector(state => state?.abroadUniversity)
-    console.log(country,"++++++++++++++++++++++++++++++");
+    const { AllUniversity } = useSelector(state => state?.abroadUniversity)
+    console.log(country, "++++++++++++++++++++++++++++++");
     const fetchAllCountries = async () => {
-        const res = await dispatch(fetchAllCountry())
-        const res1 = await dispatch(fetchAllUni())
-        setCountry(res.payload)
+        try {
+            setLoading(true);
+
+            const res = await dispatch(fetchAllCountry());
+            const res1 = await dispatch(fetchAllUni());
+
+            setCountry(res.payload);
+            // setCountry(res.payload)
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
         // console.log(res.payload,"==================");
     }
     // align keys with your Mongoose schema (accept common variants from older code)
@@ -32,7 +43,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
         type: ele?.type || "",
         name: ele?.name || "",
         template: ele?.template || "",
-        university:ele?.university || ""
+        university: ele?.university || ""
     };
 
     const [formValues, setFormValues] = useState(initial);
@@ -132,21 +143,21 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
 
         try {
             const payload = { ...formValues };
-            
+
             // Remove empty User field or fields that are empty strings
             if (!payload.User || payload.User.trim() === "") {
                 delete payload.User;
             }
-            
+
             // Remove empty dob if not set
             if (!payload.dob) {
                 delete payload.dob;
             }
-            
+
             if (payload.DateOfBirth) {
                 payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
             }
-            
+
             // don't overwrite password with empty value on update
             if (ele && ele._id && !payload.password) delete payload.password;
 
@@ -154,7 +165,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                 // console.log(payload,"::::::::::::::::::::::::::::::::::::::::::::");
                 const res = await dispatch(updateFile({ id: ele._id, data: payload }));
                 // console.log(res);
-                
+
                 // toast.success("File updated");
                 if (res?.meta?.requestStatus === "fulfilled") {
                     fetchData?.();
@@ -166,10 +177,10 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                 }
             } else {
                 // console.log(payload);
-                
+
                 const res = await dispatch(createFile(payload));
-                console.log(res,"|||||||||||||||||||||||||||||||");
-                
+                console.log(res, "|||||||||||||||||||||||||||||||");
+
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("File created");
                     fetchData?.();
@@ -213,27 +224,37 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
 
                                         </select>
                                     </div>
-                                     <div className="col-md-4">
+                                    <div className="col-md-4">
                                         <label className="form-label">University</label>
                                         <select name="university" value={formValues?.university?.name} onChange={handleInputChange} className="form-control">
                                             <option value="">Select University</option>
-                                           {
-                                            AllUniversity.map((e)=>(
-                                                <option key={e._id} value={e._id}>{e.name}</option>
-                                            ))
-                                           }
+                                            {
+                                                AllUniversity.map((e) => (
+                                                    <option key={e._id} value={e._id}>{e.name}</option>
+                                                ))
+                                            }
 
                                         </select>
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Country</label>
-                                        <select name="SecondCountry" value={formValues?.SecondCountry || ""} onChange={handleInputChange} className="form-control">
+                                        <select
+                                            name="SecondCountry"
+                                            value={formValues?.SecondCountry || ""}
+                                            onChange={handleInputChange}
+                                            className="form-control"
+                                        >
                                             <option value="">Select Country</option>
-                                            {
-                                                country.map((e) => (
-                                                    <option key={e._id} value={e._id}>{e.name}</option>
+
+                                            {loading ? (
+                                                <option disabled>Loading countries...</option>
+                                            ) : (
+                                                country?.map((e) => (
+                                                    <option key={e._id} value={e._id}>
+                                                        {e.name}
+                                                    </option>
                                                 ))
-                                            }
+                                            )}
                                         </select>
                                     </div>
 

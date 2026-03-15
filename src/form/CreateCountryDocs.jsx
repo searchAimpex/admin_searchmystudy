@@ -158,7 +158,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                 }
             } else {
                 const res = await dispatch(createSecondCountry(payload));
-                console.log(res,"||||||||||||||||||||||||||||||")
+                // console.log(res,"||||||||||||||||||||||||||||||")
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Country created");
                     fetchData?.();
@@ -287,7 +287,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                             </div>
                                         )}
                                     </div>
-
+{/* 
                                     <div className="col-md-6 mt-3">
                                         <label className="form-label">Flag Image</label>
                                         <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'flagURL')} className="form-control" />
@@ -297,7 +297,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                                 <div>Progress: {Math.round(uploads.flagURL.progress)}%</div>
                                             </div>
                                         )}
-                                    </div>
+                                    </div> */}
 
                                 </div>
                             </div>

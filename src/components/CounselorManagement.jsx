@@ -280,7 +280,7 @@ const CounselorManagement = () => {
               <th>Password</th>
               <th>Center Name</th>
               <th>Center Code</th>
-              {/* <th>Contact</th> */}
+              <th>Status</th>
               <th>Created</th>
               <th>Action</th>
             </tr>
@@ -307,7 +307,7 @@ const CounselorManagement = () => {
                 <td>{renderValue(ele?.passwordTracker)}</td>
                 <td>{renderValue(ele?.createdBy?.name)}</td>
                 <td>{renderValue(ele?.createdBy?.CenterCode)}</td>
-                {/* <td>{renderValue(ele?.WhatappNumber)}</td> */}
+                <td>{renderValue(ele?.block?"Block":"Unblock")}</td>
                 <td>{renderValue(ele?.createdAt)}</td>
                 <td>
                   <button

@@ -22,8 +22,12 @@ const DashBoardLayerSeven = () => {
 
   return (
     <>
-      <div className='row gy-4'>
-        <div className='col-xxl-8'>
+      <div 
+      // className='row gy-4'
+      >
+        <div
+        //  className='col-xxl-8'
+         >
           <div className='row gy-4'>
             {/* BannerInnerOne */}
             {/* <BannerInnerOne /> */}
@@ -39,21 +43,21 @@ const DashBoardLayerSeven = () => {
           </div>
         </div>
 
-        <div className='col-xxl-4'>
+        {/* <div className='col-xxl-4'>
           <div className='row gy-4'>
-            {/* ETHPriceOne */}
+           
             <ETHPriceOne />
 
-            {/* StatisticsOne */}
+          
             <StatisticsOne />
 
-            {/* FeaturedCreatorsOne */}
+            
             <FeaturedCreatorsOne />
 
-            {/* FeaturedCreatorsTwo */}
+         
             <FeaturedCreatorsTwo />
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

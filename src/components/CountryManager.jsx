@@ -33,7 +33,6 @@ const CountryManager = () => {
   const fetchData = async () => {
     const rs = await dispatch(fetchCountry());
     console.log(rs,"::::::::::::::::");
-    
   };
 
   useEffect(() => {
@@ -218,8 +217,8 @@ const CountryManager = () => {
                     </td>
 
                     <td>
-                      {c.flagURL ? (
-                        <a href={c.flagURL} target="_blank">Link</a>
+                      {c?.country?.flagURL ? (
+                        <a href={c.country?.flagURL} target="_blank">Link</a>
                       ) : "—"}
                     </td>
 

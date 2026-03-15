@@ -19,8 +19,8 @@ const TransactionManagement = () => {
         dispatch(FetchTransaction());
     }, [dispatch]);
 
-    // ✅ Filtering logic (SAFE)
-    const filteredTransaction = transaction?.filter((item) => {
+    // ✅ Filtering logic (SAFE) – ensure result is always an array
+    const filteredTransaction = (transaction?.filter((item) => {
         const matchTransactionID = filterTransactionID
             ? item?.transactionID
                   ?.toLowerCase()
@@ -34,7 +34,7 @@ const TransactionManagement = () => {
             : true;
 
         return matchTransactionID && matchCenterCode;
-    });
+    }) ?? []);
 
 
 

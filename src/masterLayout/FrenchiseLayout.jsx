@@ -175,7 +175,7 @@ const FrenchiseLayout = ({ children }) => {
             <li className="bg-primary rounded">
               <NavLink to="/frenchise-dashboard">
                 <Icon icon="solar:home-smile-angle-outline" className="menu-icon text-white" />
-                <span className="text-white">D ashboard</span>
+                <span className="text-white">Dashboard</span>
               </NavLink>
             </li>
 
@@ -223,14 +223,14 @@ const FrenchiseLayout = ({ children }) => {
             <li>
               <NavLink to="/file-management">
                 <Icon icon="mdi:file-document-multiple-outline" className="menu-icon" />
-                <span>File / Template</span>
+                <span>Add Marketing Item</span>
               </NavLink>
             </li>
 
             <li>
               <NavLink to="/nav-management">
                 <Icon icon="mdi:view-dashboard-outline" className="menu-icon" />
-                <span>Navigation</span>
+                <span>Add Navigation</span>
               </NavLink>
             </li>
 
@@ -268,14 +268,14 @@ const FrenchiseLayout = ({ children }) => {
             <li>
               <NavLink to="/commission-management">
                 <Icon icon="mdi:percent-outline" className="menu-icon" />
-                <span>Add Center Payment</span>
+                <span>Add Commission List</span>
               </NavLink>
             </li>
 
             <li>
               <NavLink to="/transaction-management">
                 <Icon icon="mdi:cash-multiple" className="menu-icon" />
-                <span>Center Payments</span>
+                <span>Add Center Payments</span>
               </NavLink>
             </li>
 

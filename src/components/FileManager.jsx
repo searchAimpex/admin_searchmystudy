@@ -45,24 +45,22 @@ const FileManager = () => {
   /* ================= FILTER ================= */
   const filteredFiles = useMemo(() => {
     return files.filter((f) => {
-      const countryMatch = f?.SecondCountry?.name
-        ?.toLowerCase()
-        .includes(countryFilter.toLowerCase());
+      const countryName = f?.SecondCountry?.name?.toLowerCase() || "";
+      const universityName = f?.university?.name?.toLowerCase() || "";
+      const fileType = f?.type?.toLowerCase() || "";
 
-      const universityMatch = f?.university?.name
-        ?.toLowerCase()
-        .includes(universityFilter.toLowerCase());
-
-      const typeMatch = f?.type
-        ?.toLowerCase()
-        .includes(typeFilter.toLowerCase()); // ✅ NEW
+      const countryMatch = countryName.includes(countryFilter.toLowerCase());
+      const universityMatch = universityName.includes(
+        universityFilter.toLowerCase()
+      );
+      const typeMatch = fileType.includes(typeFilter.toLowerCase());
 
       return countryMatch && universityMatch && typeMatch;
     });
   }, [files, countryFilter, universityFilter, typeFilter]);
 
   /* ================= PAGINATION ================= */
-  const totalPages = Math.ceil(filteredFiles.length / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filteredFiles.length / PAGE_SIZE));
 
   const paginatedFiles = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -190,14 +188,14 @@ const FileManager = () => {
             </thead>
 
             <tbody>
-              {files.length === 0 ? (
+              {filteredFiles.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="text-center">
                     No data found
                   </td>
                 </tr>
               ) : (
-                [...files].reverse().map((ele) => (
+                [...paginatedFiles].reverse().map((ele) => (
                   <tr key={ele._id}>
                     <td>
                       <input
