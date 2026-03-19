@@ -94,6 +94,8 @@ const CommissionManager = () => {
     fetchData();
   };
 
+
+  console.log(comission,"++++++++++++++++");
   /* ================= JSX ================= */
   return (
     <div className="card">

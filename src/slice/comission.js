@@ -66,32 +66,23 @@ export const updateLoanLead = createAsyncThunk(
 );
 export const createCommission = createAsyncThunk(
   'comission/createCommission',
-  async (blogData, thunkAPI) => {
+  async (data, thunkAPI) => {
     try {
-
-      const response = await fetch("https://searchmystudy.com/api/admin/commission", {
+      const isFormData = data instanceof FormData;
+      const config = {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(blogData),
-      });
-
-      console.log("Response status:", response.status);
+        ...(isFormData ? { body: data } : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
+      };
+      const response = await fetch("http://localhost:5001/api/admin/commission", config);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response data:", errorData);
-        return thunkAPI.rejectWithValue(errorData);
+        const errorData = await response.json().catch(() => ({}));
+        return thunkAPI.rejectWithValue(errorData?.message || errorData || 'Request failed');
       }
 
-      const data = await response.json();
-      console.log("Success response data:", data);
-      return data;
-
+      return await response.json();
     } catch (error) {
-      console.error("Fetch error:", error);
-      return thunkAPI.rejectWithValue(error.message);
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
     }
   }
 );

@@ -18,12 +18,19 @@ export const FetchTransaction = createAsyncThunk(
 
 export const createTransaction = createAsyncThunk(
   "transaction/createTransaction",
-  async (data)=>{
+  async (data, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`https://searchmystudy.com/api/admin/transaction`,data)
-      return response.data
+      const config = data instanceof FormData
+        ? {} // browser sets multipart/form-data with boundary
+        : { headers: { "Content-Type": "application/json" } };
+      const response = await axios.post(
+        "http://localhost:5001/api/admin/transaction",
+        data,
+        config
+      );
+      return response.data;
     } catch (error) {
-      console.log(error)
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 )

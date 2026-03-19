@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { allCountry } from "../slice/AbroadSlice";
 import { useSelector } from "react-redux";
-import { createFile, fetchCountry, updateFile } from "../slice/CountrySlicr";
+import { fetchCountry, updateFile } from "../slice/CountrySlicr";
 import { createCommission } from "../slice/comission";
-
-const storage = getStorage(app);
 
 const CreateCommission = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
@@ -48,8 +43,7 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
     }, [dispatch]);
 
     const [uploads, setUploads] = useState({
-        // only fileURL preview is needed for this component
-        fileURL: { progress: 0, preview: initial.fileURL || null, loading: false },
+        fileURL: { preview: initial.fileURL || null, file: null },
     });
 
     // keep uploads previews in sync when ele changes
@@ -57,12 +51,12 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
         if (!ele) return;
         setUploads(prev => {
             const next = { ...prev };
-            if (ele.fileURL) next.fileURL = { ...next.fileURL, preview: ele.fileURL };
+            if (ele.fileURL && !prev.fileURL?.file) next.fileURL = { ...next.fileURL, preview: ele.fileURL };
             return next;
         });
     }, [ele]);
 
-    const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
+    const anyUploading = () => false;
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -72,31 +66,8 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
     const handleFileChange = (e, fieldName) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         const previewURL = URL.createObjectURL(file);
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL, progress: 0 } }));
-
-        const storageRef = ref(storage, `partners/${fieldName}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on(
-            "state_changed",
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], progress } }));
-            },
-            (error) => {
-                console.error("Upload error:", error);
-                toast.error("Failed to upload " + fieldName);
-                setUploads(prev => ({ ...prev, [fieldName]: { progress: 0, preview: null, loading: false } }));
-            },
-            async () => {
-                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                setFormValues(prev => ({ ...prev, [fieldName]: url }));
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } }));
-                toast.success(`${fieldName} uploaded`);
-            }
-        );
+        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], preview: previewURL, file } }));
     };
 
     const validateForm = () => {
@@ -126,52 +97,36 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
         // }
 
         try {
-            const payload = { ...formValues };
-            // normalize SecondCountry to an _id before sending
-            if (payload.SecondCountry) {
-                // if already an _id present in countries, keep it
-                if (Array.isArray(country) && country.find(c => c._id === payload.SecondCountry)) {
-                    // OK
-                } else if (Array.isArray(country)) {
-                    // try to resolve by name
-                    const found = country.find(c => c.name === payload.SecondCountry || c._id === payload.SecondCountry);
-                    if (found) payload.SecondCountry = found._id;
-                }
-            }
-            
-            // keep target as string (options are "franchise" / "partner")
-            if (payload.target == null) payload.target = "";
-
-            // Remove empty User field or fields that are empty strings
-            if (!payload.User || payload.User.trim() === "") {
-                delete payload.User;
-            }
-            
-            // Remove empty dob if not set
-            if (!payload.dob) {
-                delete payload.dob;
-            }
-            
-            if (payload.DateOfBirth) {
-                payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
-            }
-            
-            // don't overwrite password with empty value on update
-            if (ele && ele._id && !payload.password) delete payload.password;
+            const secondCountryId = (() => {
+                const sc = formValues.SecondCountry;
+                if (!sc) return "";
+                if (Array.isArray(country) && country.find(c => c._id === sc)) return sc;
+                const found = country?.find(c => c.name === sc || c._id === sc);
+                return found ? found._id : sc;
+            })();
 
             if (ele && ele._id) {
+                const payload = { ...formValues, SecondCountry: secondCountryId };
+                if (payload.target == null) payload.target = "";
                 const res = await dispatch(updateFile({ id: ele._id, data: payload }));
-                
                 toast.success("File updated");
                 if (res?.meta?.requestStatus === "fulfilled") {
-                    fetchData();
-                    // handleClose?.();
+                    fetchData?.();
                 } else {
                     const msg = res?.payload?.message || res?.error?.message || "Update failed";
                     toast.error(msg);
                 }
             } else {
-               const res = await dispatch(createCommission(payload)); 
+                const formData = new FormData();
+                if (uploads.fileURL?.file) {
+                    formData.append("fileURL", uploads.fileURL.file);
+                } else if (uploads.fileURL?.preview && !String(uploads.fileURL.preview).startsWith("blob:")) {
+                    formData.append("fileURL", uploads.fileURL.preview);
+                }
+                formData.append("SecondCountry", secondCountryId);
+                formData.append("title", formValues.title || "");
+                formData.append("target", formValues.target ?? "");
+                const res = await dispatch(createCommission(formData));
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Commission created");
                     fetchData?.();
@@ -221,12 +176,11 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" name="fileURL" id="fileURL" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'fileURL')} className="form-control" />
                                         {uploads?.fileURL?.preview && (
                                             <div className="mt-2">
-                                                {typeof uploads.fileURL.preview === 'string' && uploads.fileURL.preview.toLowerCase().includes('.pdf') ? (
+                                                {(uploads.fileURL.file?.name?.toLowerCase().endsWith('.pdf') || (typeof uploads.fileURL.preview === 'string' && uploads.fileURL.preview.toLowerCase().includes('.pdf'))) ? (
                                                     <a href={uploads.fileURL.preview} target="_blank" rel="noreferrer">Open File (PDF)</a>
                                                 ) : (
                                                     <img src={uploads.fileURL.preview} alt="file" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                 )}
-                                                <div>Progress: {Math.round(uploads.fileURL.progress)}%</div>
                                             </div>
                                         )}
                                     </div>

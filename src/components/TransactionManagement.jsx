@@ -59,7 +59,7 @@ const TransactionManagement = () => {
         setSelectedIds([]);
         dispatch(FetchTransaction());
     };
-
+    console.log(filteredTransaction)
     return (
         <div className="card">
             {/* HEADER */}

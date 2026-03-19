@@ -1,17 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { app } from "../firebase";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import {  createTransaction } from "../slice/transaction";
+import { createTransaction } from "../slice/transaction";
 
-const storage = getStorage(app);
+const FILE_FIELDS = ["invoice", "receipt", "other"];
 
 const CreateTransaction = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
@@ -33,20 +26,24 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
 
   /* ================= FILE UPLOAD STATE ================= */
   const [uploads, setUploads] = useState({
-    invoice: { progress: 0, preview: ele?.invoice || null, loading: false },
-    receipt: { progress: 0, preview: ele?.receipt || null, loading: false },
-    other: { progress: 0, preview: ele?.other || null, loading: false },
+    invoice: { preview: ele?.invoice || null, file: null },
+    receipt: { preview: ele?.receipt || null, file: null },
+    other: { preview: ele?.other || null, file: null },
   });
 
   useEffect(() => {
     if (ele) {
       setFormValues({ ...initial });
+      setUploads({
+        invoice: { preview: ele?.invoice || null, file: null },
+        receipt: { preview: ele?.receipt || null, file: null },
+        other: { preview: ele?.other || null, file: null },
+      });
     }
     // eslint-disable-next-line
   }, [ele]);
 
-  const anyUploading = () =>
-    Object.values(uploads).some((u) => u.loading);
+  const anyUploading = () => false;
 
   /* ================= INPUT HANDLER ================= */
   const handleInputChange = (e) => {
@@ -58,75 +55,41 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
   const handleFileChange = (e, field) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const storageRef = ref(
-      storage,
-      `transactions/${field}/${Date.now()}_${file.name}`
-    );
-
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    setUploads((prev) => ({
-      ...prev,
-      [field]: { ...prev[field], loading: true, progress: 0 },
-    }));
-
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploads((prev) => ({
-          ...prev,
-          [field]: { ...prev[field], progress },
-        }));
-      },
-      (error) => {
-        console.error(error);
-        toast.error(`Failed to upload ${field}`);
-        setUploads((prev) => ({
-          ...prev,
-          [field]: { progress: 0, preview: null, loading: false },
-        }));
-      },
-      async () => {
-        const url = await getDownloadURL(uploadTask.snapshot.ref);
-        setFormValues((prev) => ({ ...prev, [field]: url }));
-        setUploads((prev) => ({
-          ...prev,
-          [field]: { progress: 100, preview: url, loading: false },
-        }));
-        toast.success(`${field} uploaded`);
-      }
-    );
+    const previewURL = URL.createObjectURL(file);
+    setUploads((prev) => ({ ...prev, [field]: { ...prev[field], preview: previewURL, file } }));
   };
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (anyUploading()) {
-      toast.error("Please wait for uploads to finish");
-      return;
-    }
-
     try {
+      const formData = new FormData();
+
+      FILE_FIELDS.forEach((f) => {
+        if (uploads[f]?.file) {
+          formData.append(f, uploads[f].file);
+        } else if (uploads[f]?.preview && !String(uploads[f].preview).startsWith("blob:")) {
+          formData.append(f, uploads[f].preview);
+        }
+      });
+
+      formData.append("amount", formValues.amount ?? "");
+      formData.append("transactionDate", formValues.transactionDate ?? "");
+      formData.append("transactionID", formValues.transactionID ?? "");
+      formData.append("transactionMode", formValues.transactionMode ?? "");
+      formData.append("remarks", formValues.remarks ?? "");
+      formData.append("centerCode", formValues.centerCode ?? "");
+
       let res;
       if (ele?._id) {
-        res = await dispatch(
-          // updateTransaction({ id: ele._id, data: formValues })
-        );
+        res = await dispatch(/* updateTransaction({ id: ele._id, data: formData }) */);
       } else {
-        console.log(formValues);
-        
-        res = await dispatch(createTransaction(formValues));
-
+        res = await dispatch(createTransaction(formData));
       }
 
       if (res?.meta?.requestStatus === "fulfilled") {
-        toast.success(
-          ele ? "Transaction updated" : "Transaction created"
-        );
+        toast.success(ele ? "Transaction updated" : "Transaction created");
         fetchData?.();
         handleClose?.();
       } else {
@@ -250,7 +213,7 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
                     </h6>
                   </div>
 
-                  {["invoice", "receipt", "other"].map((f) => (
+                  {FILE_FIELDS.map((f) => (
                     <div className="col-md-4" key={f}>
                       <label className="form-label fw-semibold">
                         {f.toUpperCase()}
