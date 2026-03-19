@@ -4,6 +4,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createPartner, updatePartner } from "../slice/PartnerSlice";
 
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
 const FILE_FIELDS_LIST = [
   "ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "CounsellorCode",
   "OwnerPhoto", "OfficePhoto", "mou", "registration", "VistOffice",
@@ -29,6 +31,12 @@ function getFileNameFromUrl(url) {
   } catch {
     return url;
   }
+}
+
+function getPreviewUrl(value) {
+  if (!value || typeof value !== "string") return "";
+  if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+  return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
 }
 
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
@@ -296,7 +304,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner created");
           fetchData?.();
-          handleClose?.();c
+          // handleClose?.();c
         } else {
           const msg =
             res?.payload?.message ||
@@ -435,7 +443,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
                       {(uploads[f]?.preview || formValues[f]) && (
                         <div className="mt-2">
                           {uploads[f]?.preview && (
-                            <img src={uploads[f].preview} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
+                            <img src={getPreviewUrl(uploads[f].preview)} alt={f} style={{ maxWidth: 200, maxHeight: 120 }} />
                           )}
                           {formValues[f] && <div className="small text-muted">{formValues[f]}</div>}
                           <div>Progress: {Math.round(uploads[f]?.progress ?? 0)}%</div>

@@ -1,12 +1,18 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createPartner, updatePartner } from "../slice/PartnerSlice";
 
-const storage = getStorage(app);
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+const formFileKeyToMulterName = (key) => (key === "VistOffice" ? "VisitOffice" : key);
+
+function getPreviewUrl(value) {
+  if (!value || typeof value !== "string") return "";
+  if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+  return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+}
 
 const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
@@ -16,7 +22,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   const [formValues, setFormValues] = useState({
     email: ele?.email || '',
     role: ele?.role || 'franchise',
-    name: ele?.name || 'Null',
+    name: ele?.name || ele?.OwnerName || '',
     OwnerName: ele?.OwnerName || '',
     OwnerFatherName: ele?.OwnerFatherName || '',
     InsitutionName: ele?.InsitutionName || '',
@@ -32,7 +38,7 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     BackAdhar: ele?.BackAdhar || null,
     PanCard: ele?.PanCard || null,
     ProfilePhoto: ele?.ProfilePhoto || null,
-    VisitOffice: ele?.VistOffice || '',
+    VistOffice: ele?.VistOffice || ele?.VisitOffice || '',
     OfficePhoto: ele?.OfficePhoto || null,
     OwnerPhoto: ele?.OwnerPhoto || null,
     CancelledCheck: ele?.CancelledCheck || null,
@@ -45,21 +51,17 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
   }); 
  
   const [uploads, setUploads] = useState({
-    FrontAdhar: { progress: 0, preview: formValues.FrontAdhar || null, loading: false },
-    BackAdhar: { progress: 0, preview: formValues.BackAdhar || null, loading: false },
-    PanCard: { progress: 0, preview: formValues.PanCard || null, loading: false },
-    ProfilePhoto: { progress: 0, preview: formValues.ProfilePhoto || null, loading: false },
-    OwnerPhoto: { progress: 0, preview: formValues.OwnerPhoto || null, loading: false },
-    OfficePhoto: { progress: 0, preview: formValues.OfficePhoto || null, loading: false },
-    CancelledCheck: { progress: 0, preview: formValues.CancelledCheck || null, loading: false },
-    Logo: { progress: 0, preview: formValues.Logo || null, loading: false },
-        mou: { progress: 0, preview: formValues.mou || null, loading: false },
-    registration: { progress: 0, preview: formValues.registration || null, loading: false },
-
-    // mou: { progress: 0, preview: formValues.mou || null, loading: false },       
-    // registration: { progress: 0, preview: formValues.registration || null, loading: false },
+    FrontAdhar: { progress: 0, preview: formValues.FrontAdhar || null, file: null },
+    BackAdhar: { progress: 0, preview: formValues.BackAdhar || null, file: null },
+    PanCard: { progress: 0, preview: formValues.PanCard || null, file: null },
+    ProfilePhoto: { progress: 0, preview: formValues.ProfilePhoto || null, file: null },
+    OwnerPhoto: { progress: 0, preview: formValues.OwnerPhoto || null, file: null },
+    OfficePhoto: { progress: 0, preview: formValues.OfficePhoto || null, file: null },
+    CancelledCheck: { progress: 0, preview: formValues.CancelledCheck || null, file: null },
+    Logo: { progress: 0, preview: formValues.Logo || null, file: null },
+    mou: { progress: 0, preview: formValues.mou || null, file: null },
+    registration: { progress: 0, preview: formValues.registration || null, file: null },
   });
- console.log(uploads)
 
   const [errors, setErrors] = useState({});
 
@@ -81,41 +83,16 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     if (!file) return;
 
     const previewURL = URL.createObjectURL(file);
-    setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL } }));
-
-    const storageRef = ref(storage, `partners/${fieldName}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], progress } }));
-      },
-      (error) => {
-        toast.error("Failed to upload " + fieldName);
-        setUploads(prev => {
-          const prevPreview = prev[fieldName]?.preview;
-          if (prevPreview && prevPreview.startsWith("blob:")) URL.revokeObjectURL(prevPreview);
-          return { ...prev, [fieldName]: { progress: 0, preview: null, loading: false } };
-        });
-      },
-      async () => {
-        const url = await getDownloadURL(uploadTask.snapshot.ref);
-        setFormValues(prev => ({ ...prev, [fieldName]: url }));
-        setUploads(prev => {
-          const prevPreview = prev[fieldName]?.preview;
-          if (prevPreview && prevPreview.startsWith("blob:")) URL.revokeObjectURL(prevPreview);
-          return { ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } };
-        });
-        setErrors(prev => {
-          const next = { ...prev };
-          delete next[fieldName];
-          return next;
-        });
-        toast.success(`${fieldName} uploaded`);
-      }
-    );
+    setUploads(prev => ({
+      ...prev,
+      [fieldName]: { ...prev[fieldName], preview: previewURL, file, progress: 100 },
+    }));
+    setFormValues(prev => ({ ...prev, [fieldName]: file.name }));
+    setErrors(prev => {
+      const next = { ...prev };
+      delete next[fieldName];
+      return next;
+    });
   };
 
   const fileFields = [
@@ -149,7 +126,9 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     }
 
     fileFields.forEach((f) => {
-      if (!formValues[f]?.trim?.()) newErrors[f] = REQUIRED_MSG;
+      const hasFile = uploads[f]?.file;
+      const hasValue = formValues[f]?.trim?.();
+      if (!hasFile && !hasValue) newErrors[f] = REQUIRED_MSG;
     });
 
     setErrors(newErrors);
@@ -166,8 +145,40 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
     }
 
     try {
+      const formData = new FormData();
+
+      fileFields.forEach((fieldName) => {
+        const multerFieldName = formFileKeyToMulterName(fieldName);
+        if (uploads[fieldName]?.file) {
+          formData.append(multerFieldName, uploads[fieldName].file);
+        } else if (
+          uploads[fieldName]?.preview &&
+          !String(uploads[fieldName].preview).startsWith("blob:")
+        ) {
+          formData.append(multerFieldName, uploads[fieldName].preview);
+        }
+      });
+
+      const name =
+        (formValues.name && String(formValues.name).trim()) ||
+        formValues.OwnerName ||
+        formValues.InsitutionName ||
+        "";
+
+      const payload = {
+        ...formValues,
+        name,
+        password: createPassword,
+      };
+
+      Object.entries(payload).forEach(([key, value]) => {
+        if (fileFields.includes(key)) return;
+        if (value === undefined || value === null || value === "") return;
+        formData.append(key, value);
+      });
+
       if (ele && ele._id) {
-        const res = await dispatch(updatePartner({ id: ele._id, data: formValues }));
+        const res = await dispatch(updatePartner({ id: ele._id, data: formData }));
         if (updatePartner.fulfilled.match(res)) {
           toast.success("Partner updated");
           handleClose();
@@ -177,10 +188,11 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
           toast.error(typeof msg === "string" ? msg : "Update failed");
         }
       } else {
-        const res = await dispatch(createPartner({ ...formValues, password: createPassword }));
+        const res = await dispatch(createPartner(formData));
+        console.log(res,"???????????????????????????????????");
         if (res?.type?.endsWith("/fulfilled")) {
           toast.success("Partner created");
-          handleClose();
+          // handleClose();
           fetchData?.();
         } else {
           const msg = res?.payload?.message ?? res?.payload ?? "Failed to create";
@@ -331,15 +343,16 @@ const CreateFrenchise = ({ ele, handleClose, fetchData }) => {
                           If the preview URL looks like an image, render an <img>. Otherwise
                           fall back to a downloadable link (useful for PDFs or other docs).
                         */}
-                        {uploads[f].preview.match(/\.(jpe?g|png|gif|bmp|webp)(\?|$)/i) ? (
+                        {/\.(jpe?g|png|gif|bmp|webp)(\?|$)/i.test(getPreviewUrl(uploads[f].preview)) ||
+                        String(uploads[f].preview).startsWith("blob:") ? (
                           <img
-                            src={uploads[f].preview}
+                            src={getPreviewUrl(uploads[f].preview)}
                             alt={f}
                             style={{ maxWidth: 200, maxHeight: 120 }}
                           />
                         ) : (
                           <a
-                            href={uploads[f].preview}
+                            href={getPreviewUrl(uploads[f].preview)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="me-2"

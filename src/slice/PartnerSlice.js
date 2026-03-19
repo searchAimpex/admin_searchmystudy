@@ -3,7 +3,7 @@ import axios from 'axios';
 
 
 
-const API_BASE = 'http://localhost:5001/api/users';
+const API_BASE = 'https://searchmystudy.com/api/users';
 
 export const createPartner = createAsyncThunk(
   'blogs/createPartner',

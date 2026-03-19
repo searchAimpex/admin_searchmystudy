@@ -143,7 +143,7 @@ const FrenchiseManager = () => {
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     saveAs(new Blob([buf]), "frenchise.xlsx");
   };
-
+  console.log(filteredWebinars)
   return (
     <div className="card">
       <div className="card-header d-flex justify-content-between">
