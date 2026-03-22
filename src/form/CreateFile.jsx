@@ -1,18 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import "react-toastify/dist/ReactToastify.css";
-import { createPartner, updatePartner } from "../slice/PartnerSlice";
-import { createAssessment, updateAssessment } from "../slice/AssessmentSlice";
-import { allCountry } from "../slice/AbroadSlice";
 import { useSelector } from "react-redux";
-import { createFile, fetchCountry, updateFile } from "../slice/CountrySlicr";
+import { createFile, updateFile } from "../slice/CountrySlicr";
 import { fetchAllUni } from "../slice/AbroadUniversitySlice";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { fetchAllCountry } from "../slice/MbbsSlice";
-
-const storage = getStorage(app);
 
 const CreateFile = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
@@ -20,7 +13,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     const [loading, setLoading] = useState(false);
     // const  {country}  = useSelector(state => state?.country);
     const { AllUniversity } = useSelector(state => state?.abroadUniversity)
-    console.log(country, "++++++++++++++++++++++++++++++");
+    // console.log(country, "++++++++++++++++++++++++++++++");
     const fetchAllCountries = async () => {
         try {
             setLoading(true);
@@ -56,23 +49,19 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     }, [ele]);
 
     const [uploads, setUploads] = useState({
-        // Only template is neended for this form — keep structure similar to other forms
-        template: { progress: 0, preview: initial.template || null, loading: false },
+        template: { preview: initial.template || null, file: null },
     });
 
-    // keep uploads previews in sync when ele changes
     useEffect(() => {
         if (!ele) return;
         setUploads(prev => {
             const next = { ...prev };
-            Object.keys(next).forEach(k => {
-                if (ele[k]) next[k].preview = ele[k];
-            });
+            if (ele.template && !prev.template?.file) next.template = { ...next.template, preview: ele.template };
             return next;
         });
     }, [ele]);
 
-    const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
+    const anyUploading = () => false;
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -82,31 +71,8 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     const handleFileChange = (e, fieldName) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         const previewURL = URL.createObjectURL(file);
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL, progress: 0 } }));
-
-        const storageRef = ref(storage, `partners/${fieldName}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on(
-            "state_changed",
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], progress } }));
-            },
-            (error) => {
-                console.error("Upload error:", error);
-                toast.error("Failed to upload " + fieldName);
-                setUploads(prev => ({ ...prev, [fieldName]: { progress: 0, preview: null, loading: false } }));
-            },
-            async () => {
-                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                setFormValues(prev => ({ ...prev, [fieldName]: url }));
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } }));
-                toast.success(`${fieldName} uploaded`);
-            }
-        );
+        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], preview: previewURL, file } }));
     };
 
     const validateForm = () => {
@@ -119,54 +85,26 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     };
     const [errors, setErrors] = useState({});
 
-    const fileFields = [
-
-        "resume",
-        "englishTestScorecard",
-        "acadmics",
-        "englishTestDoc",
-        "workExperienceDoc",
-    ];
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // if (anyUploading()) {
-        //   toast.error("Please wait for file uploads to finish.");
-        //   return;
-        // }
-
-        // if (!validateForm()) {
-        //   toast.error("Please fix validation errors.");
-        //   return;
-        // }
-
         try {
-            const payload = { ...formValues };
+            const formData = new FormData();
 
-            // Remove empty User field or fields that are empty strings
-            if (!payload.User || payload.User.trim() === "") {
-                delete payload.User;
+            if (uploads.template?.file) {
+                formData.append("template", uploads.template.file);
+            } else if (uploads.template?.preview && !String(uploads.template.preview).startsWith("blob:")) {
+                formData.append("template", uploads.template.preview);
             }
 
-            // Remove empty dob if not set
-            if (!payload.dob) {
-                delete payload.dob;
-            }
-
-            if (payload.DateOfBirth) {
-                payload.DateOfBirth = new Date(payload.DateOfBirth).toISOString();
-            }
-
-            // don't overwrite password with empty value on update
-            if (ele && ele._id && !payload.password) delete payload.password;
+            formData.append("name", formValues.name ?? "");
+            formData.append("type", formValues.type ?? "");
+            formData.append("SecondCountry", formValues.SecondCountry ?? "");
+            const uniId = typeof formValues.university === "object" ? formValues.university?._id : formValues.university;
+            formData.append("university", uniId ?? "");
 
             if (ele && ele._id) {
-                // console.log(payload,"::::::::::::::::::::::::::::::::::::::::::::");
-                const res = await dispatch(updateFile({ id: ele._id, data: payload }));
-                // console.log(res);
-
-                // toast.success("File updated");
+                const res = await dispatch(updateFile({ id: ele._id, data: formData }));
                 if (res?.meta?.requestStatus === "fulfilled") {
                     fetchData?.();
                     handleClose?.();
@@ -176,11 +114,8 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                     toast.error(msg);
                 }
             } else {
-                // console.log(payload);
-
-                const res = await dispatch(createFile(payload));
-                console.log(res, "|||||||||||||||||||||||||||||||");
-
+                const res = await dispatch(createFile(formData));
+                console.log(res, "++++++++++++++++++++++++++++++");
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("File created");
                     fetchData?.();
@@ -224,9 +159,9 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
 
                                         </select>
                                     </div>
-                                    <div className="col-md-4">
+                                        <div className="col-md-4">
                                         <label className="form-label">University</label>
-                                        <select name="university" value={formValues?.university?.name} onChange={handleInputChange} className="form-control">
+                                        <select name="university" value={typeof formValues.university === "object" ? formValues.university?._id : formValues.university || ""} onChange={handleInputChange} className="form-control">
                                             <option value="">Select University</option>
                                             {
                                                 AllUniversity.map((e) => (
@@ -263,12 +198,11 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" name="template" id="template" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'template')} className="form-control" />
                                         {uploads.template?.preview && (
                                             <div className="mt-2">
-                                                {typeof uploads.template.preview === 'string' && uploads.template.preview.toLowerCase().includes('.pdf') ? (
+                                                {(uploads.template.file?.name?.toLowerCase().endsWith(".pdf") || (typeof uploads.template.preview === "string" && uploads.template.preview.toLowerCase().includes(".pdf"))) ? (
                                                     <a href={uploads.template.preview} target="_blank" rel="noreferrer">Open Template (PDF)</a>
                                                 ) : (
                                                     <img src={uploads.template.preview} alt="template" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                 )}
-                                                <div>Progress: {Math.round(uploads.template.progress)}%</div>
                                             </div>
                                         )}
                                     </div>
@@ -278,7 +212,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={handleClose}>Close</button>
                                 <button type="submit" className="btn btn-primary" disabled={anyUploading()}>
-                                    {anyUploading() ? "Uploading..." : (ele && ele._id ? "Update Partner" : "Create Partner")}
+                                    {anyUploading() ? "Uploading..." : (ele && ele._id ? "Update File" : "Create File")}
                                 </button>
                             </div>
                         </form>

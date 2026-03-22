@@ -142,27 +142,24 @@ export const fetchFile = createAsyncThunk(
 );
 
 
+const FILE_API_BASE = 'http://searchmystudy.com'; // use 'http://localhost:5001' for local dev
+
 export const createFile = createAsyncThunk(
   'country/createFile',
-  async (Data, thunkAPI) => {
+  async (data, thunkAPI) => {
     try {
-      const response = await fetch('https://searchmystudy.com/api/admin/file', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(Data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData);
+      const url = `${FILE_API_BASE}/api/admin/file`;
+      if (data instanceof FormData) {
+        const response = await axios.post(url, data);
+        return response.data;
       }
-
-      const data = await response.json();
-      return data;
+      const response = await axios.post(url, data, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.message || 'Network error');
+      const msg = error.response?.data?.message ?? error.response?.data ?? error.message;
+      return thunkAPI.rejectWithValue(typeof msg === 'string' ? msg : 'Request failed');
     }
   }
 );
@@ -174,7 +171,7 @@ export const deleteFiles = createAsyncThunk(
       return rejectWithValue({ message: "No file IDs provided" });
     }
     try {
-      const response = await axios.delete("https://searchmystudy.com/api/admin/file", {
+      const response = await axios.delete(`${FILE_API_BASE}/api/admin/file`, {
         data: { ids },
       });
       return response.data;
@@ -187,23 +184,18 @@ export const updateFile = createAsyncThunk(
   'file/updateFile',
   async ({ id, data }, thunkAPI) => {
     try {
-      const response = await fetch(`https://searchmystudy.com/api/admin/file/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData);
+      const url = `${FILE_API_BASE}/api/admin/file/${id}`;
+      if (data instanceof FormData) {
+        const response = await axios.put(url, data);
+        return response.data;
       }
-
-      const resData = await response.json();
-      return resData;
+      const response = await axios.put(url, data, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.message || 'Network error');
+      const msg = error.response?.data?.message ?? error.response?.data ?? error.message;
+      return thunkAPI.rejectWithValue(typeof msg === 'string' ? msg : 'Request failed');
     }
   }
 );
