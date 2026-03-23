@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createSecondCountry, updateSecondCountry } from "../slice/CountrySlicr";
 import { useSelector } from "react-redux";
 import { allCountry } from "../slice/AbroadSlice";
-
-const storage = getStorage(app);
 
 const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
@@ -56,6 +52,13 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
         whyThisCountry: { progress: 0, preview: initial.whyThisCountry || null, loading: false },
         faq: { progress: 0, preview: initial.faq || null, loading: false },
     });
+    const [selectedFiles, setSelectedFiles] = useState({
+        flagURL: null,
+        vfs: null,
+        step: null,
+        whyThisCountry: null,
+        faq: null,
+    });
 
     // keep uploads previews in sync when ele changes
     useEffect(() => {
@@ -84,29 +87,8 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
         if (!file) return;
 
         const previewURL = URL.createObjectURL(file);
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL, progress: 0 } }));
-
-        const storageRef = ref(storage, `secondcountry/${fieldName}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on(
-            "state_changed",
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], progress } }));
-            },
-            (error) => {
-                console.error("Upload error:", error);
-                toast.error("Failed to upload " + fieldName);
-                setUploads(prev => ({ ...prev, [fieldName]: { progress: 0, preview: null, loading: false } }));
-            },
-            async () => {
-                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                setFormValues(prev => ({ ...prev, [fieldName]: url }));
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } }));
-                toast.success(`${fieldName} uploaded`);
-            }
-        );
+        setSelectedFiles(prev => ({ ...prev, [fieldName]: file }));
+        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, preview: previewURL, progress: 100 } }));
     };
 
     const validateForm = () => {
@@ -141,8 +123,20 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
         // }
 
         try {
-            const payload = { ...formValues };
-            console.log(payload);
+            const payload = new FormData();
+            Object.entries(formValues).forEach(([key, value]) => {
+                if (fileFields.includes(key)) return;
+                if (value !== undefined && value !== null) {
+                    payload.append(key, value);
+                }
+            });
+            fileFields.forEach((field) => {
+                if (selectedFiles[field]) {
+                    payload.append(field, selectedFiles[field]);
+                } else if (formValues[field]) {
+                    payload.append(field, formValues[field]);
+                }
+            });
             
             // nothing special to normalize for secondCountry schema
 
@@ -158,11 +152,11 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                 }
             } else {
                 const res = await dispatch(createSecondCountry(payload));
-                // console.log(res,"||||||||||||||||||||||||||||||")
+                console.log(res,"||||||||||||||||||||||||||||||")
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Country created");
                     fetchData?.();
-                    handleClose?.();
+                    // handleClose?.();
                 } else {
                     const msg = res?.payload?.message || res?.error?.message || "Creation failed";
                     toast.error(msg);

@@ -39,23 +39,19 @@ export const createSecondCountry = createAsyncThunk(
   'country/createSecondCountry',
   async (countryData, thunkAPI) => {
     try {
-      const response = await fetch('https://searchmystudy.com/api/users/secondcountry', {
-        method: 'POST',
+      const url = 'http://localhost:5001/api/users/secondcountry';
+      if (countryData instanceof FormData) {
+        const response = await axios.post(url, countryData);
+        return response.data;
+      }
+      const response = await axios.post(url, countryData, {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(countryData),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData);
-      }
-
-      const data = await response.json();
-      return data;
+      return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.message || 'Network error');
+      return thunkAPI.rejectWithValue(error.response?.data || error.message || 'Network error');
     }
   }
 );
@@ -65,23 +61,19 @@ export const updateSecondCountry = createAsyncThunk(
   'country/updateSecondCountry',
   async ({ id, data }, thunkAPI) => {
     try {
-      const response = await fetch(`https://searchmystudy.com/api/users/secondcountry/${id}`, {
-        method: 'PUT',
+      const url = `http://localhost:5001/api/users/secondcountry/${id}`;
+      if (data instanceof FormData) {
+        const response = await axios.put(url, data);
+        return response.data;
+      }
+      const response = await axios.put(url, data, {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData);
-      }
-
-      const resData = await response.json();
-      return resData;
+      return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.message || 'Network error');
+      return thunkAPI.rejectWithValue(error.response?.data || error.message || 'Network error');
     }
   }
 );
