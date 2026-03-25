@@ -39,7 +39,7 @@ export const createSecondCountry = createAsyncThunk(
   'country/createSecondCountry',
   async (countryData, thunkAPI) => {
     try {
-      const url = 'http://localhost:5001/api/users/secondcountry';
+      const url = 'https://searchmystudy.com/api/users/secondcountry';
       if (countryData instanceof FormData) {
         const response = await axios.post(url, countryData);
         return response.data;
@@ -61,7 +61,7 @@ export const updateSecondCountry = createAsyncThunk(
   'country/updateSecondCountry',
   async ({ id, data }, thunkAPI) => {
     try {
-      const url = `http://localhost:5001/api/users/secondcountry/${id}`;
+      const url = `https://searchmystudy.com/api/users/secondcountry/${id}`;
       if (data instanceof FormData) {
         const response = await axios.put(url, data);
         return response.data;
@@ -176,7 +176,7 @@ export const updateFile = createAsyncThunk(
   'file/updateFile',
   async ({ id, data }, thunkAPI) => {
     try {
-      const url = `${FILE_API_BASE}/api/admin/file/${id}`;
+      const url = `https://searchmystudy.com/api/admin/file/${id}`;
       if (data instanceof FormData) {
         const response = await axios.put(url, data);
         return response.data;

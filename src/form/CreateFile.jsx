@@ -36,13 +36,19 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
         type: ele?.type || "",
         name: ele?.name || "",
         template: ele?.template || "",
-        university: ele?.university || ""
+        university: ele?.university?._id || ele?.university || ""
     };
 
     const [formValues, setFormValues] = useState(initial);
     // console.log(formValues)
     useEffect(() => {
-        setFormValues(prev => ({ ...prev, ...(ele || {}) }));
+        setFormValues({
+            SecondCountry: ele?.SecondCountry?._id || ele?.SecondCountry || "",
+            type: ele?.type || "",
+            name: ele?.name || "",
+            template: ele?.template || "",
+            university: ele?.university?._id || ele?.university || "",
+        });
         // populate upload previews from ele if available
         // eslint-disable-next-line
         fetchAllCountries()
@@ -99,7 +105,8 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
 
             formData.append("name", formValues.name ?? "");
             formData.append("type", formValues.type ?? "");
-            formData.append("SecondCountry", formValues.SecondCountry ?? "");
+            const countryId = typeof formValues.SecondCountry === "object" ? formValues.SecondCountry?._id : formValues.SecondCountry;
+            formData.append("SecondCountry", countryId ?? "");
             const uniId = typeof formValues.university === "object" ? formValues.university?._id : formValues.university;
             formData.append("university", uniId ?? "");
 
@@ -175,7 +182,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                         <label className="form-label">Country</label>
                                         <select
                                             name="SecondCountry"
-                                            value={formValues?.SecondCountry || ""}
+                                            value={typeof formValues.SecondCountry === "object" ? formValues.SecondCountry?._id : formValues?.SecondCountry || ""}
                                             onChange={handleInputChange}
                                             className="form-control"
                                         >
@@ -194,7 +201,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                     </div>
 
                                     <div className="col-md-6">
-                                        <label htmlFor="template" className="form-label">Template</label>
+                                        <label htmlFor="template" className="form-label">Template/Broucher</label>
                                         <input type="file" name="template" id="template" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'template')} className="form-control" />
                                         {uploads.template?.preview && (
                                             <div className="mt-2">

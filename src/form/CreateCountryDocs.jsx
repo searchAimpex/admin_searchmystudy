@@ -13,7 +13,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     
     const fetchCountry  = async ()=>{
         const res  = await dispatch(allCountry());  
-        console.log(res,"+++++++++++++++++++++++++++++");
+        // console.log(res,"+++++++++++++++++++++++++++++");
         
     }
     
@@ -156,7 +156,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Country created");
                     fetchData?.();
-                    // handleClose?.();
+                    handleClose?.();
                 } else {
                     const msg = res?.payload?.message || res?.error?.message || "Creation failed";
                     toast.error(msg);
