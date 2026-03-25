@@ -44,12 +44,15 @@ export const updateContact = createAsyncThunk(
   'contact/updateContact',
   async ({ id, data }, thunkAPI) => {
     try {
+      const isFormData = data instanceof FormData;
       const response = await fetch(`https://searchmystudy.com/api/admin/contact/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        ...(isFormData
+          ? { body: data }
+          : {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            }),
       });
 
       if (!response.ok) {
@@ -68,29 +71,24 @@ export const createContact = createAsyncThunk(
   'contact/createContact',
   async (blogData, thunkAPI) => {
     try {
-
+      const isFormData = blogData instanceof FormData;
       const response = await fetch("https://searchmystudy.com/api/admin/contact", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(blogData),
+        ...(isFormData
+          ? { body: blogData }
+          : {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(blogData),
+            }),
       });
-
-      // console.log("Response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error response data:", errorData);
         return thunkAPI.rejectWithValue(errorData);
       }
 
-      const data = await response.json();
-      console.log("Success response data:", data);
-      return data;
-
+      return await response.json();
     } catch (error) {
-      console.error("Fetch error:", error);
       return thunkAPI.rejectWithValue(error.message);
     }
   }

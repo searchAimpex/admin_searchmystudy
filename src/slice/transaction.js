@@ -24,7 +24,7 @@ export const createTransaction = createAsyncThunk(
         ? {} // browser sets multipart/form-data with boundary
         : { headers: { "Content-Type": "application/json" } };
       const response = await axios.post(
-        "http://localhost:5001/api/admin/transaction",
+        "https://searchmystudy.com/api/admin/transaction",
         data,
         config
       );

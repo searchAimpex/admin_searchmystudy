@@ -1,21 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { updateFile } from "../slice/CountrySlicr";
-import { createNav, updateNav } from "../slice/nav";
-import { createPromotional, updatePromotional } from "../slice/promotional";
-import { createContact } from "../slice/contact";
+import { createContact, updateContact } from "../slice/contact";
 
-const storage = getStorage(app);
+const buildContactFormData = (formValues, profileImgFile) => {
+    const formData = new FormData();
+    formData.append("name", formValues.name ?? "");
+    formData.append("email", formValues.email ?? "");
+    formData.append("phone", formValues.phone != null ? String(formValues.phone) : "");
+    formData.append("description", formValues.description ?? "");
+    formData.append("designation", formValues.designation ?? "");
+    if (profileImgFile) {
+        formData.append("profileImg", profileImgFile);
+    } else if (formValues.profileImg) {
+        formData.append("profileImg", formValues.profileImg);
+    }
+    return formData;
+};
 
 const CreateContact = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
 
-
-    // canonical fields used by this form
     const initial = {
         profileImg: ele?.profileImg ?? "",
         description: ele?.description ?? "",
@@ -26,14 +32,19 @@ const CreateContact = ({ ele, handleClose, fetchData }) => {
     };
 
     const [formValues, setFormValues] = useState(initial);
+    const [profileImgFile, setProfileImgFile] = useState(null);
+    const [profilePreview, setProfilePreview] = useState(initial.profileImg || "");
+    const previewBlobRef = useRef(null);
 
-    // uploads state for profileImg
-    const [uploads, setUploads] = useState({
-        profileImg: { progress: 0, preview: initial.profileImg || null, loading: false },
-    });
+    const revokeBlobPreview = () => {
+        if (previewBlobRef.current) {
+            URL.revokeObjectURL(previewBlobRef.current);
+            previewBlobRef.current = null;
+        }
+    };
 
-    // keep form values and upload preview in sync when ele changes
     useEffect(() => {
+        revokeBlobPreview();
         setFormValues({
             name: ele?.name ?? "",
             phone: ele?.phone ?? "",
@@ -42,73 +53,45 @@ const CreateContact = ({ ele, handleClose, fetchData }) => {
             description: ele?.description ?? "",
             designation: ele?.designation ?? "",
         });
-        setUploads(prev => {
-            const next = { ...prev };
-            next.profileImg = { ...next.profileImg, preview: ele?.profileImg ?? next.profileImg.preview };
-            return next;
-        });
+        setProfileImgFile(null);
+        setProfilePreview(ele?.profileImg ?? "");
     }, [ele]);
 
-    const anyUploading = () => Object.values(uploads).some(u => u.loading === true);
+    useEffect(() => () => revokeBlobPreview(), []);
 
     const handleFileChange = (e) => {
-        const fieldName = "profileImg";
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const previewURL = URL.createObjectURL(file);
-        setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: true, preview: previewURL, progress: 0 } }));
-
-        const storageRef = ref(storage, `contacts/${fieldName}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on(
-            "state_changed",
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], progress } }));
-            },
-            (error) => {
-                console.error("Upload error:", error);
-                toast.error("Failed to upload profile image");
-                setUploads(prev => ({ ...prev, [fieldName]: { progress: 0, preview: null, loading: false } }));
-            },
-            async () => {
-                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                setFormValues(prev => ({ ...prev, [fieldName]: url }));
-                setUploads(prev => ({ ...prev, [fieldName]: { ...prev[fieldName], loading: false, progress: 100, preview: url } }));
-                toast.success("Profile image uploaded");
-            }
-        );
+        revokeBlobPreview();
+        const objectUrl = URL.createObjectURL(file);
+        previewBlobRef.current = objectUrl;
+        setProfilePreview(objectUrl);
+        setProfileImgFile(file);
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormValues(prev => ({ ...prev, [name]: value }));
+        setFormValues((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // if (anyUploading()) {
-        //   toast.error("Please wait for file uploads to finish.");
-        //   return;
-        // }
-
-        // if (!validateForm()) {
-        //   toast.error("Please fix validation errors.");
-        //   return;
-        // }
-
         try {
-            const payload = { ...formValues };
-            // normalize SecondCountry to an _id before sending
+            const isEdit = Boolean(ele && ele._id);
 
+            if (!isEdit && !profileImgFile && !formValues.profileImg) {
+                toast.error("Please choose a profile image.");
+                return;
+            }
 
-            if (ele && ele._id) {
-                const res = await dispatch(updatePromotional({ id: ele._id, data: payload }));
-                toast.success("Nav updated");
+            const formData = buildContactFormData(formValues, profileImgFile);
+
+            if (isEdit) {
+                const res = await dispatch(updateContact({ id: ele._id, data: formData }));
                 if (res?.meta?.requestStatus === "fulfilled") {
+                    toast.success("Contact updated");
                     fetchData?.();
                     handleClose?.();
                 } else {
@@ -116,11 +99,9 @@ const CreateContact = ({ ele, handleClose, fetchData }) => {
                     toast.error(msg);
                 }
             } else {
-                console.log(payload,"-----------------------");
-                
-                const res = await dispatch(createContact(payload));
+                const res = await dispatch(createContact(formData));
                 if (res?.meta?.requestStatus === "fulfilled") {
-                    toast.success("Banner created");
+                    toast.success("Contact created");
                     fetchData?.();
                     handleClose?.();
                 } else {
@@ -146,17 +127,25 @@ const CreateContact = ({ ele, handleClose, fetchData }) => {
                         </div>
 
                         <form onSubmit={handleSubmit}>
-                            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                            <div className="modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
                                 <div className="row g-3">
-
-
                                     <div className="col-md-6">
                                         <label className="form-label">Profile Image</label>
-                                        <input type="file" name="profileImg" id="profileImg" accept="image/*" onChange={handleFileChange} className="form-control" />
-                                        {uploads?.profileImg?.preview && (
+                                        <input
+                                            type="file"
+                                            name="profileImg"
+                                            id="profileImg"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="form-control"
+                                        />
+                                        {profilePreview && (
                                             <div className="mt-2">
-                                                <img src={uploads.profileImg.preview} alt={formValues.name || "profile"} style={{ maxWidth: 160, maxHeight: 120 }} />
-                                                <div>Progress: {Math.round(uploads.profileImg.progress)}%</div>
+                                                <img
+                                                    src={profilePreview}
+                                                    alt={formValues.name || "profile"}
+                                                    style={{ maxWidth: 160, maxHeight: 120, objectFit: "cover" }}
+                                                />
                                             </div>
                                         )}
                                     </div>
@@ -212,6 +201,7 @@ const CreateContact = ({ ele, handleClose, fetchData }) => {
                                         <input
                                             name="phone"
                                             type="number"
+                                            // max={10}
                                             value={formValues?.phone || ""}
                                             onChange={handleInputChange}
                                             className="form-control"
@@ -222,16 +212,14 @@ const CreateContact = ({ ele, handleClose, fetchData }) => {
                             </div>
 
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={handleClose}>Close</button>
-                                <button type="submit" className="btn btn-primary" disabled={anyUploading()}>
-                                    {anyUploading() ? "Uploading..." : (ele && ele._id ? "Update" : "Create")}
+                                <button type="button" className="btn btn-secondary" onClick={handleClose}>
+                                    Close
+                                </button>
+                                <button type="submit" className="btn btn-primary">
+                                    {ele && ele._id ? "Update" : "Create"}
                                 </button>
                             </div>
                         </form>
-
-
-
-
                     </div>
                 </div>
             </div>

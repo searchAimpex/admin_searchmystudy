@@ -73,7 +73,7 @@ export const createCommission = createAsyncThunk(
         method: 'POST',
         ...(isFormData ? { body: data } : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }),
       };
-      const response = await fetch("http://localhost:5001/api/admin/commission", config);
+      const response = await fetch("https://searchmystudy.com/api/admin/commission", config);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

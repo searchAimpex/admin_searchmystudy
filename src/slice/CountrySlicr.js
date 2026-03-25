@@ -134,7 +134,7 @@ export const fetchFile = createAsyncThunk(
 );
 
 
-const FILE_API_BASE = 'http://searchmystudy.com'; // use 'http://localhost:5001' for local dev
+const FILE_API_BASE = 'https://searchmystudy.com'; // use 'https://searchmystudy.com' for local dev
 
 export const createFile = createAsyncThunk(
   'country/createFile',

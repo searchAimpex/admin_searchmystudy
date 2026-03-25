@@ -34,7 +34,7 @@ const normalize = (val) =>
 const UsefullManagement = () => {
   const dispatch = useDispatch();
   const {information} = useSelector(state=>state?.information)
-  // console.log(data,"+++++++++++++++++")
+  console.log(information,"+++++++++++++++++")
 
   /* ================= REDUX ================= */
   // const information = useSelector(
@@ -246,7 +246,7 @@ const UsefullManagement = () => {
                 <td>{ele?.target1?"Available":"Unavailable"}</td>
                 <td>{ele?.countryName || "—"}</td>
                 <td>
-                  <a href={ele?.iconURL} target="_blank">Link</a>
+                  <a href={`https://backend.searchmystudy.com/${ele?.iconURL}`} target="_blank">Link</a>
                 </td>
                 <td>
                   <a  target="_blank" href={ele?.imageURL}>Link</a>

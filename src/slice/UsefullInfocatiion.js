@@ -7,7 +7,7 @@ export const createInformation = createAsyncThunk(
     async(data,thunkAPI) => {
         try {
             console.log("Sending Counsellor data", data);
-            const response = await axios.post("http://localhost:5001/api/admin/upload",data);
+            const response = await axios.post("https://searchmystudy.com/api/admin/upload",data);
             return response.data;
         } catch (error) {
             console.log("Fetch error", error.message);
@@ -43,7 +43,7 @@ export const deleteInformation = createAsyncThunk(
             const response = await axios.delete(`https://searchmystudy.com/api/admin/upload`,{
                 data: { ids },
             })
-            // const response = await axios.delete("http://localhost:5001/api/admin/upload",data);
+            // const response = await axios.delete("https://searchmystudy.com/api/admin/upload",data);
 
             return response?.data;
         } catch (error) {

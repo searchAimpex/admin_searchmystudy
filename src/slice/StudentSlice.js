@@ -28,7 +28,7 @@ export const updateAssessment = createAsyncThunk(
     try {
       console.log(data, "--------------------");
 
-      const response = await axios.put(`http://searchmystudy.com/api/admin/profile/update/${id}`, data);
+      const response = await axios.put(`https://searchmystudy.com/api/admin/profile/update/${id}`, data);
       // fetchWebinar();     
       // console.log("Update response:", response.data);
       return response.data;

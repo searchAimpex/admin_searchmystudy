@@ -259,7 +259,7 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
         }
 
         res = await dispatch(createInformation(formData));
-
+        console.log(res,"res+++++++++++++++++++++++++++++");
         if (res.meta.requestStatus !== "fulfilled") {
           throw new Error("Failed to create information alert");
         }
@@ -267,8 +267,8 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
         toast.success("Information created successfully!", { id: toastId });
       }
 
-      handleClose();
-      loadData();
+      // handleClose();
+      // loadData();
 
     } catch (error) {
       toast.error(error.message || "Something went wrong", {
@@ -613,7 +613,7 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
 
             <div className="mb-3">
               <label className="form-label">Image </label>
-              {/* <p className="text-[10px]">Image size should be 300x250 px</p> */}
+              <p className="text-[10px]">Image size should be 300x250 px</p>
               <input
                 type="file"
                 accept="image/*"
@@ -633,32 +633,42 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
               <label className="form-label">Country Name</label>
               <select
                 name="countryName"
-                // value={form.countryName || ""}
+                value={form.countryName || ""}
                 onChange={(e) => setForm((prev) => ({ ...prev, countryName: e.target.value }))}
                 className="form-control"
                 disabled={loading}
               >
-                <option value="">Select Country Icon</option>
-                {(countries || []).map((c) => (
-                  <option key={c._id} >{c?.country?.name}</option>
-                ))}
+                <option value="">Select country</option>
+                {(countries || []).map((c) => {
+                  const name = c?.country?.name || c?.name || "";
+                  return (
+                    <option key={c._id} value={name}>
+                      {name || "—"}
+                    </option>
+                  );
+                })}
               </select>
-            
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Country</label>
+              <label className="form-label">Country icon (flag)</label>
               <select
                 name="iconURL"
-                // value={form.countryName || ""}
+                value={form.iconURL || ""}
                 onChange={(e) => setForm((prev) => ({ ...prev, iconURL: e.target.value }))}
                 className="form-control"
                 disabled={loading}
               >
-                <option value="">Select Country</option>
-                {(countries || []).map((c) => (
-                  <option key={c.country?.flagURL} >{c.country?.name}</option>
-                ))}
+                <option value="">Select country — stores flag URL in iconURL</option>
+                {(countries || []).map((c) => {
+                  const flagURL = c?.country?.flagURL || c?.flagURL || "";
+                  const label = c?.country?.name || c?.name || "—";
+                  return (
+                    <option key={c._id} value={flagURL} disabled={!flagURL}>
+                      {label}
+                    </option>
+                  );
+                })}
               </select>
               {form.iconURL && (
                 <div className="mt-2">
@@ -691,7 +701,7 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
                   {ele && ele._id ? "Updating..." : "Creating..."}
                 </>
               ) : (
-                ele && ele._id ? "💾 Update" : "➕ Create"
+                ele && ele._id ? " Update" : " Create"
               )}
             </button>
           </div>

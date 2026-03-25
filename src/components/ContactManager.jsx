@@ -195,10 +195,10 @@ const ContactManager = () => {
 
                                 <td>{ele?.name || "---------"}</td>
                                  <td>{ele?.designation || "---------"}</td>
-                                <td>
-                                    <a href={ele?.profileImg} target="_blank">Link</a>
-                                </td>
                                  <td>{ele?.phone || "---------"}</td>
+                                <td>
+                                    <a href={`https://backend.searchmystudy.com/${ele?.profileImg}`} target="_blank">Link</a>
+                                </td>
 
                                 <td>{ele?.createdAt}</td>
 
