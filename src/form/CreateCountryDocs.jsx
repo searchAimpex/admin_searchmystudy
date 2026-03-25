@@ -13,7 +13,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     
     const fetchCountry  = async ()=>{
         const res  = await dispatch(allCountry());  
-        console.log(res,"+++++++++++++++++++++++++++++");
+        // console.log(res,"+++++++++++++++++++++++++++++");
         
     }
     
@@ -156,7 +156,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Country created");
                     fetchData?.();
-                    // handleClose?.();
+                    handleClose?.();
                 } else {
                     const msg = res?.payload?.message || res?.error?.message || "Creation failed";
                     toast.error(msg);
@@ -230,7 +230,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                                 {String(uploads.vfs.preview).toLowerCase().includes('.pdf') ? (
                                                     <a href={uploads.vfs.preview} target="_blank" rel="noreferrer">View file</a>
                                                 ) : (
-                                                    <img src={uploads.vfs.preview} alt="vfs" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={`https://backend.searchmystudy.com/${uploads.vfs.preview}`} alt="vfs" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                 )}
                                                 <div>Progress: {Math.round(uploads.vfs.progress)}%</div>
                                             </div>
@@ -245,7 +245,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                                     {String(uploads.step.preview).toLowerCase().includes('.pdf') ? (
                                                         <a href={uploads.step.preview} target="_blank" rel="noreferrer">View file</a>
                                                     ) : (
-                                                        <img src={uploads.step.preview} alt="step" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                        <img src={`https://backend.searchmystudy.com/${uploads.step.preview}`} alt="step" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                     )}
                                                     <div>Progress: {Math.round(uploads.step.progress)}%</div>
                                                 </div>
@@ -260,7 +260,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                                 {String(uploads.whyThisCountry.preview).toLowerCase().includes('.pdf') ? (
                                                     <a href={uploads.whyThisCountry.preview} target="_blank" rel="noreferrer">View file</a>
                                                 ) : (
-                                                    <img src={uploads.whyThisCountry.preview} alt="whyThisCountry" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={`https://backend.searchmystudy.com/${uploads.whyThisCountry.preview}`} alt="whyThisCountry" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                 )}
                                                 <div>Progress: {Math.round(uploads.whyThisCountry.progress)}%</div>
                                             </div>
@@ -275,7 +275,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                                 {String(uploads.faq.preview).toLowerCase().includes('.pdf') ? (
                                                     <a href={uploads.faq.preview} target="_blank" rel="noreferrer">View file</a>
                                                 ) : (
-                                                    <img src={uploads.faq.preview} alt="faq" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={`https://backend.searchmystudy.com/${uploads.faq.preview}`} alt="faq" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                 )}
                                                 <div>Progress: {Math.round(uploads.faq.progress)}%</div>
                                             </div>

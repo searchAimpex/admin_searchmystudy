@@ -215,7 +215,7 @@ const FileManager = () => {
 
                     <td>
                       {ele?.template ? (
-                        <a href={ele.template} target="_blank" rel="noreferrer">
+                        <a href={`https://backend.searchmystudy.com/${ele.template}`} target="_blank" rel="noreferrer">
                           Link
                         </a>
                       ) : "—"}

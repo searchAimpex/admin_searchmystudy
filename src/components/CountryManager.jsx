@@ -204,7 +204,7 @@ const CountryManager = () => {
 
                     <td>
                       {c.faq ? (
-                        <a href={c.faq} target="_blank">Link</a>
+                        <a href={`https://backend.searchmystudy.com/${c.faq}`} target="_blank">Link</a>
                       ) : "—"}
                     </td>
 
@@ -212,20 +212,20 @@ const CountryManager = () => {
 
                     <td>
                       {c.step ? (
-                        <a href={c.step} target="_blank">Link</a>
+                        <a href={`https://backend.searchmystudy.com/${c.step}`} target="_blank">Link</a>
                       ) : "—"}
                     </td>
 
                     <td>
                       {c?.country?.flagURL ? (
-                        <a href={c.country?.flagURL} target="_blank">Link</a>
+                        <a href={`https://backend.searchmystudy.com/${c.country?.flagURL}`} target="_blank">Link</a>
                       ) : "—"}
                     </td>
 
                     <td>
                       {c.whyThisCountry ? (
                         <a
-                          href={c.whyThisCountry}
+                          href={`https://backend.searchmystudy.com/${c.whyThisCountry}`}
                           target="_blank"
                         >
                           Link
@@ -235,7 +235,7 @@ const CountryManager = () => {
 
                     <td>
                       {c.vfs ? (
-                        <a href={c.vfs} target="_blank">VFS</a>
+                        <a href={`https://backend.searchmystudy.com/${c.vfs}`} target="_blank">VFS</a>
                       ) : "—"}
                     </td>
 
