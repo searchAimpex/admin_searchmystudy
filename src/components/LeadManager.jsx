@@ -159,12 +159,12 @@ console.log(assessment)
             Download Excel
           </button>
 
-          <button
+          {/* <button
             className="btn btn-primary mx-2"
             onClick={() => setShowModal(true)}
           >
             Create Lead
-          </button>
+          </button> */}
 
           <button
             className="btn btn-danger mx-2"
@@ -176,117 +176,106 @@ console.log(assessment)
       </div>
 
       <div className="card-body">
-      <table
-  className="
-    // table
-    // table-bordered
-    // table-hover
-    // table-striped
-    // align-middle
-    text-nowrap
-    mb-0
-  "
->
+        <div className="table-responsive">
+          <table className="table table-bordered table-hover align-middle text-nowrap mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tracking ID</th>
+                <th>Student Name</th>
+                <th>Role</th>
+                <th>Country</th>
+                <th>Course</th>
+                <th>Specialization</th>
+                <th>Course Level</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>DOB</th>
+                <th>Center Code</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th style={{ width: 180 }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...assessment].reverse().map((ele) => (
+                <tr key={ele._id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      checked={selectedIds.includes(ele._id)}
+                      onChange={() =>
+                        setSelectedIds((prev) =>
+                          prev.includes(ele._id)
+                            ? prev.filter((id) => id !== ele._id)
+                            : [...prev, ele._id]
+                        )
+                      }
+                    />
+                  </td>
 
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Tracking ID</th>
-                            <th>Student Name</th>
-                            <th>Role</th>
-                            <th>Country</th>
-                            <th>Course</th>
-                              <th>Speicialization</th>
-                            <th>Course Level</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>DOB</th>
-                            <th>Center Code</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {[...assessment].reverse().map((ele) => (
-                            <tr key={ele._id}>
-                                <td>
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        checked={selectedIds.includes(ele._id)}
-                                        onChange={() =>
-                                            setSelectedIds((prev) =>
-                                                prev.includes(ele._id)
-                                                    ? prev.filter(
-                                                          (id) =>
-                                                              id !== ele._id
-                                                      )
-                                                    : [...prev, ele._id]
-                                            )
-                                        }
-                                    />
-                                </td>
+                  <td>{ele.trackingId}</td>
+                  <td>
+                    {ele.firstName} {ele.lastName}
+                  </td>
+                  <td>{ele?.User?.role}</td>
+                  <td>{ele?.Country?.name || "—"}</td>
+                  <td>{ele.Course}</td>
+                  <td>{ele.programLevel || "—"}</td>
+                  <td>{ele.courselevel || "—"}</td>
+                  <td>{ele.emailID}</td>
+                  <td>{ele.mobileNumber}</td>
+                  <td>{ele.dob}</td>
+                  <td>{ele?.User?.CenterCode}</td>
+                  <td>{ele.status}</td>
+                  <td>
+                    {ele.createdAt
+                      ? new Date(ele.createdAt).toLocaleDateString()
+                      : "—"}
+                  </td>
 
-                                <td>{ele.trackingId}</td>
-                                <td>
-                                    {ele.firstName} {ele.lastName}
-                                </td>
-                                <td>{ele?.User?.role}</td>
-                                <td>{ele?.Country?.name || "—"}</td>
-                                <td>{ele.Course}</td>
-                                 <td>{ele.programLevel || "—"}</td>
-                                 <td>{ele.courselevel || "—"}</td>
-                                <td>{ele.emailID}</td>
+                  <td>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-success"
+                        onClick={() => {
+                          setEditingWebinar(ele);
+                          setShowModal(true);
+                        }}
+                        aria-label="Edit lead"
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
 
-                                <td>{ele.mobileNumber}</td>
-                                <td>{ele.dob}</td>
-                                <td>{ele?.User?.CenterCode}</td>
-                                <td>{ele.status}</td>
-                                <td>
-                                    {new Date(
-                                        ele.createdAt
-                                    ).toLocaleDateString()}
-                                </td>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-primary"
+                        onClick={() => {
+                          setEditingWebinar(ele);
+                          setShowStatusModal(true);
+                        }}
+                        aria-label="Edit lead status"
+                      >
+                        <Icon icon="lucide:edit" />
+                      </button>
 
-                                <td>
-                                    <Link
-                                        to="#"
-                                        className="btn btn-sm btn-success"
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowModal(true);
-                                        }}
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link>
-
-                                    <Link
-                                        to="#"
-                                        className="btn btn-sm btn-primary mx-2"
-                                        onClick={() => {
-                                            setEditingWebinar(ele);
-                                            setShowStatusModal(true);
-                                        }}
-                                    >
-                                        <Icon icon="lucide:edit" />
-                                    </Link>
-
-                                    {/* ===== ADDED DOWNLOAD BUTTON ===== */}
-                                    <Link
-                                        to="#"
-                                        className="btn btn-sm btn-danger"
-                                        onClick={() =>
-                                            handleDownloadDocuments(ele)
-                                        }
-                                    >
-                                        <Icon icon="lucide:download" />
-                                    </Link>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleDownloadDocuments(ele)}
+                        aria-label="Download documents"
+                      >
+                        <Icon icon="lucide:download" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (

@@ -9,29 +9,23 @@ export const createPopup = createAsyncThunk(
     try {
       console.log("Sending Webinar data:", blogData);
 
-      const response = await fetch("https://searchmystudy.com/api/admin/popup", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(blogData),
-      });
+      const url = "https://searchmystudy.com/api/admin/popup";
 
-      console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response data:", errorData);
-        return thunkAPI.rejectWithValue(errorData);
+      // If uploading an image, blogData must be FormData (multipart).
+      // Do not JSON-stringify FormData; it becomes {} on the backend.
+      if (blogData instanceof FormData) {
+        const response = await axios.post(url, blogData);
+        return response.data;
       }
 
-      const data = await response.json();
-      console.log("Success response data:", data);
-      return data;
+      const response = await axios.post(url, blogData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return response.data;
 
     } catch (error) {
-      console.error("Fetch error:", error);
-      return thunkAPI.rejectWithValue(error.message);
+      const msg = error.response?.data ?? error.message;
+      return thunkAPI.rejectWithValue(msg);
     }
   }
 );
@@ -49,6 +43,34 @@ export const fetchPopup = createAsyncThunk(
     }
   }
 );
+
+export const updatePopup = createAsyncThunk(
+  'popup/updatePopup',
+  async ({ id, data }, thunkAPI) => {
+    try {
+      if (!id) {
+        return thunkAPI.rejectWithValue({ message: "Popup id is required" });
+      }
+
+      const isFormData = data instanceof FormData;
+      const response = await fetch(`https://searchmystudy.com/api/admin/popup/${id}`, {
+        method: 'PUT',
+        headers: isFormData ? undefined : { 'Content-Type': 'application/json' },
+        body: isFormData ? data : JSON.stringify(data),
+      });
+
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        return thunkAPI.rejectWithValue(json?.message || json || "Update failed");
+      }
+      return json;
+      
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || "Update failed");
+    }
+  }
+);
+
 
 export const deletePopup = createAsyncThunk(
   'blogs/deletePopup',

@@ -201,7 +201,7 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                                 {(uploads.template.file?.name?.toLowerCase().endsWith(".pdf") || (typeof uploads.template.preview === "string" && uploads.template.preview.toLowerCase().includes(".pdf"))) ? (
                                                     <a href={uploads.template.preview} target="_blank" rel="noreferrer">Open Template (PDF)</a>
                                                 ) : (
-                                                    <img src={uploads.template.preview} alt="template" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={`https://backend.searchmystudy.com/${uploads.template.preview}`} alt="template" style={{ maxWidth: 200, maxHeight: 120 }} />
                                                 )}
                                             </div>
                                         )}

@@ -19,7 +19,7 @@ const PopupManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingCounsellor, setEditingCounsellor] = useState(null);
-  console.log(counsellor, "-----------------------------------");
+  console.log(editingCounsellor, "-----------------------------------");
 
   // Fetch Counsellor
   const loadCounsellors = async () => {

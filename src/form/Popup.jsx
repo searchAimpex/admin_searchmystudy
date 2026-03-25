@@ -1,21 +1,12 @@
 import React, { useState } from "react";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
 import { useDispatch } from "react-redux";
-import { createPopup } from "../slice/popupManagement";
-import { app } from "../firebase";
+import { createPopup, updatePopup } from "../slice/popupManagement";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const storage = getStorage(app);
-
 const Popup = ({ handleClose, loadCounsellors, ele }) => {
   const dispatch = useDispatch();
-
+// console.log(ele,"ele+++++++++++++++++++++++++++++++++++++");
   const [form, setForm] = useState({
     title: ele?.title || "",
     imageURL: ele?.imageURL || "",
@@ -30,46 +21,58 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
   const [imageValid, setImageValid] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const resolvePreviewUrl = (url) => {
+    if (!url) return "";
+    if (
+      url.startsWith("blob:") ||
+      url.startsWith("data:") ||
+      url.startsWith("http://") ||
+      url.startsWith("https://")
+    ) {
+      return url;
+    }
+    if (url.startsWith("/")) return `https://backend.searchmystudy.com${url}`;
+    return `https://backend.searchmystudy.com/${url}`;
+  };
+
   // File change handler
+  
   const handleFileChange = (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const previewURL = URL.createObjectURL(file);
+    setImageValid(false); // validateImage runs async
     setForm((prev) => ({ ...prev, imageFile: file, imageURL: "" }));
     setUploads((prev) => ({
       ...prev,
       image: { ...prev.image, preview: previewURL, progress: 0, loading: false },
     }));
-    validateImage(file);
+    validateImage(file).then((valid) => {
+      setImageValid(valid);
+      if (valid) toast.success("Valid image uploaded!");
+      else toast.error("Image dimensions must be 700x800 pixels.");
+    });
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
+
+
   // Validate image dimensions
   const validateImage = (file) => {
-    const img = new Image();
-    const reader = new FileReader();
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
 
-    reader.onload = (e) => {
-      img.src = e.target.result;
-    };
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
 
-    img.onload = () => {
-      if (img.width === 700 && img.height === 800) {
-        setImageValid(true);
-        toast.success("Valid image uploaded!");
-      } else {
-        setImageValid(false);
-        toast.error("Image dimensions must be 700x800 pixels.");
-      }
-    };
+      img.onload = () => resolve(img.width === 700 && img.height === 800);
+      img.onerror = () => resolve(false);
 
-    img.onerror = () => {
-      setImageValid(false);
-      toast.error("Invalid image file.");
-    };
-
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
   };
 
   // Validate form
@@ -85,83 +88,65 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Upload image to Firebase
-  const uploadImage = async (file) => {
-    return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, `popup/${file?.name}`);
-      const metadata = {
-        contentType: file?.type,
-        contentDisposition: "inline",
-      };
-
-      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
-
-      setUploads((prev) => ({
-        ...prev,
-        image: { ...prev.image, loading: true },
-      }));
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploads((prev) => ({
-            ...prev,
-            image: { ...prev.image, progress },
-          }));
-        },
-        (error) => {
-          setUploads((prev) => ({
-            ...prev,
-            image: { ...prev.image, loading: false, progress: 0 },
-          }));
-          reject(error);
-        },
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          setUploads((prev) => ({
-            ...prev,
-            image: { ...prev.image, loading: false, progress: 100 },
-          }));
-          resolve(url);
-        }
-      );
-    });
-  };
-
   // Submit handler
   const handleSubmit = async () => {
+    if (form.imageFile) {
+      const valid = await validateImage(form.imageFile);
+      setImageValid(valid);
+      if (!valid) {
+        setErrors((prev) => ({ ...prev, imageURL: "Image dimensions are invalid" }));
+        toast.error("Image dimensions must be 700x800 pixels.");
+        return;
+      }
+    }
+
     if (!validateForm()) {
       toast.error("Please fill in all required fields with valid image.");
       return;
     }
 
-    let formData = {};
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("target", form.target);
+
+    // Important: send `imageURL` in FormData.
     if (form?.imageFile) {
-      console.log("Uploading image:", form.imageFile.name);
-      const imageUrl = await uploadImage(form.imageFile);
-      formData = { ...form, imageURL: imageUrl };
+      formData.append("imageURL", form.imageFile);
     } else if (form?.imageURL) {
-      formData = { ...form, imageURL: form.imageURL };
+      formData.append("imageURL", form.imageURL);
     } else {
       toast.error("Please upload an image");
       return;
     }
-
-    console.log("Final formData to dispatch:", formData);
-
-    try { 
-      console.log( formData,"-------------------------");
-      const res = await dispatch(createPopup(formData));
-      console.log( res,"-------------------------");
-
-      if (createPopup.fulfilled.match(res)) {
-        toast.success("Popup created successfully!");
-        loadCounsellors();
-        handleClose();
+  
+    try {
+      if (ele?._id) {
+        const res = await dispatch(updatePopup({ id: ele._id, data: formData }));
+        console.log(res,"+++++++++++++++++++++++++++++++++++++");
+        if (res?.meta?.requestStatus === "fulfilled") {
+          toast.success("Popup updated successfully!");
+          loadCounsellors?.();
+          handleClose?.();
+        } else {
+          toast.error(
+            res?.payload?.message ||
+              res?.error?.message ||
+              "Failed to update Popup"
+          );
+        }
       } else {
-        toast.error("Failed to create Popup");
+        const res = await dispatch(createPopup(formData));
+        if (res?.meta?.requestStatus === "fulfilled") {
+          toast.success("Popup created successfully!");
+          loadCounsellors?.();
+          handleClose?.();
+        } else {
+          toast.error(
+            res?.payload?.message ||
+              res?.error?.message ||
+              "Failed to create Popup"
+          );
+        }
       }
     } catch (error) {
       toast.error("Unexpected error: " + error.message);
@@ -178,7 +163,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
         <div className="modal-dialog" style={{ maxWidth: "800px" }}>
           <div className="modal-content p-4">
             <div className="modal-header">
-              <h5 className="modal-title">Add Popup</h5>
+              <h5 className="modal-title">{ele?._id ? "Edit Popup" : "Add Popup"}</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -192,7 +177,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
                 <label className="form-label">Title *</label>
                 <input
                   type="text"
-                  value={ele?.title}
+                  value={form.title}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, title: e.target.value }))
                   }
@@ -217,10 +202,10 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
                     errors.imageURL ? "is-invalid" : ""
                   }`}
                 />
-                {ele?.imageURL && (
+                {(uploads.image.preview || ele?.imageURL || form.imageURL) && (
                   <div className="mt-2">
                     <img
-                      src={ele?.imageURL}
+                      src={resolvePreviewUrl(uploads.image.preview || ele?.imageURL || form.imageURL)}
                       alt="preview"
                       style={{ width: "150px" }}
                     />
@@ -238,7 +223,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
                   className={`form-select ${
                     errors.target ? "is-invalid" : ""
                   }`}
-                  value={ele?.target}
+                  value={form.target}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, target: e.target.value }))
                   }
@@ -258,7 +243,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
                 Close
               </button>
               <button className="btn btn-primary" onClick={handleSubmit}>
-                Create
+                {ele?._id ? "Update" : "Create"}
               </button>
             </div>
           </div>

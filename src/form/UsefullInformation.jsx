@@ -22,15 +22,31 @@ const storage = getStorage(app);
 const UsefullInformation = ({ ele, handleClose, loadData }) => {
   const dispatch = useDispatch();
 
+  const resolvePreviewUrl = (url) => {
+    if (!url) return "";
+    if (typeof url !== "string") return "";
+    if (
+      url.startsWith("blob:") ||
+      url.startsWith("data:") ||
+      url.startsWith("http://") ||
+      url.startsWith("https://")
+    ) {
+      return url;
+    }
+    // Handle relative paths like "/uploads/xxx.png"
+    if (url.startsWith("/")) return `https://backend.searchmystudy.com${url}`;
+    return url;
+  };
+
   const [form, setForm] = useState({
     title: ele?.title || "",
     target1: ele?.target1 || false,
-    countryName:ele?.countryName || "",
+    countryName: ele?.countryName || "",
     target: ele?.target || false,
     iconURL: ele?.iconURL || "",
     imageURL: ele?.imageURL || "",
     description: ele?.description || "",
-     imageFile: null,
+    imageFile: null,
     iconFile: null
   });
 
@@ -42,16 +58,19 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
   const [imageValid, setImageValid] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const countries = useSelector(
-    (state) => state.country.country||[]
-  );
-  const fetchCountryData = async ()=>{
+  // const countries = useSelector(
+  //   (state) => state.country.country||[]
+  // );
+  const [countries, setCountries] = useState([]);
+  const fetchCountryData = async () => {
     const a = await dispatch(fetchCountry());
-  // console.log(a,"+++++++++++++++++++++++++++++");  
+    console.log(a.payload, "{{{{{{{{{{{{{{{{{{{[[");
+    setCountries(a.payload);
   }
   useEffect(() => {
     fetchCountryData();
   }, []);
+  // console.log(countries, "countries+++++++++++++++++++++++++++++");
 
   // Sync form from ele when opening edit (so iconURL and other fields show correctly)
   useEffect(() => {
@@ -82,11 +101,16 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
     const previewURL = URL.createObjectURL(file);
     if (field === "imageURL") {
       setForm((prev) => ({ ...prev, imageFile: file, imageURL: "" }));
+      setImageValid(false);
       setUploads((prev) => ({
         ...prev,
         image: { ...prev.image, preview: previewURL, progress: 0, loading: false },
       }));
-      validateImage(file);
+      validateImage(file).then((valid) => {
+        setImageValid(valid);
+        if (valid) toast.success("Valid image uploaded!");
+        else toast.error("Image dimensions must be 300x250 pixels.");
+      });
     } else if (field === "iconURL") {
       setForm((prev) => ({ ...prev, iconFile: file, iconURL: "" }));
       setUploads((prev) => ({
@@ -99,38 +123,30 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
 
   // Validate image dimensions
   const validateImage = (file) => {
-    const img = new Image();
-    const reader = new FileReader();
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
 
-    reader.onload = (e) => {
-      img.src = e.target.result;
-    };
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
 
-    img.onload = () => {
-      if (img.width === 300 && img.height === 250) {
-        setImageValid(true);
-        toast.success("Valid image uploaded!");
-      } else {
-        setImageValid(false);
-        toast.error("Image dimensions must be 300x250 pixels.");
-      }
-    };
+      img.onload = () => resolve(img.width === 300 && img.height === 250);
+      img.onerror = () => resolve(false);
 
-    img.onerror = () => {
-      setImageValid(false);
-      toast.error("Invalid image file.");
-    };
-
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
   };
 
   // Validate form – all fields from form state
-  const validateForm = () => {
+  // imageValidOverride prevents race-conditions (React state updates are async)
+  const validateForm = (imageValidOverride) => {
     const newErrors = {};
+    const effectiveImageValid = imageValidOverride ?? imageValid;
     if (!form.title?.trim()) newErrors.title = "Title is required";
     if (!form.target1 && !form.target) newErrors.target = "Select at least one target";
     if (!form.imageFile && !form.imageURL) newErrors.imageURL = "Image is required";
-    if (!imageValid && form.imageFile) newErrors.imageURL = "Image dimensions are invalid";
+    if (form.imageFile && !effectiveImageValid) newErrors.imageURL = "Image dimensions are invalid";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -168,80 +184,100 @@ const UsefullInformation = ({ ele, handleClose, loadData }) => {
     });
   };
 
-const handleSubmit = async () => {
-  if (loading) return;
-  setLoading(true);
-  const toastId = toast.loading(
-    ele ? "Updating information..." : "Creating information..."
-  );
-  
-  try {
-    let formData = {
-      title: form.title,
-      target1: form.target1,
-      target: form.target,
-      description: form.description,
-      iconURL: form.iconURL,
-      countryName: form.countryName
-    };
-    console.log(formData,"::::::::::::::::::::::::::::::::::::::::::::");
-    // Image upload
-    if (form?.imageFile) {
-      formData.imageURL = await uploadFile(form.imageFile, "image");
-    } else if (form?.imageURL) {
-      formData.imageURL = form.imageURL;
-    } else {
-      throw new Error("Please upload an image");
-    }
+  const handleSubmit = async () => {
+    if (loading) return;
+    setLoading(true);
+    const toastId = toast.loading(
+      ele ? "Updating information..." : "Creating information..."
+    );
 
-    // Icon upload (optional)
-    if (form?.iconFile) {
-      formData.iconURL = await uploadFile(form.iconFile, "icon");
-    } else if (form?.iconURL) {
-      formData.iconURL = form.iconURL;
-    }
-    
-    let res;
-    
-    if (ele && ele._id) {
-      // UPDATE
-      res = await dispatch(
-        updateInformation({ id: ele._id, data: formData })
-      );
-      
-      if (res.meta.requestStatus !== "fulfilled") {
-        throw new Error("Failed to update information alert");
-      }
-      
-      toast.success("Information updated successfully!", { id: toastId });
-      dispatch(fetchInformation());
-    } else {
-      // CREATE
-      if (!validateForm()) {
-        throw new Error("Please fill all required fields.");
-      }
-      
-      console.log(formData,"+++++++++++++++++")
-      res = await dispatch(createInformation(formData));
+    try {
+      const formData = new FormData();
 
-      if (res.meta.requestStatus !== "fulfilled") {
-        throw new Error("Failed to create information alert");
+    let imageIsValidNow = null;
+
+      // Ensure image dimensions are valid before sending multipart request.
+      if (form?.imageFile) {
+        const valid = await validateImage(form.imageFile);
+        setImageValid(valid);
+      imageIsValidNow = valid;
+        if (!valid) {
+          throw new Error("Image dimensions are invalid");
+        }
       }
 
-      toast.success("Information created successfully!", { id: toastId });
-    }
+      // Text fields (multipart)
+      formData.append("title", form.title ?? "");
+      formData.append("target1", form.target1 ?? false);
+      formData.append("target", form.target ?? false);
+      formData.append("description", form.description ?? "");
+      formData.append("countryName", form.countryName ?? "");
 
-    handleClose();
-    loadData();
+      // Image upload (send file in FormData)
+      if (form?.imageFile) {
+        formData.append("imageURL", form.imageFile);
+      } else if (form?.imageURL) {
+        // When editing and user doesn't pick a new file, backend can still use existing URL.
+        formData.append("imageURL", form.imageURL);
+      } else {
+        throw new Error("Please upload an image");
+      }
 
-  } catch (error) {
-    toast.error(error.message || "Something went wrong", {
-      id: toastId,
+      // Icon upload (optional)
+      if (form?.iconFile) {
+        formData.append("iconURL", form.iconFile);
+      } else if (form?.iconURL) {
+        formData.append("iconURL", form.iconURL);
+      }
+
+      let res;
+
+    // DEBUG: verify multipart payload (especially imageURL)
+    const debugEntries = [];
+    formData.forEach((v, k) => {
+      const isFile = typeof File !== "undefined" && v instanceof File;
+      debugEntries.push({ k, isFile, type: typeof v });
     });
-  } finally {
-    setLoading(false);
-  }
-};
+    console.log("UsefullInformation FormData:", debugEntries);
+
+      if (ele && ele._id) {
+        // UPDATE
+        res = await dispatch(
+          updateInformation({ id: ele._id, data: formData })
+        );
+
+        if (res.meta.requestStatus !== "fulfilled") {
+          throw new Error("Failed to update information alert");
+        }
+
+        toast.success("Information updated successfully!", { id: toastId });
+        dispatch(fetchInformation());
+      } else {
+        // CREATE
+      if (!validateForm(imageIsValidNow)) {
+          throw new Error("Please fill all required fields.");
+        }
+
+        res = await dispatch(createInformation(formData));
+
+        if (res.meta.requestStatus !== "fulfilled") {
+          throw new Error("Failed to create information alert");
+        }
+
+        toast.success("Information created successfully!", { id: toastId });
+      }
+
+      handleClose();
+      loadData();
+
+    } catch (error) {
+      toast.error(error.message || "Something went wrong", {
+        id: toastId,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleContentChange = (value) => {
@@ -502,13 +538,13 @@ const handleSubmit = async () => {
       <div className="professional-modal-overlay">
         <div className="professional-modal-content">
           <div className="profesional-modal-header">
-            <h5 style={{textAlign: "black"}} className="professioal-modal-title">
+            <h5 style={{ textAlign: "black" }} className="professioal-modal-title">
               {ele?._id ? "📝 Update Information" : "Add Information"}
             </h5>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="close-btn-icon"
-              onClick={handleClose} 
+              onClick={handleClose}
               disabled={loading}
               aria-label="Close"
             >
@@ -575,74 +611,78 @@ const handleSubmit = async () => {
               <TextEditor name="description" content={form?.description} setContent={handleContentChange} />
             </div>
 
-           <div className="mb-3">
-                <label className="form-label">Image </label>
-                {/* <p className="text-[10px]">Image size should be 300x250 px</p> */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "imageURL")}
-                  className={`form-control ${errors.imageURL ? "is-invalid" : ""}`}
-                  disabled={loading}
-                />
-                {(uploads.image.preview || form.imageURL) && (
-                  <div className="mt-2">
-                    <img src={uploads.image.preview || form.imageURL} alt="preview" style={{ width: "150px" }} />
-                  </div>
-                )}
-                {errors.imageURL && <div className="invalid-feedback">{errors.imageURL}</div>}
-              </div>
+            <div className="mb-3">
+              <label className="form-label">Image </label>
+              {/* <p className="text-[10px]">Image size should be 300x250 px</p> */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, "imageURL")}
+                className={`form-control ${errors.imageURL ? "is-invalid" : ""}`}
+                disabled={loading}
+              />
+              {(uploads.image.preview || form.imageURL) && (
+                <div className="mt-2">
+                  <img src={uploads.image.preview || form.imageURL} alt="preview" style={{ width: "150px" }} />
+                </div>
+              )}
+              {errors.imageURL && <div className="invalid-feedback">{errors.imageURL}</div>}
+            </div>
 
-                <div className="mb-3">
-                <label className="form-label">Country Icon</label>
-                <select
-                  name="iconURL"
-                  value={form.iconURL || ""}
-                  onChange={(e) => setForm((prev) => ({ ...prev, iconURL: e.target.value }))}
-                  className="form-control"
-                  disabled={loading}
-                >
-                  <option value="">Select Country</option>
-                  {(countries || []).map((c) => (
-                    <option key={c._id} value={c.flagURL || ""}>{c.name}</option>
-                  ))} 
-                </select>
-                {form.iconURL && (
-                  <div className="mt-2">
-                    <img src={form.iconURL} alt="Flag" style={{ width: "32px", height: "auto" }} />
-                  </div>
-                )}
-              </div>
+            <div className="mb-3">
+              <label className="form-label">Country Name</label>
+              <select
+                name="countryName"
+                // value={form.countryName || ""}
+                onChange={(e) => setForm((prev) => ({ ...prev, countryName: e.target.value }))}
+                className="form-control"
+                disabled={loading}
+              >
+                <option value="">Select Country Icon</option>
+                {(countries || []).map((c) => (
+                  <option key={c._id} >{c?.country?.name}</option>
+                ))}
+              </select>
+            
+            </div>
 
-                <div className="mb-3">
-                <label className="form-label">Country</label>
-                <select
-                  name="iconURL"
-                  value={form.countryName || ""}
-                  onChange={(e) => setForm((prev) => ({ ...prev, countryName: e.target.value }))}
-                  className="form-control"
-                  disabled={loading}
-                >
-                  <option value="">Select Country</option>
-                  {(countries || []).map((c) => (
-                    <option key={c._id} value={c.name || ""}>{c.name}</option>
-                  ))} 
-                </select>
-                
-              </div>
+            <div className="mb-3">
+              <label className="form-label">Country</label>
+              <select
+                name="iconURL"
+                // value={form.countryName || ""}
+                onChange={(e) => setForm((prev) => ({ ...prev, iconURL: e.target.value }))}
+                className="form-control"
+                disabled={loading}
+              >
+                <option value="">Select Country</option>
+                {(countries || []).map((c) => (
+                  <option key={c.country?.flagURL} >{c.country?.name}</option>
+                ))}
+              </select>
+              {form.iconURL && (
+                <div className="mt-2">
+                  <img
+                    src={resolvePreviewUrl(form.iconURL)}
+                    alt="Flag"
+                    style={{ width: "32px", height: "auto" }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="professional-modal-footer">
-            <button 
-              className="btn-close-modal" 
-              onClick={handleClose} 
+            <button
+              className="btn-close-modal"
+              onClick={handleClose}
               disabled={loading}
             >
               Cancel
             </button>
-            <button 
-              className="btn-submit-modal" 
-              onClick={handleSubmit} 
+            <button
+              className="btn-submit-modal"
+              onClick={handleSubmit}
               disabled={loading}
             >
               {loading ? (
