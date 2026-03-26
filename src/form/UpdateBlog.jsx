@@ -1,16 +1,16 @@
 import { useState } from "react";
 import TextEditor from "./TextEditor";
-import { blogUpdate, createBlogThunk } from "../slice/blogSlice";
+import { blogUpdate } from "../slice/blogSlice";
 import { useDispatch } from "react-redux";
-
-import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
-// import { storage } from "../firebase"; // adjust path
-// import { toast, ToastContainer } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
-import { app } from "../firebase";
 import { toast } from "react-toastify";
-// import { getStorage, uploadBytes, getDownloadURL } from 'firebase/storage';
-const storage = getStorage(app);
+
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+const getAssetUrl = (value) => {
+    if (!value || typeof value !== "string") return "";
+    if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+    return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+};
 
 export default function UpdateBlog({ handleClose, loadBlogs, updateBlog }) {
     const dispatch = useDispatch();
@@ -25,8 +25,8 @@ export default function UpdateBlog({ handleClose, loadBlogs, updateBlog }) {
     });
 
     const [uploads, setUploads] = useState({
-        banner: { progress: 0, preview: null, name: "", loading: false },
-        thumbnail: { progress: 0, preview: null, name: "", loading: false },
+        banner: { progress: 0, preview: updateBlog?.bannerURL || null, name: "", file: null },
+        thumbnail: { progress: 0, preview: updateBlog?.thumbnailURL || null, name: "", file: null },
     });
 
     const [errors, setErrors] = useState({});
@@ -35,45 +35,13 @@ export default function UpdateBlog({ handleClose, loadBlogs, updateBlog }) {
         const file = event.target.files[0];
         if (!file) return;
 
+        const previewURL = URL.createObjectURL(file);
+        setForm((prev) => ({ ...prev, [`${type}URL`]: file.name }));
         setUploads((prev) => ({
             ...prev,
-            [type]: { ...prev[type], loading: true, name: file.name },
+            [type]: { progress: 100, preview: previewURL, name: file.name, file },
         }));
-
-        try {
-            const previewURL = URL.createObjectURL(file);
-
-            const progressInterval = setInterval(() => {
-                setUploads((prev) => ({
-                    ...prev,
-                    [type]: {
-                        ...prev[type],
-                        progress: Math.min(prev[type].progress + 10, 90),
-                    },
-                }));
-            }, 200);
-
-            const storageRef = ref(storage, `${type}/${file.name}`);
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
-
-            clearInterval(progressInterval);
-
-            setForm((prev) => ({ ...prev, [`${type}URL`]: url }));
-            setUploads((prev) => ({
-                ...prev,
-                [type]: { progress: 100, preview: previewURL, name: file.name, loading: false },
-            }));
-
-            toast.success(`${type} uploaded successfully!`);
-        } catch (error) {
-            console.error(`Failed to upload ${type}:`, error);
-            setUploads((prev) => ({
-                ...prev,
-                [type]: { progress: 0, preview: null, name: "", loading: false },
-            }));
-            toast.error(`Failed to upload ${type}`);
-        }
+        setErrors((prev) => ({ ...prev, [`${type}URL`]: "" }));
     };
 
     const handleContentChange = (value) => {
@@ -101,8 +69,23 @@ console.log(form);
     }
 
     try {
+            const formData = new FormData();
+            formData.append("title", form.title);
+            formData.append("date", form.date);
+            formData.append("content", form.content);
+            if (uploads.banner.file) {
+                formData.append("bannerURL", uploads.banner.file);
+            } else if (form.bannerURL) {
+                formData.append("bannerURL", form.bannerURL);
+            }
+            if (uploads.thumbnail.file) {
+                formData.append("thumbnailURL", uploads.thumbnail.file);
+            } else if (form.thumbnailURL) {
+                formData.append("thumbnailURL", form.thumbnailURL);
+            }
+
             const res = await dispatch(
-                blogUpdate({ form, id: updateBlog?._id })
+                blogUpdate({ form: formData, id: updateBlog?._id })
             );
 
         console.log(res, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
@@ -162,7 +145,7 @@ console.log(form);
                                     onChange={(e) => handleFileChange(e, "banner")}
                                 />
                                 <p style={{ color: "red" }}>Banner Size should be 2400x400 px</p>
-                                {form?.bannerURL && <img src={form?.bannerURL} alt="banner" width="500" />}
+                                {uploads.banner.preview && <img src={getAssetUrl(uploads.banner.preview)} alt="banner" width="500" />}
                                 {errors.bannerURL && <div className="invalid-feedback">{errors.bannerURL}</div>}
                               
 
@@ -178,7 +161,7 @@ console.log(form);
                                     onChange={(e) => handleFileChange(e, "thumbnail")}
                                 />
                                 <p style={{ color: "red" }}>Thumbnail Size should be 1200x900 px</p>
-                                {form?.thumbnailURL && <img src={form?.thumbnailURL} alt="thumbnail" width="200" />}
+                                {uploads.thumbnail.preview && <img src={getAssetUrl(uploads.thumbnail.preview)} alt="thumbnail" width="200" />}
                                 {errors.thumbnailURL && <div className="invalid-feedback">{errors.thumbnailURL}</div>}
 
                             </div>

@@ -214,7 +214,7 @@ const TicketManagement = () => {
                     {ele?.priority}
                   </td>
                   <td>
-                    <a target="_blank" href={ele?.attachments[0]}>Click To View</a>
+                    <a target="_blank" href={`https://backend.searchmystudy.com/${ele?.attachments[0]}`}>Click To View</a>
                   </td>
 
                   <td>

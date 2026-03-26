@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-
+import { Link } from "react-router-dom";
+import { Icon } from "@iconify/react/dist/iconify.js";
 import { FetchTransaction, deleteTransaction } from "../slice/transaction";
 import CreateTransaction from "../form/CreateTransaction";
+
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+const getAssetUrl = (value) => {
+    if (!value || typeof value !== "string") return "#";
+    if (/^https?:\/\//i.test(value)) return value;
+    return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+};
 
 const TransactionManagement = () => {
     const dispatch = useDispatch();
@@ -13,11 +22,12 @@ const TransactionManagement = () => {
     const [filterCenterCode, setFilterCenterCode] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState(null);
 
     // ✅ Fetch data
     useEffect(() => {
         dispatch(FetchTransaction());
-    }, [dispatch]);
+    }, [dispatch]); 
 
     // ✅ Filtering logic (SAFE) – ensure result is always an array
     const filteredTransaction = (transaction?.filter((item) => {
@@ -36,7 +46,7 @@ const TransactionManagement = () => {
         return matchTransactionID && matchCenterCode;
     }) ?? []);
 
-
+    console.log(filteredTransaction)
 
     const handleCheckboxChange = (id) => {
         setSelectedIds((prev) =>
@@ -69,7 +79,10 @@ const TransactionManagement = () => {
                 <div>
                     <button
                         className="btn btn-primary mx-2"
-                        onClick={() => setShowModal(true)}
+                        onClick={() => {
+                            setEditingTransaction(null);
+                            setShowModal(true);
+                        }}
                     >
                         Create Transaction
                     </button>
@@ -148,6 +161,7 @@ const TransactionManagement = () => {
                                 <th>Transaction ID</th>
                                 <th>Mode</th>
                                 <th>Created At</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
 
@@ -179,7 +193,7 @@ const TransactionManagement = () => {
                                     <td>{ele?.centerCode}</td>
                                     <td>
                                         <a
-                                            href={ele?.invoice}
+                                            href={getAssetUrl(ele?.invoice)}
                                             target="_blank"
                                             rel="noreferrer"
                                         >
@@ -188,7 +202,7 @@ const TransactionManagement = () => {
                                     </td>
                                     <td>
                                         <a
-                                            href={ele?.other}
+                                            href={getAssetUrl(ele?.other)}
                                             target="_blank"
                                             rel="noreferrer"
                                         >
@@ -197,7 +211,7 @@ const TransactionManagement = () => {
                                     </td>
                                     <td>
                                         <a
-                                            href={ele?.receipt}
+                                            href={getAssetUrl(ele?.recipt)}
                                             target="_blank"
                                             rel="noreferrer"
                                         >
@@ -215,6 +229,19 @@ const TransactionManagement = () => {
                                               ).toLocaleDateString()
                                             : "—"}
                                     </td>
+                                    <td>
+                    <Link
+                      onClick={() => {
+                        setEditingTransaction(ele);
+                        setShowModal(true);
+                      }}
+                      to="#"
+                      className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
+                    >
+                      <Icon icon="lucide:edit" />
+                    </Link>
+
+                  </td>
                                 </tr>
                                 ))
                             )}
@@ -226,8 +253,12 @@ const TransactionManagement = () => {
             {/* MODAL */}
             {showModal && (
                 <CreateTransaction
+                    ele={editingTransaction}
                     fetchData={() => dispatch(FetchTransaction())}
-                    handleClose={() => setShowModal(false)}
+                    handleClose={() => {
+                        setShowModal(false);
+                        setEditingTransaction(null);
+                    }}
                 />
             )}
         </div>

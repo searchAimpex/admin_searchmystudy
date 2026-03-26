@@ -38,13 +38,17 @@ export const createBlogThunk = createAsyncThunk(
   async (blogData, thunkAPI) => {
     try {
       console.log("Sending blog data:", blogData);
-
+      const isFormData = blogData instanceof FormData;
       const response = await fetch("https://searchmystudy.com/api/admin/Blog", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(blogData),
+        ...(isFormData
+          ? { body: blogData }
+          : {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(blogData),
+            }),
       });
 
       console.log("Response status:", response.status);
@@ -87,11 +91,13 @@ export const blogUpdate = createAsyncThunk(
   async ({ form, id }, { rejectWithValue }) => {
     try {
       console.log(id);
-      
-      // PUT request to update the blog
+      const config = form instanceof FormData
+        ? {}
+        : { headers: { 'Content-Type': 'application/json' } };
       const response = await axios.put(
         ` https://searchmystudy.com/api/admin/Blog/${id}`,
-        form
+        form,
+        config
       );
       return response.data;
     } catch (error) {

@@ -35,6 +35,25 @@ export const createTransaction = createAsyncThunk(
   }
 )
 
+export const updateTransaction = createAsyncThunk(
+  "transaction/updateTransaction",
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const config = data instanceof FormData
+        ? {}
+        : { headers: { "Content-Type": "application/json" } };
+      const response = await axios.put(
+        `https://searchmystudy.com/api/admin/transaction/${id}`,
+        data,
+        config
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+)
+
 export const deleteTransaction = createAsyncThunk(
   "transaction/deleteTransaction",
   async (ids,{rejectWithValue})=>{

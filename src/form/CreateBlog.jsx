@@ -2,14 +2,8 @@ import { useState } from "react";
 import TextEditor from "./TextEditor";
 import { createBlogThunk } from "../slice/blogSlice";
 import { useDispatch } from "react-redux";
-
-import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
-// import { storage } from "../firebase"; // adjust path
 import {  toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { app } from "../firebase";
-// import { getStorage, uploadBytes, getDownloadURL } from 'firebase/storage';
-const storage = getStorage(app);
 
 export default function CreateBlog({ handleClose ,loadBlogs}) {
   const dispatch = useDispatch();
@@ -23,8 +17,8 @@ export default function CreateBlog({ handleClose ,loadBlogs}) {
   });
 
   const [uploads, setUploads] = useState({
-    banner: { progress: 0, preview: null, name: "", loading: false },
-    thumbnail: { progress: 0, preview: null, name: "", loading: false },
+    banner: { progress: 0, preview: null, name: "", file: null },
+    thumbnail: { progress: 0, preview: null, name: "", file: null },
   });
 
   const [errors, setErrors] = useState({});
@@ -33,45 +27,13 @@ export default function CreateBlog({ handleClose ,loadBlogs}) {
     const file = event.target.files[0];
     if (!file) return;
 
+    const previewURL = URL.createObjectURL(file);
+    setForm((prev) => ({ ...prev, [`${type}URL`]: file.name }));
     setUploads((prev) => ({
       ...prev,
-      [type]: { ...prev[type], loading: true, name: file.name },
+      [type]: { progress: 100, preview: previewURL, name: file.name, file },
     }));
-
-    try {
-      const previewURL = URL.createObjectURL(file);
-
-      const progressInterval = setInterval(() => {
-        setUploads((prev) => ({
-          ...prev,
-          [type]: {
-            ...prev[type],
-            progress: Math.min(prev[type].progress + 10, 90),
-          },
-        }));
-      }, 200);
-
-      const storageRef = ref(storage, `${type}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-
-      clearInterval(progressInterval);
-
-      setForm((prev) => ({ ...prev, [`${type}URL`]: url }));
-      setUploads((prev) => ({
-        ...prev,
-        [type]: { progress: 100, preview: previewURL, name: file.name, loading: false },
-      }));
-
-      toast.success(`${type} uploaded successfully!`);
-    } catch (error) {
-      console.error(`Failed to upload ${type}:`, error);
-      setUploads((prev) => ({
-        ...prev,
-        [type]: { progress: 0, preview: null, name: "", loading: false },
-      }));
-      toast.error(`Failed to upload ${type}`);
-    }
+    setErrors((prev) => ({ ...prev, [`${type}URL`]: "" }));
   };
 
   const handleContentChange = (value) => {
@@ -97,7 +59,22 @@ const handleSubmit = async () => {
     return;
   }
   try {
-    const res = await dispatch(createBlogThunk(form));
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("date", form.date);
+    formData.append("content", form.content);
+    if (uploads.banner.file) {
+      formData.append("bannerURL", uploads.banner.file);
+    } else if (form.bannerURL) {
+      formData.append("bannerURL", form.bannerURL);
+    }
+    if (uploads.thumbnail.file) {
+      formData.append("thumbnailURL", uploads.thumbnail.file);
+    } else if (form.thumbnailURL) {
+      formData.append("thumbnailURL", form.thumbnailURL);
+    }
+
+    const res = await dispatch(createBlogThunk(formData));
     console.log(res, "<<< Blog creation response >>>");
 
     if (createBlogThunk.fulfilled.match(res)) {

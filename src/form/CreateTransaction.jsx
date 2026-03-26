@@ -2,9 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createTransaction } from "../slice/transaction";
+import { createTransaction, updateTransaction } from "../slice/transaction";
 
 const FILE_FIELDS = ["invoice", "receipt", "other"];
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+const getAssetUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+  return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+};
 
 const CreateTransaction = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
@@ -18,7 +25,7 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
     remarks: ele?.remarks || "",
     centerCode: ele?.centerCode || "",
     invoice: ele?.invoice || "",
-    receipt: ele?.receipt || "",
+    receipt: ele?.recipt || "",
     other: ele?.other || "",
   };
 
@@ -27,7 +34,7 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
   /* ================= FILE UPLOAD STATE ================= */
   const [uploads, setUploads] = useState({
     invoice: { preview: ele?.invoice || null, file: null },
-    receipt: { preview: ele?.receipt || null, file: null },
+    receipt: { preview: ele?.recipt || null, file: null },
     other: { preview: ele?.other || null, file: null },
   });
 
@@ -36,7 +43,7 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
       setFormValues({ ...initial });
       setUploads({
         invoice: { preview: ele?.invoice || null, file: null },
-        receipt: { preview: ele?.receipt || null, file: null },
+        receipt: { preview: ele?.recipt || null, file: null },
         other: { preview: ele?.other || null, file: null },
       });
     }
@@ -83,7 +90,7 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
 
       let res;
       if (ele?._id) {
-        res = await dispatch(/* updateTransaction({ id: ele._id, data: formData }) */);
+        res = await dispatch(updateTransaction({ id: ele._id, data: formData }));
       } else {
         res = await dispatch(createTransaction(formData));
       }
@@ -226,7 +233,7 @@ const CreateTransaction = ({ ele, handleClose, fetchData }) => {
                       />
                       {uploads[f]?.preview && (
                         <a
-                          href={uploads[f].preview}
+                          href={getAssetUrl(uploads[f].preview)}
                           target="_blank"
                           rel="noreferrer"
                           className="d-block mt-1 text-primary"
