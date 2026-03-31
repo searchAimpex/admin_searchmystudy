@@ -5,7 +5,10 @@ export const createTestemonial = createAsyncThunk(
     'testemonial/createTestemonial',
     async(data,thunkAPI) => {
         try {
-            const response = await axios.post("https://searchmystudy.com/api/admin/CreateTestimonials",data);
+            const config = data instanceof FormData
+                ? {}
+                : { headers: { "Content-Type": "application/json" } };
+            const response = await axios.post("https://searchmystudy.com/api/admin/CreateTestimonials",data,config);
                 console.log(response,"++++++++++++++");
                 
             return response.data;
@@ -50,7 +53,10 @@ export const updateTestemonial = createAsyncThunk(
     'testemonial/updateTestemonial',
     async({id,data},{ rejectWithValue })=>{
         try {
-            const response = await axios.put(`https://searchmystudy.com/api/admin/UpdateTestimonials/${id}`,data)
+            const config = data instanceof FormData
+                ? {}
+                : { headers: { "Content-Type": "application/json" } };
+            const response = await axios.put(`https://searchmystudy.com/api/admin/UpdateTestimonials/${id}`,data,config)
             return response?.data;
         } catch (error) {
             return rejectWithValue(error?.response?.data || error.message)

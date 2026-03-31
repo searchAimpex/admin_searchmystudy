@@ -51,7 +51,14 @@ export const createSecondCountry = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message || 'Network error');
+      const data = error.response?.data;
+      const msg =
+        (typeof data === 'string' && data.trim()) ||
+        data?.message ||
+        (typeof data?.error === 'string' ? data.error : null) ||
+        error.message ||
+        'Network error';
+      return thunkAPI.rejectWithValue(typeof msg === 'string' ? msg : 'Request failed');
     }
   }
 );
@@ -73,7 +80,14 @@ export const updateSecondCountry = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message || 'Network error');
+      const data = error.response?.data;
+      const msg =
+        (typeof data === 'string' && data.trim()) ||
+        data?.message ||
+        (typeof data?.error === 'string' ? data.error : null) ||
+        error.message ||
+        'Network error';
+      return thunkAPI.rejectWithValue(typeof msg === 'string' ? msg : 'Request failed');
     }
   }
 );
@@ -105,7 +119,7 @@ export const fetchCountry = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('https://searchmystudy.com/api/users/secondcountry');
-    //   console.log(response.data,"++++++++++++++++");
+      // console.log(response.data,"++++++++++++++++");
       
       return response.data;
     } catch (error) {

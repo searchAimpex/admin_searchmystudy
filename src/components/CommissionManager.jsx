@@ -31,8 +31,9 @@ const CommissionManager = () => {
 
   /* ================= FETCH ================= */
   const fetchData = async () => {
-    await dispatch(fetchCountry());
-    await dispatch(fetchComission());
+    // await dispatch(fetchCountry());
+    const a = await dispatch(fetchComission());
+    console.log(a,"++++++++++++++++");
   };
 
   useEffect(() => {
@@ -192,7 +193,7 @@ const CommissionManager = () => {
                     <td>
                       {ele?.fileURL ? (
                         <a
-                          href={ele.fileURL}
+                          href={`https://backend.searchmystudy.com/${ele.fileURL}`}
                           target="_blank"
                           rel="noreferrer"
                         >
@@ -202,7 +203,7 @@ const CommissionManager = () => {
                     </td>
 
                     <td>
-                      {ele?.SecondCountry?.name || "---------"}
+                      {ele?.SecondCountry?.country?.name || "---------"}
                     </td>
 
                     <td>

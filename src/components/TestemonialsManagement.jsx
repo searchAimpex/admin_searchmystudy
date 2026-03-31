@@ -203,7 +203,7 @@ const CounsellorManager = () => {
                   </div>
                 </td>
                 <td>
-                  <a href={ele?.imageURL} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://backend.searchmystudy.com/${ele?.imageURL}`} target="_blank" rel="noopener noreferrer">
                     Click to View
                   </a>
                 </td>

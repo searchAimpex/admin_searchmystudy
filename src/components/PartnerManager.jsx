@@ -106,7 +106,7 @@ console.log(partners,"////////////////////////////////////////");
       await dispatch(updateStatus({ id, status })).unwrap();
       toast.success("Status updated");
       dispatch(fetchPartner());
-    } catch {await
+    } catch {
       toast.error("Status update failed");
     }
   };

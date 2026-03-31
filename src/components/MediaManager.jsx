@@ -142,12 +142,12 @@ const MediaManager = () => {
                 <td>{ele?.title}</td>
                 <td>{ele?.description}</td>
                 <td>
-                  <a href={ele?.imageURL} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://backend.searchmystudy.com/${ele?.imageURL}`} target="_blank" rel="noopener noreferrer">
                     Click to View
                   </a>
                 </td>
                 <td>
-                  <a href={ele?.articalURL} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://backend.searchmystudy.com/${ele?.articalURL}`} target="_blank" rel="noopener noreferrer">
                     Click to View
                   </a>
                 </td>

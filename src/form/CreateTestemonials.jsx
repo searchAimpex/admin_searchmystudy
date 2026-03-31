@@ -1,12 +1,15 @@
 import React, { useState } from "react";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useDispatch } from "react-redux";
 import { createTestemonial, fetchTestemonial, updateTestemonial } from "../slice/testemonialsManagementSlice";
-import { app } from "../firebase";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
 
-const storage = getStorage(app);
+const getAssetUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+  return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+};
 
 const Createtestemonial = ({ ele, handleClose, loadCounsellors }) => {
   const dispatch = useDispatch();
@@ -25,7 +28,7 @@ const Createtestemonial = ({ ele, handleClose, loadCounsellors }) => {
   });
 
   const [uploads, setUploads] = useState({
-    image: { progress: 0, preview: null, loading: false },
+    image: { progress: 0, preview: ele?.imageURL || null, file: null },
   });
 
   const [imageValid, setImageValid] = useState(false);
@@ -40,7 +43,7 @@ const Createtestemonial = ({ ele, handleClose, loadCounsellors }) => {
     setForm((prev) => ({ ...prev, imageFile: file, imageURL: "" }));
     setUploads((prev) => ({
       ...prev,
-      image: { ...prev.image, preview: previewURL, progress: 0, loading: false },
+      image: { ...prev.image, preview: previewURL, progress: 100, file },
     }));
     validateImage(file);
     setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -86,46 +89,27 @@ const Createtestemonial = ({ ele, handleClose, loadCounsellors }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Upload image to Firebase
-  const uploadImage = async (file) => {
-    return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, `counsellors/${file?.name}`);
-      const metadata = {
-        contentType: file?.type,
-        contentDisposition: "inline",
-      };
-
-      const uploadTask = uploadBytesResumable(storageRef, file, metadata);
-
-      setUploads((prev) => ({ ...prev, image: { ...prev.image, loading: true } }));
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploads((prev) => ({ ...prev, image: { ...prev.image, progress } }));
-        },
-        (error) => {
-          setUploads((prev) => ({ ...prev, image: { ...prev.image, loading: false, progress: 0 } }));
-          reject(error);
-        },
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          setUploads((prev) => ({ ...prev, image: { ...prev.image, loading: false, progress: 100 } }));
-          resolve(url);
-        }
-      );
-    });
-  };
-
   // Submit handler
   const handleSubmit = async () => {
-    let formData = {};
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields with valid image.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("name", form.name);
+    formData.append("location", form.location);
+    formData.append("role", form.role);
+    formData.append("degree", form.degree);
+    formData.append("experience", form.experience);
+    formData.append("description", form.description);
+    formData.append("rating", form.rating);
+
     if (form?.imageFile) {
-      const imageUrl = await uploadImage(form.imageFile);
-      formData = { ...form, imageURL: imageUrl };
+      formData.append("imageURL", form.imageFile);
     } else if (form?.imageURL) {
-      formData = { ...form, imageURL: form.imageURL };
+      formData.append("imageURL", form.imageURL);
     } else {
       toast.error("Please upload an image");
       return;
@@ -133,8 +117,6 @@ const Createtestemonial = ({ ele, handleClose, loadCounsellors }) => {
 
     try {
       if (ele && ele._id) {
-        // Updatecons
-        // console.log(formData,"---------------------")
         const res = await dispatch(updateTestemonial({ id: ele._id, data: formData }));
         console.log(res);
         
@@ -147,11 +129,6 @@ const Createtestemonial = ({ ele, handleClose, loadCounsellors }) => {
           toast.error("Failed to update Counsellor");
         }
       } else {
-        // Create
-        if (!validateForm()) {
-          toast.error("Please fill in all required fields with valid image.");
-          return;
-        }
         console.log(formData,":::::::::::::::::::::::::::;");
         
         const res = await dispatch(createTestemonial(formData));
@@ -285,9 +262,9 @@ const Createtestemonial = ({ ele, handleClose, loadCounsellors }) => {
                   onChange={(e) => handleFileChange(e, "imageURL")}
                   className={`form-control ${errors.imageURL ? "is-invalid" : ""}`}
                 />
-                {ele?.imageURL && (
+                {uploads.image.preview && (
                   <div className="mt-2">
-                    <img src={ele?.imageURL} alt="preview" style={{ width: "150px" }} />
+                    <img src={getAssetUrl(uploads.image.preview)} alt="preview" style={{ width: "150px" }} />
                   </div>
                 )}
                 {errors.imageURL && <div className="invalid-feedback">{errors.imageURL}</div>}

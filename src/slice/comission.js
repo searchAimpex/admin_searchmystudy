@@ -86,6 +86,34 @@ export const createCommission = createAsyncThunk(
     }
   }
 );
+
+
+export const updateCommission = createAsyncThunk(
+  'comission/updateCommission',
+  async ({ id, data }, thunkAPI) => {
+    try {
+      const response = await fetch(`https://searchmystudy.com/api/admin/commission/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData);
+      }
+      const resData = await response.json();
+      return resData;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message || 'Network error');
+    }
+  }
+);
+
+
+
+
 const ComissionSlice = createSlice({
   name: 'comission',
   initialState: {

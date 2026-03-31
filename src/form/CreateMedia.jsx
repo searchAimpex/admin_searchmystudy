@@ -5,35 +5,33 @@ import {
   Button,
   Form,
 } from 'react-bootstrap';
-import { app } from "../firebase";
 import TextEditor from "./TextEditor";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createVideo, updateVideo, fetchVideos } from "../slice/VideoSlice";
 import { createMedia, fetchMedias, updateMedia } from "../slice/MediaSlice";
 
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+const getAssetUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+  return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+};
 
 const CreateMedia = ({ ele, handleClose}) => {
-  const storage = getStorage(app);
   const dispatch = useDispatch();
   const [form,setForm] = useState({
     title:ele?.title || "",
     description:ele?.description || "",
-    imageURL: ele?.videoURL || "",
+    imageURL: ele?.imageURL || "",
     articalURL: ele?.articalURL || "",
   })
 
   const [errors, setErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(ele && ele._id ? ele?.imageURL : null);
-  const [isUploading, setIsUploading] = useState(false);
-
-  const uploadImage = async (file) => {
-    const storageRef = ref(storage, `thumbnails/${Date.now()}-${file.name}`);
-    await uploadBytesResumable(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    return url;
-  };
+  const [imageFile, setImageFile] = useState(null);
+  const [articleFile, setArticleFile] = useState(null);
 
   const handleChange = async (event) => {
     const { name, value, type, files } = event.target;
@@ -42,18 +40,13 @@ const CreateMedia = ({ ele, handleClose}) => {
       const file = files[0];
       if (file) {
         if (name === 'imageURL') {
-          try {
-            setIsUploading(true);
-            const previewURL = URL.createObjectURL(file);
-            setImagePreview(previewURL);
-            const imageURL = await uploadImage(file);
-            setForm(prev => ({ ...prev, imageURL: imageURL }));
-          } catch (error) {
-            console.error("Error uploading image:", error);
-            toast.error("Failed to upload image");
-          } finally {
-            setIsUploading(false);
-          }
+          const previewURL = URL.createObjectURL(file);
+          setImagePreview(previewURL);
+          setImageFile(file);
+          setForm(prev => ({ ...prev, imageURL: file.name }));
+        } else if (name === 'articalURL') {
+          setArticleFile(file);
+          setForm(prev => ({ ...prev, articalURL: file.name }));
         }
       }
     } else {
@@ -68,9 +61,23 @@ const CreateMedia = ({ ele, handleClose}) => {
 
   const handleSubmit = async () => {
     try {
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      if (articleFile) {
+        formData.append("articalURL", articleFile);
+      } else if (form.articalURL) {
+        formData.append("articalURL", form.articalURL);
+      }
+      if (imageFile) {
+        formData.append("imageURL", imageFile);
+      } else if (form.imageURL) {
+        formData.append("imageURL", form.imageURL);
+      }
+
       if (ele && ele._id) {
         // Update existing media
-        const res = await dispatch(updateMedia({ id: ele._id, data: form }));
+        const res = await dispatch(updateMedia({ id: ele._id, data: formData }));
         if (updateMedia.fulfilled.match(res)) {
           toast.success("✅ Media updated successfully!");
           await dispatch(fetchMedias())
@@ -83,7 +90,7 @@ const CreateMedia = ({ ele, handleClose}) => {
         }
       } else {
         // Create new video
-        const res = await dispatch(createMedia(form));
+        const res = await dispatch(createMedia(formData));
         if (createMedia.fulfilled.match(res)) {
           toast.success("✅ Media created successfully!");
           await dispatch(fetchMedias())
@@ -127,12 +134,22 @@ const CreateMedia = ({ ele, handleClose}) => {
           <Form.Group>
             <Form.Label>Article</Form.Label>
             <Form.Control
-              type="text"
+              type="file"
               name="articalURL"
-              value={form.articalURL}
+              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
               onChange={handleChange}
               isInvalid={!!errors.articalURL}
             />
+            {form.articalURL && (
+              <a
+                href={getAssetUrl(form.articalURL)}
+                target="_blank"
+                rel="noreferrer"
+                className="d-block mt-2 text-primary"
+              >
+                View article file
+              </a>
+            )}
             <Form.Control.Feedback type="invalid">{errors.articleURL}</Form.Control.Feedback>
           </Form.Group>
 
@@ -144,24 +161,15 @@ const CreateMedia = ({ ele, handleClose}) => {
               accept="image/*"
               onChange={handleChange}
               isInvalid={!!errors.imageURL}
-              disabled={isUploading}
             />
-            {imagePreview && <img src={imagePreview} alt="image" className="mt-2 img-fluid rounded" />}
+            {imagePreview && <img src={getAssetUrl(imagePreview)} alt="image" className="mt-2 img-fluid rounded" />}
             <p>Image should be 320*250px</p>
           </Form.Group>
-          {isUploading && (
-            <div className="text-center mt-3">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Uploading...</span>
-              </div>
-              <p className="mt-2">Uploading file...</p>
-            </div>
-          )}
         </Form>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-        <Button variant="primary" onClick={handleSubmit} disabled={isUploading}>
+        <Button variant="primary" onClick={handleSubmit}>
           {ele && ele._id ? "Update" : "Submit"}
         </Button>
       </Modal.Footer>

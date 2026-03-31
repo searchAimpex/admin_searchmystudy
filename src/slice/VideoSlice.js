@@ -18,21 +18,24 @@ export const fetchVideos = createAsyncThunk(
 
 export const createVideo = createAsyncThunk(
     'admin/createVideo',
-    async (abroadData, thunkAPI) => {
+    async (payload, thunkAPI) => {
       try {
-        const response = await fetch("https://searchmystudy.com/api/admin/CreateVideo", {
+        const isFormData = payload instanceof FormData;
+        const response = await fetch('https://searchmystudy.com/api/admin/CreateVideo', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(abroadData),
+          ...(isFormData
+            ? { body: payload }
+            : {
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              }),
         });
-  
+
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({}));
           return thunkAPI.rejectWithValue(errorData);
         }
-  
+
         const data = await response.json();
         return data;
       } catch (error) {
@@ -59,28 +62,31 @@ export const createVideo = createAsyncThunk(
   );
 
   export const updateVideo = createAsyncThunk(
-    'admin/updateVideo',  
-      async ({ id, data }, thunkAPI) => {
-          try {
-          const response = await fetch(`https://searchmystudy.com/api/admin/UpdateVideo/${id}`, {
-              method: 'PUT',
-              headers: {
-              'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(data),
-          });
-      
-          if (!response.ok) {
-              const errorData = await response.json();
-              return thunkAPI.rejectWithValue(errorData);
-          }
-      
-          const updatedData = await response.json();
-          return updatedData;
-          } catch (error) {
-          return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
-          }
+    'admin/updateVideo',
+    async ({ id, data }, thunkAPI) => {
+      try {
+        const isFormData = data instanceof FormData;
+        const response = await fetch(`https://searchmystudy.com/api/admin/UpdateVideo/${id}`, {
+          method: 'PUT',
+          ...(isFormData
+            ? { body: data }
+            : {
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+              }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          return thunkAPI.rejectWithValue(errorData);
+        }
+
+        const updatedData = await response.json();
+        return updatedData;
+      } catch (error) {
+        return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
       }
+    }
   );
 
   const VideoSlice = createSlice({

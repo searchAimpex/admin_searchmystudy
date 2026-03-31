@@ -767,7 +767,7 @@ const CreateLead = ({ ele, handleClose, fetchData }) => {
                                         </div>
 
                                         <a
-                                          href={url}
+                                          href={`https://backend.searchmystudy.com/${url}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="btn btn-sm btn-outline-primary mt-2"

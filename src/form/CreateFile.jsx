@@ -1,11 +1,57 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
 import { createFile, updateFile } from "../slice/CountrySlicr";
 import { fetchAllUni } from "../slice/AbroadUniversitySlice";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { fetchAllCountry } from "../slice/MbbsSlice";
+
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+function getPreviewUrl(value) {
+    if (value == null || value === "") return "";
+    let s = typeof value === "string" ? value.trim() : String(value).trim();
+    if (!s) return "";
+
+    // Undo wrong concat: https://backend.../blob:https://... → blob:https://...
+    const blobAt = s.toLowerCase().indexOf("blob:");
+    if (blobAt > 0) {
+        s = s.slice(blobAt);
+    }
+
+    if (/^blob:/i.test(s) || /^data:/i.test(s)) return s;
+    if (/^https?:\/\//i.test(s)) return s;
+    return `${BACKEND_ASSET_BASE}/${s.replace(/^\/+/, "")}`;
+}
+
+/** RTK `.unwrap()` throws an error whose `payload` is the rejectWithValue argument. */
+function getUnwrapErrorMessage(err) {
+    if (err == null) return "Request failed";
+    const payload = err.payload !== undefined ? err.payload : err;
+    if (typeof payload === "string" && payload.trim()) return payload.trim();
+    if (payload && typeof payload === "object" && typeof payload.message === "string") {
+        return payload.message;
+    }
+    if (typeof err.message === "string" && err.message !== "Rejected") return err.message;
+    return "Request failed";
+}
+
+function showFileSaveSuccess(message) {
+    toast.success(message, {
+        id: "file-save-success",
+        duration: 5000,
+        style: {
+            background: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: "15px",
+            padding: "16px 22px",
+            borderRadius: "12px",
+            boxShadow: "0 12px 40px rgba(5, 150, 105, 0.35)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+        },
+    });
+}
 
 const CreateFile = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
@@ -16,13 +62,13 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
     // console.log(country, "++++++++++++++++++++++++++++++");
     const fetchAllCountries = async () => {
         try {
-            setLoading(true);
+            setLoading(true);  
 
             const res = await dispatch(fetchAllCountry());
-            const res1 = await dispatch(fetchAllUni());
+            const res1 = await dispatch(fetchAllUni());  
 
             setCountry(res.payload);
-            // setCountry(res.payload)
+            // setCountry(res.payload)  
         } catch (error) {
             console.log(error);
         } finally {
@@ -111,36 +157,43 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
             formData.append("university", uniId ?? "");
 
             if (ele && ele._id) {
-                const res = await dispatch(updateFile({ id: ele._id, data: formData }));
-                if (res?.meta?.requestStatus === "fulfilled") {
-                    fetchData?.();
-                    handleClose?.();
-                    toast.success("File updated");
-                } else {
-                    const msg = res?.payload?.message || res?.error?.message || "Update failed";
-                    toast.error(msg);
-                }
+                await dispatch(updateFile({ id: ele._id, data: formData })).unwrap();
+                showFileSaveSuccess("File updated successfully");
+                handleClose?.();
+                await fetchData?.();
             } else {
-                const res = await dispatch(createFile(formData));
-                console.log(res, "++++++++++++++++++++++++++++++");
-                if (res?.meta?.requestStatus === "fulfilled") {
-                    toast.success("File created");
-                    fetchData?.();
-                    handleClose?.();
-                } else {
-                    const msg = res?.payload?.message || res?.error?.message || "Creation failed";
-                    toast.error(msg);
-                }
+                await dispatch(createFile(formData)).unwrap();
+                showFileSaveSuccess("File created successfully");
+                handleClose?.();
+                await fetchData?.();
             }
         } catch (err) {
             console.error(err);
-            toast.error("Unexpected error");
+            const fromApi =
+                err?.response?.data?.message ??
+                (typeof err?.response?.data === "string" ? err.response.data : null);
+            const msg =
+                fromApi ??
+                getUnwrapErrorMessage(err) ??
+                err?.message ??
+                "Unexpected error";
+            toast.error(typeof msg === "string" ? msg : "Unexpected error", {
+                id: "file-save-error",
+                duration: 6000,
+                style: {
+                    background: "#b91c1c",
+                    color: "#fff",
+                    fontWeight: 600,
+                    padding: "14px 20px",
+                    borderRadius: "12px",
+                    maxWidth: 420,
+                },
+            });
         }
     };
 
     return (
         <>
-            {/* <ToastContainer /> */}
             <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
                 <div className="modal-dialog" style={{ maxWidth: 900 }}>
                     <div className="modal-content p-20">
@@ -205,10 +258,12 @@ const CreateFile = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" name="template" id="template" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'template')} className="form-control" />
                                         {uploads.template?.preview && (
                                             <div className="mt-2">
-                                                {(uploads.template.file?.name?.toLowerCase().endsWith(".pdf") || (typeof uploads.template.preview === "string" && uploads.template.preview.toLowerCase().includes(".pdf"))) ? (
-                                                    <a href={uploads.template.preview} target="_blank" rel="noreferrer">Open Template (PDF)</a>
+                                                {(uploads.template.file?.type === "application/pdf" ||
+                                                    uploads.template.file?.name?.toLowerCase().endsWith(".pdf") ||
+                                                    (typeof uploads.template.preview === "string" && uploads.template.preview.split("?")[0].toLowerCase().includes(".pdf"))) ? (
+                                                    <a href={getPreviewUrl(uploads.template.preview)} target="_blank" rel="noreferrer">Open Template (PDF)</a>
                                                 ) : (
-                                                    <img src={`https://backend.searchmystudy.com/${uploads.template.preview}`} alt="template" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={getPreviewUrl(uploads.template.preview)} alt="template" style={{ maxWidth: 200, maxHeight: 120, objectFit: "contain" }} />
                                                 )}
                                             </div>
                                         )}

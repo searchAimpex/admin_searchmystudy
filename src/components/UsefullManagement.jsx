@@ -222,7 +222,7 @@ const UsefullManagement = () => {
               <th>Frenchise</th>
               <th>Partner</th>
                <th>Country </th>
-              <th>Icon Link</th>
+              {/* <th>Icon Link</th> */}
               <th>Image Link</th>
               <th>Created</th>
               <th>Action</th>
@@ -245,11 +245,11 @@ const UsefullManagement = () => {
                 <td>{ele?.target?"Available":"Unavailable"}</td>
                 <td>{ele?.target1?"Available":"Unavailable"}</td>
                 <td>{ele?.countryName || "—"}</td>
-                <td>
+                {/* <td>
                   <a href={`https://backend.searchmystudy.com/${ele?.iconURL}`} target="_blank">Link</a>
-                </td>
+                </td> */}
                 <td>
-                  <a  target="_blank" href={ele?.imageURL}>Link</a>
+                  <a  target="_blank" href={`https://backend.searchmystudy.com/${ele?.imageURL}`}>Link</a>
                 </td>
                   <td>{ele?.createdAt}</td>
                 <td>

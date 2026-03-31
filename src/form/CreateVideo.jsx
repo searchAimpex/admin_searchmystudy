@@ -1,115 +1,147 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   Modal,
   Button,
   Form,
-} from 'react-bootstrap';
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+} from "react-bootstrap";
+import { toast } from "react-toastify";
 import { createVideo, updateVideo, fetchVideos } from "../slice/VideoSlice";
 
-const CreateVideo = ({ele, handleClose}) => {
-  const storage = getStorage(app);
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+function getPreviewUrl(value) {
+  if (value == null || value === "") return "";
+  let s = typeof value === "string" ? value.trim() : String(value).trim();
+  if (!s) return "";
+  const blobAt = s.toLowerCase().indexOf("blob:");
+  if (blobAt > 0) s = s.slice(blobAt);
+  if (/^blob:/i.test(s) || /^data:/i.test(s)) return s;
+  if (/^https?:\/\//i.test(s)) return s;
+  return `${BACKEND_ASSET_BASE}/${s.replace(/^\/+/, "")}`;
+}
+
+const CreateVideo = ({ ele, handleClose }) => {
   const dispatch = useDispatch();
-  const [form,setForm] = useState({
-    name:ele?.name || "",
+
+  const [form, setForm] = useState({
+    name: ele?.name || "",
     videoURL: ele?.videoURL || "",
     thumbnailURL: ele?.thumbnailURL || "",
-  })
-  const [errors, setErrors] = useState({});
-  const [thumbnailPreview, setThumbnailPreview] = useState(ele && ele._id ? ele?.thumbnailURL : null);
-  const [videoPreview, setVideoPreview] = useState(ele && ele._id ? ele?.videoURL : null);
+  });
+
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [videoFile, setVideoFile] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const uploadImage = async (file) => {
-    const storageRef = ref(storage, `thumbnails/${Date.now()}-${file.name}`);
-    await uploadBytesResumable(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    return url;
-  };
+  useEffect(() => {
+    if (ele?._id) {
+      setForm({
+        name: ele.name || "",
+        videoURL: ele.videoURL || "",
+        thumbnailURL: ele.thumbnailURL || "",
+      });
+      setThumbnailFile(null);
+      setVideoFile(null);
+      setThumbnailPreview(ele.thumbnailURL ? getPreviewUrl(ele.thumbnailURL) : null);
+      setVideoPreview(ele.videoURL ? getPreviewUrl(ele.videoURL) : null);
+    } else {
+      setForm({ name: "", videoURL: "", thumbnailURL: "" });
+      setThumbnailFile(null);
+      setVideoFile(null);
+      setThumbnailPreview(null);
+      setVideoPreview(null);
+    }
+  }, [ele]);
 
-  const uploadVideo = async (file) => {
-    const storageRef = ref(storage, `videos/${Date.now()}-${file.name}`);
-    await uploadBytesResumable(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    return url;
-  };
-  
-  const handleChange = async (event) => {
+  const handleChange = (event) => {
     const { name, value, type, files } = event.target;
 
-    if (type === 'file') {
-      const file = files[0];
-      if (file) {
-        if (name === 'thumbnailURL') {
-          try {
-            setIsUploading(true);
-            const previewURL = URL.createObjectURL(file);
-            setThumbnailPreview(previewURL);
-            const imageURL = await uploadImage(file);
-            setForm(prev => ({ ...prev, thumbnailURL: imageURL }));
-          } catch (error) {
-            console.error("Error uploading thumbnail:", error);
-            toast.error("Failed to upload thumbnail");
-          } finally {
-            setIsUploading(false);
-          }
-        } else if (name === "videoURL") {
-          try {
-            setIsUploading(true);
-            const previewURL = URL.createObjectURL(file);
-            setVideoPreview(previewURL);
-            const videoURL = await uploadVideo(file);
-            setForm(prev => ({ ...prev, videoURL: videoURL }));
-          } catch (error) {
-            console.error("Error uploading video:", error);
-            toast.error("Failed to upload video");
-          } finally {
-            setIsUploading(false);
-          }
-        }
+    if (type === "file") {
+      const file = files?.[0];
+      if (!file) return;
+      if (name === "thumbnailURL") {
+        setThumbnailFile(file);
+        setThumbnailPreview(URL.createObjectURL(file));
+      } else if (name === "videoURL") {
+        setVideoFile(file);
+        setVideoPreview(URL.createObjectURL(file));
       }
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  const buildFormData = () => {
+    const fd = new FormData();
+    fd.append("name", form.name ?? "");
+    if (thumbnailFile) {
+      fd.append("thumbnailURL", thumbnailFile);
+    } else if (form.thumbnailURL) {
+      fd.append("thumbnailURL", form.thumbnailURL);
+    }
+    if (videoFile) {
+      fd.append("videoURL", videoFile);
+    } else if (form.videoURL) {
+      fd.append("videoURL", form.videoURL);
+    }
+    return fd;
   };
 
   const handleSubmit = async () => {
+    if (!String(form.name || "").trim()) {
+      toast.error("Name is required");
+      return;
+    }
+
+    const isCreate = !ele?._id;
+    if (isCreate) {
+      const hasThumb = thumbnailFile || String(form.thumbnailURL || "").trim();
+      const hasVideo = videoFile || String(form.videoURL || "").trim();
+      if (!hasThumb || !hasVideo) {
+        toast.error("Thumbnail and video are required");
+        return;
+      }
+    }
+
+    setIsUploading(true);
     try {
       if (ele && ele._id) {
-        // Update existing video
-        const res = await dispatch(updateVideo({ id: ele._id, data: form }));
+        const fd = buildFormData();
+        const res = await dispatch(updateVideo({ id: ele._id, data: fd }));
         if (updateVideo.fulfilled.match(res)) {
-          toast.success("✅ Video updated successfully!");
-          await dispatch(fetchVideos())
+          toast.success("Video updated successfully!");
+          await dispatch(fetchVideos());
           handleClose();
-        }
-        else if (updateVideo.rejected.match(res)) {
+        } else if (updateVideo.rejected.match(res)) {
+          const p = res.payload;
           const errorMsg =
-            res.payload?.message || res.error?.message || "Unknown error occurred.";
-          toast.error("❌ Failed to update video: " + errorMsg);
+            (typeof p === "string" ? p : p?.message) || res.error?.message || "Unknown error";
+          toast.error("Failed to update video: " + errorMsg);
         }
       } else {
-        // Create new video
-        const res = await dispatch(createVideo(form));
+        const fd = buildFormData();
+        const res = await dispatch(createVideo(fd));
         if (createVideo.fulfilled.match(res)) {
-          toast.success("✅ Video created successfully!");
-          await dispatch(fetchVideos())
+          toast.success("Video created successfully!");
+          await dispatch(fetchVideos());
           handleClose();
         } else if (createVideo.rejected.match(res)) {
+          const p = res.payload;
           const errorMsg =
-            res.payload?.message || res.error?.message || "Unknown error occurred.";
-          toast.error("❌ Failed to create video: " + errorMsg);
+            (typeof p === "string" ? p : p?.message) || res.error?.message || "Unknown error";
+          toast.error("Failed to create video: " + errorMsg);
         }
       }
     } catch (error) {
-      console.error("Failed to create Video:", error);
-      toast.error("Failed to create Video");
+      console.error("Failed to save video:", error);
+      toast.error("Failed to save video");
+    } finally {
+      setIsUploading(false);
     }
-  }
+  };
 
   return (
     <Modal show={true} onHide={handleClose} size="lg" centered scrollable>
@@ -125,9 +157,8 @@ const CreateVideo = ({ele, handleClose}) => {
               name="name"
               value={form.name}
               onChange={handleChange}
-              isInvalid={!!errors.name}
+              disabled={isUploading}
             />
-            <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
           </Form.Group>
 
           <Form.Group className="mt-3">
@@ -137,12 +168,18 @@ const CreateVideo = ({ele, handleClose}) => {
               name="thumbnailURL"
               accept="image/*"
               onChange={handleChange}
-              isInvalid={!!errors.thumbnailURL}
               disabled={isUploading}
             />
-            {thumbnailPreview && <img src={thumbnailPreview} alt="thumbnail" className="mt-2 img-fluid rounded" />}
+            {thumbnailPreview && (
+              <img
+                src={thumbnailPreview}
+                alt="thumbnail"
+                className="mt-2 img-fluid rounded"
+                style={{ maxHeight: 200, objectFit: "contain" }}
+              />
+            )}
           </Form.Group>
-                  <p className="color-red">Image size should be 1024 x 1536 px</p>
+          <p className="text-danger small">Image size should be 1024 x 1536 px</p>
 
           <Form.Group className="mt-3">
             <Form.Label>Video File</Form.Label>
@@ -151,30 +188,29 @@ const CreateVideo = ({ele, handleClose}) => {
               name="videoURL"
               accept="video/*"
               onChange={handleChange}
-              isInvalid={!!errors.videoURL}
               disabled={isUploading}
             />
-            {videoPreview && <video src={videoPreview} alt="Video" className="mt-2 img-fluid rounded" controls />}
+            {videoPreview && (
+              <video
+                src={videoPreview}
+                className="mt-2 img-fluid rounded"
+                controls
+                style={{ maxHeight: 240 }}
+              />
+            )}
           </Form.Group>
-
-          {isUploading && (
-            <div className="text-center mt-3">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Uploading...</span>
-              </div>
-              <p className="mt-2">Uploading file...</p>
-            </div>
-          )}
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+        <Button variant="secondary" onClick={handleClose} disabled={isUploading}>
+          Cancel
+        </Button>
         <Button variant="primary" onClick={handleSubmit} disabled={isUploading}>
-          {ele && ele._id ? "Update" : "Submit"}
+          {isUploading ? "Saving…" : ele && ele._id ? "Update" : "Submit"}
         </Button>
       </Modal.Footer>
     </Modal>
-  )
-}
+  );
+};
 
-export default CreateVideo
+export default CreateVideo;

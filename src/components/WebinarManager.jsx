@@ -169,7 +169,7 @@ const WebinarManager = () => {
             onChange={(e) => setFilterCountry(e.target.value)}
           >
             <option value="">All Countries</option>
-            {[...new Set(webinars.map((w) => w.country))].map(
+            {[...new Set(webinars?.map((w) => w.country))].map(
               (country, i) => (
                 <option key={i} value={country}>
                   {country}

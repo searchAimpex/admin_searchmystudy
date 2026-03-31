@@ -22,7 +22,10 @@ export const createMedia = createAsyncThunk(
     'admin/createMedia',
     async (data, thunkAPI) => {
         try {
-            const response = await axios.post("https://searchmystudy.com/api/admin/media",data)
+            const config = data instanceof FormData
+                ? {}
+                : { headers: { "Content-Type": "application/json" } };
+            const response = await axios.post("https://searchmystudy.com/api/admin/media",data,config)
             console.log("Create Response", response);
             return response?.data
         } catch (error) {
@@ -52,7 +55,10 @@ export const updateMedia = createAsyncThunk(
     'admin/updateMedia',
     async ({id, data}, thunkAPI) => {
         try {
-            const response = await axios.put(`https://searchmystudy.com/api/admin/media/${id}`,data)
+            const config = data instanceof FormData
+                ? {}
+                : { headers: { "Content-Type": "application/json" } };
+            const response = await axios.put(`https://searchmystudy.com/api/admin/media/${id}`,data,config)
             console.log("Create Response", response);
             return response?.data
         } catch (error) {

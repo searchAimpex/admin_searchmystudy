@@ -4,14 +4,23 @@ import axios from 'axios';
 
 export const createCounselor = createAsyncThunk(
     'counsellor/createCounsellor',
-    async(data,thunkAPI) => {
+    async (data, thunkAPI) => {
         try {
-            console.log("Sending Counsellor data", data);
-            const response = await axios.post("https://searchmystudy.com/api/admin/CreateCounsellor",data);
+            const isFormData = data instanceof FormData;
+            const response = await axios.post(
+                'https://searchmystudy.com/api/admin/CreateCounsellor',
+                data,
+                isFormData ? {} : { headers: { 'Content-Type': 'application/json' } }
+            );
             return response.data;
         } catch (error) {
-            console.log("Fetch error", error.message);
-            return thunkAPI.rejectWithValue(error.message)
+            const msg =
+                error.response?.data?.message ??
+                error.response?.data ??
+                error.message;
+            return thunkAPI.rejectWithValue(
+                typeof msg === 'string' ? msg : msg?.message || 'Request failed'
+            );
         }
     }
 );
@@ -96,12 +105,23 @@ export const deleteCounselor = createAsyncThunk(
 
 export const updateCounselor = createAsyncThunk(
     'counsellor/updateCounsellor',
-    async({id,data},{ rejectWithValue })=>{
+    async ({ id, data }, { rejectWithValue }) => {
         try {
-            const response = await axios.put(`https://searchmystudy.com/api/admin/UpdateCounsellors/${id}`,data)
+            const isFormData = data instanceof FormData;
+            const response = await axios.put(
+                `https://searchmystudy.com/api/admin/UpdateCounsellors/${id}`,
+                data,
+                isFormData ? {} : { headers: { 'Content-Type': 'application/json' } }
+            );
             return response?.data;
         } catch (error) {
-            return rejectWithValue(error?.response?.data || error.message)
+            const msg =
+                error.response?.data?.message ??
+                error.response?.data ??
+                error.message;
+            return rejectWithValue(
+                typeof msg === 'string' ? msg : msg?.message || 'Request failed'
+            );
         }
     }
 );

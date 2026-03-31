@@ -1,23 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast from "react-hot-toast";
 import { createPartner, updatePartner } from "../slice/PartnerSlice";
 
 const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
 
 const FILE_FIELDS_LIST = [
-  "ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "CounsellorCode",
+  "ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard",
   "OwnerPhoto", "OfficePhoto", "mou", "registration", "VistOffice",
-  "CancelledCheck", "Logo", "accountedDetails",
+  "CancelledCheck",
 ];
 
 // Must match backend multer .fields([{ name: "FrontAdhar" }, ...]) exactly.
 // If you get "Unexpected field", check your backend and keep only the names it allows.
 const MULTER_FILE_FIELD_NAMES = [
-  "FrontAdhar", "BackAdhar", "PanCard", "ProfilePhoto", "CounsellorCode",
+  "FrontAdhar", "BackAdhar", "PanCard", "ProfilePhoto",
   "OwnerPhoto", "OfficePhoto", "mou", "registration", "VisitOffice",
-  "CancelledCheck", "Logo", "accountedDetails",
+  "CancelledCheck",
 ];
 
 const formFileKeyToMulterName = (key) => (key === "VistOffice" ? "VisitOffice" : key);
@@ -37,6 +36,21 @@ function getPreviewUrl(value) {
   if (!value || typeof value !== "string") return "";
   if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
   return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+}
+
+/** RTK rejectWithValue often passes a string; error.message is usually the generic "Rejected". */
+function getThunkRejectMessage(res, fallback) {
+  const payload = res?.payload;
+  if (typeof payload === "string" && payload.trim()) return payload.trim();
+  if (payload && typeof payload === "object") {
+    const m = payload.message ?? payload.error;
+    if (typeof m === "string" && m.trim()) return m.trim();
+  }
+  const errMsg = res?.error?.message;
+  if (typeof errMsg === "string" && errMsg.trim() && errMsg !== "Rejected") {
+    return errMsg.trim();
+  }
+  return fallback;
 }
 
 const CreatePartner = ({ ele, handleClose, fetchData }) => {
@@ -70,11 +84,8 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     OfficePhoto: getFileNameFromUrl(ele?.OfficePhoto || ""),
     VistOffice: getFileNameFromUrl(ele?.VistOffice || ele?.VisitOffice || ""),
     CancelledCheck: getFileNameFromUrl(ele?.CancelledCheck || ""),
-    Logo: getFileNameFromUrl(ele?.Logo || ""),
     mou: getFileNameFromUrl(ele?.mou || ele?.MOU || ""),
     registration: getFileNameFromUrl(ele?.registration || ele?.Registration || ""),
-    accountedDetails: getFileNameFromUrl(ele?.accountedDetails || ""),
-    CounsellorCode: getFileNameFromUrl(ele?.CounsellorCode || ""),
     IFSC: ele?.IFSC || "",
     bankName: ele?.bankName || "",
     bio: ele?.bio || "",
@@ -94,8 +105,6 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
     registration: { progress: 0, preview: initial.registration || null, file: null },
     VistOffice: { progress: 0, preview: initial.VistOffice || null, file: null },
     CancelledCheck: { progress: 0, preview: initial.CancelledCheck || null, file: null },
-    Logo: { progress: 0, preview: initial.Logo || null, file: null },
-    accountedDetails: { progress: 0, preview: initial.accountedDetails || null, file: null },
   });
 
   uploadsRef.current = uploads;
@@ -184,7 +193,7 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       }
     }
 
-    const requiredFileFields = ["ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "OwnerPhoto", "OfficePhoto", "CancelledCheck", "Logo", "mou", "registration"];
+    const requiredFileFields = ["ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "OwnerPhoto", "OfficePhoto", "CancelledCheck", "mou", "registration"];
     requiredFileFields.forEach((f) => {
       const hasFile = uploads[f]?.file;
       const hasValue = formValues[f]?.trim?.();
@@ -200,9 +209,9 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
   const [errors, setErrors] = useState({});
 
   const fileFields = [
-    "ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard", "CounsellorCode",
+    "ProfilePhoto", "FrontAdhar", "BackAdhar", "PanCard",
     "OwnerPhoto", "OfficePhoto", "mou", "registration", "VistOffice",
-    "CancelledCheck", "Logo", "accountedDetails",
+    "CancelledCheck",
   ];
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -272,51 +281,38 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
       if (formValues.bankName) formData.append("bankName", formValues.bankName);
       if (formValues.bio) formData.append("bio", formValues.bio);
   
-      // DEBUG
-      const sentKeys = [];
-      formData.forEach((_, key) => {
-        if (!sentKeys.includes(key)) sentKeys.push(key);
-      });
-  
-      console.log("FormData keys sent:", sentKeys);
-  
-      // UPDATE
+      // UPDATE — toast must use the app-level ToastContainer; this modal unmounts on close.
       if (ele && ele._id) {
         const res = await dispatch(updatePartner({ id: ele._id, data: formData }));
-  
+
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner updated");
           fetchData?.();
           handleClose?.();
         } else {
-          const msg =
-            res?.payload?.message ||
-            res?.error?.message ||
-            "Update failed";
-          toast.error(msg);
+          toast.error(getThunkRejectMessage(res, "Update failed"));
         }
       }
-  
+
       // CREATE
       else {
         const res = await dispatch(createPartner(formData));
-        console.log(res,"???????????????????????????????????");
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Partner created");
           fetchData?.();
-          // handleClose?.();c
+          handleClose?.();
         } else {
-          const msg =
-            res?.payload?.message ||
-            res?.error?.message ||
-            "Creation failed";
-  
-          toast.error(msg);
+          toast.error(getThunkRejectMessage(res, "Creation failed"));
         }
       }
     } catch (error) {
       console.error(error);
-      toast.error("Unexpected error");
+      const msg =
+        error?.response?.data?.message ??
+        (typeof error?.response?.data === "string" ? error.response.data : null) ??
+        error?.message ??
+        "Unexpected error";
+      toast.error(typeof msg === "string" ? msg : "Unexpected error");
     }
   };
   const formatDateForInput = (dateString) => {
@@ -326,7 +322,6 @@ const CreatePartner = ({ ele, handleClose, fetchData }) => {
   // console.log(initial.mou,"???????????????????????????????????");
   return (
     <>
-      <ToastContainer />
       <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
         <div className="modal-dialog" style={{ maxWidth: 900 }}>
           <div className="modal-content p-20">

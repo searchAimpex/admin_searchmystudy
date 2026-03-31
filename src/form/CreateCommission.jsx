@@ -4,14 +4,36 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
 import { fetchCountry, updateFile } from "../slice/CountrySlicr";
-import { createCommission } from "../slice/comission";
+import { createCommission, updateCommission } from "../slice/comission";
+
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+function getPreviewUrl(value) {
+    if (value == null || value === "") return "";
+    let s = typeof value === "string" ? value.trim() : String(value).trim();
+    if (!s) return "";
+    const blobAt = s.toLowerCase().indexOf("blob:");
+    if (blobAt > 0) s = s.slice(blobAt);
+    if (/^blob:/i.test(s) || /^data:/i.test(s)) return s;
+    if (/^https?:\/\//i.test(s)) return s;
+    return `${BACKEND_ASSET_BASE}/${s.replace(/^\/+/, "")}`;
+}
+
+function isPdfPreview(preview, file) {
+    if (file?.type === "application/pdf") return true;
+    if (!preview || typeof preview !== "string") return false;
+    const path = preview.split("?")[0].toLowerCase();
+    return path.endsWith(".pdf") || /\.pdf($|[?#])/i.test(path);
+}
 
 const CreateCommission = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
-    const  {country}  = useSelector(state => state?.country);
-    
+    // const  country  = useSelector(state => state);
+    const [country, setCountry] = useState([]);
+    console.log(country,"++++++++++++++++");
     const fetchAllCountries = async () => {
         const res = await dispatch(fetchCountry())
+        setCountry(res.payload);
     }
     const initial = {
         SecondCountry: ele?.SecondCountry?.name || "",
@@ -108,8 +130,9 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
             if (ele && ele._id) {
                 const payload = { ...formValues, SecondCountry: secondCountryId };
                 if (payload.target == null) payload.target = "";
-                const res = await dispatch(updateFile({ id: ele._id, data: payload }));
-                toast.success("File updated");
+                const res = await dispatch(updateCommission({ id: ele._id, data: payload }));
+                console.log(res,"++++++++++++++++");
+                toast.success("Commission updated");
                 if (res?.meta?.requestStatus === "fulfilled") {
                     fetchData?.();
                 } else {
@@ -161,7 +184,7 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
                                         <select name="SecondCountry" value={formValues?.SecondCountry} onChange={handleInputChange} className="form-control">
                                             <option value="">Select Country</option>
                                             {(country || []).map((c) => (
-                                                <option key={c._id} value={c._id}>{c.name}</option>
+                                                <option key={c._id} value={c._id}>{c?.country?.name}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -176,10 +199,14 @@ const CreateCommission = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" name="fileURL" id="fileURL" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'fileURL')} className="form-control" />
                                         {uploads?.fileURL?.preview && (
                                             <div className="mt-2">
-                                                {(uploads.fileURL.file?.name?.toLowerCase().endsWith('.pdf') || (typeof uploads.fileURL.preview === 'string' && uploads.fileURL.preview.toLowerCase().includes('.pdf'))) ? (
-                                                    <a href={uploads.fileURL.preview} target="_blank" rel="noreferrer">Open File (PDF)</a>
+                                                {isPdfPreview(uploads.fileURL.preview, uploads.fileURL.file) ? (
+                                                    <a href={getPreviewUrl(uploads.fileURL.preview)} target="_blank" rel="noreferrer">Open File (PDF)</a>
                                                 ) : (
-                                                    <img src={uploads.fileURL.preview} alt="file" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img
+                                                        src={getPreviewUrl(uploads.fileURL.preview)}
+                                                        alt="Commission file"
+                                                        style={{ maxWidth: 200, maxHeight: 120, objectFit: "contain" }}
+                                                    />
                                                 )}
                                             </div>
                                         )}

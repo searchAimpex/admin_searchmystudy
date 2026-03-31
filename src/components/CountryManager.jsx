@@ -109,7 +109,10 @@ const CountryManager = () => {
         <div>
           <button
             className="btn btn-primary mx-2"
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setEditingCountry(null);
+              setShowModal(true);
+            }}
           >
             Add Country
           </button>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import HomePageOne from "./pages/HomePageOne";
 import { ToastContainer } from "react-toastify";
+import { Toaster } from "react-hot-toast";
 import "react-toastify/dist/ReactToastify.css"; // 👈 import styles
 
 import HomePageTwo from "./pages/HomePageTwo";
@@ -187,7 +188,17 @@ function App() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored" // options: "light", "dark", "colored"
+        theme="colored"
+        style={{ zIndex: 100000 }}
+      />
+
+      <Toaster
+        position="top-center"
+        containerStyle={{ zIndex: 2147483647 }}
+        toastOptions={{
+          duration: 5000,
+          style: { zIndex: 2147483647 },
+        }}
       />
 
       <Routes>

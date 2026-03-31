@@ -14,7 +14,7 @@ const getAssetUrl = (value) => {
 
 export default function UpdateBlog({ handleClose, loadBlogs, updateBlog }) {
     const dispatch = useDispatch();
-    console.log(updateBlog);
+    console.log(updateBlog,"---------------------");
     
     const [form, setForm] = useState({
         title: updateBlog?.title || "",

@@ -186,7 +186,7 @@ console.log(filterCounsellor,"===============================");
                   </td>
 
                   <td>
-                    <a target="_blank" href={ele?.imageURL}>Click To View</a>
+                    <a target="_blank" href={`https://backend.searchmystudy.com/${ele?.imageURL}`}>Click To View</a>
                   </td>
 
                   <td>

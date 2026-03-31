@@ -102,13 +102,10 @@ const BlogManager = () => {
     }
   };
 
-  const editHandler = async (id) => {
+  const editHandler = async (blog) => {
     try {
-      const res = await dispatch(GetOneBlog(id));
-      if (res?.meta?.requestStatus === "fulfilled") {
-        setUpdateBlog(res?.payload);
+        setUpdateBlog(blog);
         setEditModal(true);
-      }
     } catch (error) {
       console.log(error);
     }
@@ -207,10 +204,10 @@ const BlogManager = () => {
                       </div>
                     </td>
                     <td>
-                      <a href={ele?.thumbnailURL}>Click to view</a>
+                      <a target="_blank" href={`https://backend.searchmystudy.com/${ele?.thumbnailURL}`}>Click to view</a>
                     </td>
                     <td>
-                      <a href={ele?.bannerURL}>Click to view</a>
+                      <a target="_blank" href={`https://backend.searchmystudy.com/${ele?.bannerURL}`}>Click to view</a>
                     </td>
                     <td>{ele?.title}</td>
                     <td>
@@ -229,15 +226,13 @@ const BlogManager = () => {
                     </td>
 
                     <td>  <Link
-                      onClick={() => {
-                        setEditModal(ele);
-                        // setShowModal(true);
-                      }}
+                      onClick={() => editHandler(ele)}
                       to="#"
                       className="w-32-px h-32-px me-8 bg-success-focus text-success-main rounded-circle d-inline-flex align-items-center justify-content-center"
                     >
                       <Icon icon="lucide:edit" />
-                    </Link></td>
+                    </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

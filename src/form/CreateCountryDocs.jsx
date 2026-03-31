@@ -6,6 +6,41 @@ import { createSecondCountry, updateSecondCountry } from "../slice/CountrySlicr"
 import { useSelector } from "react-redux";
 import { allCountry } from "../slice/AbroadSlice";
 
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+/** Use as-is for blob: and http(s); only prefix relative server paths. */
+function getPreviewUrl(value) {
+    if (!value || typeof value !== "string") return "";
+    if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+    return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+}
+
+function isPdfPreview(preview, selectedFile) {
+    if (selectedFile?.type === "application/pdf") return true;
+    if (!preview || typeof preview !== "string") return false;
+    const path = preview.split("?")[0].toLowerCase();
+    return path.endsWith(".pdf") || /\.pdf($|[?#])/i.test(path);
+}
+
+/** List API populates `country` as { _id, name }; FormData must send the ObjectId string only. */
+function parentCountryIdFromValue(country) {
+    if (country == null || country === "") return "";
+    if (typeof country === "object" && country._id) return String(country._id);
+    return String(country);
+}
+
+function getThunkRejectMessage(res, fallback) {
+    const payload = res?.payload;
+    if (typeof payload === "string" && payload.trim()) return payload.trim();
+    if (payload && typeof payload === "object") {
+        const m = payload.message ?? payload.error;
+        if (typeof m === "string" && m.trim()) return m.trim();
+    }
+    const errMsg = res?.error?.message;
+    if (typeof errMsg === "string" && errMsg.trim() && errMsg !== "Rejected") return errMsg.trim();
+    return fallback;
+}
+
 const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     const dispatch = useDispatch();
     const {allCountries} = useSelector(state=>state.abroadStudy)
@@ -25,7 +60,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     const initial = {
         // fields matching secondCountry schema
         name: ele?.name || "",
-        country:ele?.Country?.name || "",
+        country: parentCountryIdFromValue(ele?.country),
         flagURL: ele?.flagURL || "",
         currency: ele?.currency || "",
         code: ele?.code || "",
@@ -40,8 +75,12 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     const [formValues, setFormValues] = useState(initial);
 
     useEffect(() => {
-        setFormValues(prev => ({ ...prev, ...(ele || {}) }));
-        // populate upload previews from ele if available
+        if (!ele) return;
+        setFormValues((prev) => ({
+            ...prev,
+            ...ele,
+            country: parentCountryIdFromValue(ele.country),
+        }));
         // eslint-disable-next-line
     }, [ele]);
 
@@ -111,7 +150,6 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
-        console.log("asdfsdfadsasdafadssdf")
         if (anyUploading()) {
             toast.error("Please wait for file uploads to finish.");
             return;
@@ -126,9 +164,14 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
             const payload = new FormData();
             Object.entries(formValues).forEach(([key, value]) => {
                 if (fileFields.includes(key)) return;
-                if (value !== undefined && value !== null) {
-                    payload.append(key, value);
+                if (value === undefined || value === null) return;
+                if (key === "country") {
+                    const id = parentCountryIdFromValue(value);
+                    if (id) payload.append(key, id);
+                    return;
                 }
+                if (typeof value === "object") return;
+                payload.append(key, value);
             });
             fileFields.forEach((field) => {
                 if (selectedFiles[field]) {
@@ -142,24 +185,22 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
 
             if (ele && ele._id) {
                 const res = await dispatch(updateSecondCountry({ id: ele._id, data: payload }));
+                console.log(res,"res+++++++++++++++++++++++++++++")
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Country updated");
                     fetchData?.();
                     handleClose?.();
                 } else {
-                    const msg = res?.payload?.message || res?.error?.message || "Update failed";
-                    toast.error(msg);
+                    toast.error(getThunkRejectMessage(res, "Update failed"));
                 }
             } else {
                 const res = await dispatch(createSecondCountry(payload));
-                console.log(res,"||||||||||||||||||||||||||||||")
                 if (res?.meta?.requestStatus === "fulfilled") {
                     toast.success("Country created");
                     fetchData?.();
                     handleClose?.();
                 } else {
-                    const msg = res?.payload?.message || res?.error?.message || "Creation failed";
-                    toast.error(msg);
+                    toast.error(getThunkRejectMessage(res, "Creation failed"));
                 }
             }
         } catch (err) {
@@ -227,10 +268,10 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'vfs')} className="form-control" />
                                         {uploads.vfs?.preview && (
                                             <div className="mt-2">
-                                                {String(uploads.vfs.preview).toLowerCase().includes('.pdf') ? (
-                                                    <a href={uploads.vfs.preview} target="_blank" rel="noreferrer">View file</a>
+                                                {isPdfPreview(uploads.vfs.preview, selectedFiles.vfs) ? (
+                                                    <a href={getPreviewUrl(uploads.vfs.preview)} target="_blank" rel="noreferrer">View PDF</a>
                                                 ) : (
-                                                    <img src={`https://backend.searchmystudy.com/${uploads.vfs.preview}`} alt="vfs" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={getPreviewUrl(uploads.vfs.preview)} alt="vfs" style={{ maxWidth: 200, maxHeight: 120, objectFit: "contain" }} />
                                                 )}
                                                 <div>Progress: {Math.round(uploads.vfs.progress)}%</div>
                                             </div>
@@ -242,10 +283,10 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                             <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'step')} className="form-control" />
                                             {uploads.step?.preview && (
                                                 <div className="mt-2">
-                                                    {String(uploads.step.preview).toLowerCase().includes('.pdf') ? (
-                                                        <a href={uploads.step.preview} target="_blank" rel="noreferrer">View file</a>
+                                                    {isPdfPreview(uploads.step.preview, selectedFiles.step) ? (
+                                                        <a href={getPreviewUrl(uploads.step.preview)} target="_blank" rel="noreferrer">View PDF</a>
                                                     ) : (
-                                                        <img src={`https://backend.searchmystudy.com/${uploads.step.preview}`} alt="step" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                        <img src={getPreviewUrl(uploads.step.preview)} alt="step" style={{ maxWidth: 200, maxHeight: 120, objectFit: "contain" }} />
                                                     )}
                                                     <div>Progress: {Math.round(uploads.step.progress)}%</div>
                                                 </div>
@@ -257,10 +298,10 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'whyThisCountry')} className="form-control" />
                                         {uploads.whyThisCountry?.preview && (
                                             <div className="mt-2">
-                                                {String(uploads.whyThisCountry.preview).toLowerCase().includes('.pdf') ? (
-                                                    <a href={uploads.whyThisCountry.preview} target="_blank" rel="noreferrer">View file</a>
+                                                {isPdfPreview(uploads.whyThisCountry.preview, selectedFiles.whyThisCountry) ? (
+                                                    <a href={getPreviewUrl(uploads.whyThisCountry.preview)} target="_blank" rel="noreferrer">View PDF</a>
                                                 ) : (
-                                                    <img src={`https://backend.searchmystudy.com/${uploads.whyThisCountry.preview}`} alt="whyThisCountry" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={getPreviewUrl(uploads.whyThisCountry.preview)} alt="Why this country" style={{ maxWidth: 200, maxHeight: 120, objectFit: "contain" }} />
                                                 )}
                                                 <div>Progress: {Math.round(uploads.whyThisCountry.progress)}%</div>
                                             </div>
@@ -272,10 +313,10 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'faq')} className="form-control" />
                                         {uploads.faq?.preview && (
                                             <div className="mt-2">
-                                                {String(uploads.faq.preview).toLowerCase().includes('.pdf') ? (
-                                                    <a href={uploads.faq.preview} target="_blank" rel="noreferrer">View file</a>
+                                                {isPdfPreview(uploads.faq.preview, selectedFiles.faq) ? (
+                                                    <a href={getPreviewUrl(uploads.faq.preview)} target="_blank" rel="noreferrer">View PDF</a>
                                                 ) : (
-                                                    <img src={`https://backend.searchmystudy.com/${uploads.faq.preview}`} alt="faq" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                    <img src={getPreviewUrl(uploads.faq.preview)} alt="faq" style={{ maxWidth: 200, maxHeight: 120, objectFit: "contain" }} />
                                                 )}
                                                 <div>Progress: {Math.round(uploads.faq.progress)}%</div>
                                             </div>
@@ -287,7 +328,7 @@ const CreateCountryDocs = ({ ele, handleClose, fetchData }) => {
                                         <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'flagURL')} className="form-control" />
                                         {uploads.flagURL?.preview && (
                                             <div className="mt-2">
-                                                <img src={uploads.flagURL.preview} alt="flag" style={{ maxWidth: 200, maxHeight: 120 }} />
+                                                <img src={getPreviewUrl(uploads.flagURL.preview)} alt="flag" style={{ maxWidth: 200, maxHeight: 120, objectFit: "contain" }} />
                                                 <div>Progress: {Math.round(uploads.flagURL.progress)}%</div>
                                             </div>
                                         )}

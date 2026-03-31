@@ -110,7 +110,10 @@ const FileManager = () => {
         <div>
           <button
             className="btn btn-primary mx-2"
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setEditingFile(null);
+              setShowModal(true);
+            }}
           >
             Create File
           </button>
