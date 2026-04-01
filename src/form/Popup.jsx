@@ -136,6 +136,7 @@ const Popup = ({ handleClose, loadCounsellors, ele }) => {
         }
       } else {
         const res = await dispatch(createPopup(formData));
+        // console.log(res,"res+++++++++++++++++++++++++++++++++++++");
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Popup created successfully!");
           loadCounsellors?.();

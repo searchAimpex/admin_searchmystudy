@@ -26,12 +26,13 @@ const WebsitePopupManagement = () => {
     const res = await dispatch(fetchPopup());
     if (res?.meta?.requestStatus === "fulfilled") {
       setCounsellor(res.payload);
+      // console.log(res.payload,"res.payload+++++++++++++++++++++++++++++++++++++");
     }
   };
 
 
   const filterCounsellor = counsellor.filter((ele)=>{
-    if(ele.target === "main"){
+    if(ele.target === "Searchmystudy"){
       return ele
     }
   })
@@ -177,7 +178,7 @@ const WebsitePopupManagement = () => {
                     {ele?.target}
                   </td>
                     <td>
-                      <a target="_blank" href={ele?.imageURL}>Click To View</a>
+                      <a target="_blank" href={`https://backend.searchmystudy.com/${ele?.imageURL}`}>Click To View</a>
                   </td>
                     
                   <td>
