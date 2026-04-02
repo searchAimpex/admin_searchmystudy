@@ -331,7 +331,7 @@ function App() {
         <Route exact path='/video-manager' element={<VideoManagerPage />} />
         <Route exact path='/media-manager' element={<MediaManagerPage />} />
         <Route exact path='/abroad-country' element={<AbroadStudyPage />} />
-        <Route exact path='/mbss-country' element={<MbbsStudyPage />} />
+        <Route exact path='/mbss-country' element={<MbbsStudyPage />} />     
         <Route exact path='/mbbs-university' element={<MbbsUniversityPage />} />
         <Route exact path='/mbbs-course' element={<MbbsCoursePage />} />
         <Route exact path='/abroad-province' element={<AbroadProvincePage />} />

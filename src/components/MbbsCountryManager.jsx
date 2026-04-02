@@ -74,7 +74,7 @@ const MbbsCountryManager = () => {
   const filteredData = studyMbbs.filter((ele) =>
     ele?.name?.toLowerCase().includes(search.toLowerCase())
   );
-
+  console.log(studyMbbs, "++++++++++++-----------+++++++++");
   const columns = [
     {
       name: "S.L",

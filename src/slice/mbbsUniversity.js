@@ -20,16 +20,27 @@ export const fetchMbbsUniversity = createAsyncThunk(
 );
 
 export const creatembbsUniversity = createAsyncThunk(
-    'mbbs/createMbbsUniversity',
-    async (data, thunkAPI) => {
-      try {
-        const response = await axios.post("https://searchmystudy.com/api/admin/university",data);
-        return response?.data;
-      } catch (error) {
-        return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
-      }
+  "mbbs/createMbbsUniversity",
+  async (data, thunkAPI) => {
+    try {
+      const isFormData = data instanceof FormData;
+      const response = await axios.post(
+        "https://searchmystudy.com/api/admin/university",
+        data,
+        isFormData ? {} : { headers: { "Content-Type": "application/json" } }
+      );
+      return response?.data;
+    } catch (error) {
+      const msg =
+        error.response?.data?.message ??
+        error.response?.data ??
+        error.message;
+      return thunkAPI.rejectWithValue(
+        typeof msg === "string" ? msg : msg?.message || "Request failed"
+      );
     }
-  );
+  }
+);
 
     export const deleteMbbsUniversity = createAsyncThunk(
     'mbbs/deleteMbbsUniversity',
@@ -48,17 +59,28 @@ export const creatembbsUniversity = createAsyncThunk(
       }
   );
 
-  export const updateMbbsUniversity = createAsyncThunk(
-    'mbbs/updateMbbsUniversity',  
-      async ({ id, data }, thunkAPI) => {
-          try {
-                const response = await axios.put(`https://searchmystudy.com/api/admin/university/${id}`,data);
-                return response?.data
-          } catch (error) {
-          return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
-          }
-      }
-  );
+export const updateMbbsUniversity = createAsyncThunk(
+  "mbbs/updateMbbsUniversity",
+  async ({ id, data }, thunkAPI) => {
+    try {
+      const isFormData = data instanceof FormData;
+      const response = await axios.put(
+        `http://localhost:5001/api/admin/university/${id}`,
+        data,
+        isFormData ? {} : { headers: { "Content-Type": "application/json" } }
+      );
+      return response?.data;
+    } catch (error) {
+      const msg =
+        error.response?.data?.message ??
+        error.response?.data ??
+        error.message;
+      return thunkAPI.rejectWithValue(
+        typeof msg === "string" ? msg : msg?.message || "Request failed"
+      );
+    }
+  }
+);
 
   const mbbsUniversitySlice = createSlice({
     name:"mbbsUniversity",

@@ -111,24 +111,11 @@ const CounselorManager = () => {
     {
       name: "Image",
       cell: row => (
-        <a href={row?.imageURL} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row?.imageURL}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),
-    },
-    {
-      name: "Created At",
-      cell: row => (
-        row?.createdAt
-          ? new Date(row.createdAt).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour12: true,
-            })
-          : "-----"
-      ),
-    },
+    }, 
     {
       name: "Action",
       cell: row => (

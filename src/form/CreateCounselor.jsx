@@ -18,6 +18,20 @@ function getPreviewUrl(value) {
   return `${BACKEND_ASSET_BASE}/${s.replace(/^\/+/, "")}`;
 }
 
+/** Build multipart body for create/update counselor APIs. */
+function counselorFormToFormData(f) {
+  const fd = new FormData();
+  fd.append("name", f.name ?? "");
+  fd.append("course", f.course ?? "");
+  fd.append("experience", f.experience ?? "");
+  if (f.imageFile) {
+    fd.append("imageURL", f.imageFile, f.imageFile.name);
+  } else if (f.imageURL) {
+    fd.append("imageURL", f.imageURL);
+  }
+  return fd;
+}
+
 const CreateCounselor = ({ ele, handleClose, loadCounsellors }) => {
   const dispatch = useDispatch();
 
@@ -115,19 +129,6 @@ const CreateCounselor = ({ ele, handleClose, loadCounsellors }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const buildFormData = () => {
-    const fd = new FormData();
-    fd.append("name", form.name ?? "");
-    fd.append("course", form.course ?? "");
-    fd.append("experience", form.experience ?? "");
-    if (form.imageFile) {
-      fd.append("imageURL", form.imageFile);
-    } else if (form.imageURL) {
-      fd.append("imageURL", form.imageURL);
-    }
-    return fd;
-  };
-
   const handleSubmit = async () => {
     if (!validateForm()) {
       toast.error("Please fill in all required fields with valid image.");
@@ -136,7 +137,7 @@ const CreateCounselor = ({ ele, handleClose, loadCounsellors }) => {
 
     try {
       if (ele && ele._id) {
-        const fd = buildFormData();
+        const fd = counselorFormToFormData(form);
         const res = await dispatch(updateCounselor({ id: ele._id, data: fd }));
         if (updateCounselor.fulfilled.match(res)) {
           toast.success("Counsellor updated successfully!");
@@ -149,7 +150,7 @@ const CreateCounselor = ({ ele, handleClose, loadCounsellors }) => {
           );
         }
       } else {
-        const fd = buildFormData();
+        const fd = counselorFormToFormData(form);
         if (!form.imageFile) {
           toast.error("Please upload an image.");
           return;

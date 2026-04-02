@@ -81,28 +81,28 @@ export const createAbroadStudyThunk = createAsyncThunk(
 );
 
 export const updateAbroadStudy = createAsyncThunk(
-  'abroad/updateAbroadStudy',  
-    async ({ id, data }, thunkAPI) => {
-        try {
-        const response = await fetch(`https://searchmystudy.com/api/admin/countries/${id}`, {
-            method: 'PUT',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-    
-        if (!response.ok) {
-            const errorData = await response.json();
-            return thunkAPI.rejectWithValue(errorData);
-        }
-    
-        const updatedData = await response.json();
-        return updatedData;
-        } catch (error) {
-        return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
-        }
+  "abroad/updateAbroadStudy",
+  async ({ id, data }, thunkAPI) => {
+    try {
+      const isFormData = data instanceof FormData;
+      const response = await axios.put(
+        `http://localhost:5001/api/admin/countries/${id}`,
+        data,
+        isFormData
+          ? {}
+          : { headers: { "Content-Type": "application/json" } }
+      );
+      return response.data;
+    } catch (error) {
+      const msg =
+        error.response?.data?.message ??
+        error.response?.data ??
+        error.message;
+      return thunkAPI.rejectWithValue(
+        typeof msg === "string" ? msg : msg?.message || "Request failed"
+      );
     }
+  }
 );
 
 export const abroadSlice = createSlice({

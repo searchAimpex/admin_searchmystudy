@@ -5,45 +5,111 @@ import {
   Button,
   Form,
   Accordion,
-  Card,
-  Row,
-  Col
-} from 'react-bootstrap';
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+} from "react-bootstrap";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TextEditor from "./TextEditor";
 import { creatembbsUniversity, updateMbbsUniversity } from "../slice/mbbsUniversity";
 import { fetchMbbsStudy } from "../slice/MbbsSlice";
 
+function sectionUrlForUniversityPayload(sec, index, sectionFiles) {
+  if (sectionFiles[index]) return "";
+  const u = sec.url ?? "";
+  if (typeof u === "string" && u.startsWith("data:")) return "";
+  return u;
+}
+
+function mbbsUniversityFormToFormData(form, sectionFiles = []) {
+  const fd = new FormData();
+  fd.append("name", form.name ?? "");
+  fd.append("description", form.description ?? "");
+  fd.append("MCI", String(!!form.MCI));
+  fd.append("ECFMG", String(!!form.ECFMG));
+  fd.append("WHO", String(!!form.WHO));
+  fd.append("NMC", String(!!form.NMC));
+  fd.append("grade", form.grade ?? "");
+  fd.append("rating", String(form.rating ?? ""));
+  fd.append("campusLife", form.campusLife ?? "");
+  fd.append("hostel", form.hostel ?? "");
+  fd.append("type", form.type ?? "");
+  fd.append("rank", String(form.rank ?? 0));
+  fd.append("UniLink", form.UniLink ?? "");
+
+  if (form.Country?._id) {
+    fd.append("Country", form.Country._id);
+  }
+
+  const sectionsPayload = (form.sections ?? []).map((sec, i) => {
+    const row = {
+      title: sec.title ?? "",
+      description: sec.description ?? "",
+      url: sectionUrlForUniversityPayload(sec, i, sectionFiles),
+    };
+    if (sec._id) row._id = sec._id;
+    return row;
+  });
+  fd.append("sections", JSON.stringify(sectionsPayload));
+
+  sectionFiles.forEach((file, i) => {
+    if (file) fd.append(`sectionUrl_${i}`, file, file.name);
+  });
+
+  if (form.bannerFile) {
+    fd.append("bannerURL", form.bannerFile, form.bannerFile.name);
+  } else if (String(form.bannerURL || "").trim() !== "") {
+    fd.append("bannerURL", String(form.bannerURL).trim());
+  }
+
+  if (form.heroFile) {
+    fd.append("heroURL", form.heroFile, form.heroFile.name);
+  } else if (String(form.heroURL || "").trim() !== "") {
+    fd.append("heroURL", String(form.heroURL).trim());
+  }
+
+  if (form.logoFile) {
+    fd.append("logo", form.logoFile, form.logoFile.name);
+  } else if (String(form.logo || "").trim() !== "") {
+    fd.append("logo", String(form.logo).trim());
+  }
+
+  return fd;
+}
 
 const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
-  const storage = getStorage(app);
-  const { studyMbbs } = useSelector((state) => state.mbbsStudy)
+  const { studyMbbs } = useSelector((state) => state.mbbsStudy);
   const [sectionPreviews, setSectionPreviews] = useState([]);
 
   const dispatch = useDispatch();
   const [form, setForm] = useState({
-    name: ele?.name || '',
-    bannerURL: ele?.bannerURL || '',
-    heroURL: ele?.heroURL || '',
-    description: ele?.description || '',
-    MCI: ele?.MCI || '',
-    ECFMG: ele?.ECFMG || '',
-    WHO: ele?.WHO || '',
-    NMC: ele?.NMC || '',
-    grade: ele?.grade || 'A',
-    rating: ele?.rating || '5',
-    sections: ele?.sections || [{ title: '', description: '', url: '' }],
-    logo: ele?.logo || '',
-    campusLife: ele?.campusLife || '',
-    hostel: ele?.hostel || '',
-    type: ele?.type || '',
+    name: ele?.name || "",
+    bannerURL: ele?.bannerURL || "",
+    bannerFile: null,
+    heroURL: ele?.heroURL || "",
+    heroFile: null,
+    description: ele?.description || "",
+    MCI: ele?.MCI || "",
+    ECFMG: ele?.ECFMG || "",
+    WHO: ele?.WHO || "",
+    NMC: ele?.NMC || "",
+    grade: ele?.grade || "A",
+    rating: ele?.rating || "5",
+    sections: ele?.sections || [{ title: "", description: "", url: "" }],
+    logo: ele?.logo || "",
+    logoFile: null,
+    campusLife: ele?.campusLife || "",
+    hostel: ele?.hostel || "",
+    type: ele?.type || "",
     rank: ele?.rank || 0,
-    UniLink: ele?.UniLink || '',
+    UniLink: ele?.UniLink || "",
     Country: ele?.Country || null,
-  })
+  });
+
+  const [sectionFiles, setSectionFiles] = useState(() => {
+    if (ele?.sections != null) {
+      return Array.from({ length: ele.sections.length }, () => null);
+    }
+    return [null];
+  });
 
   const [bannerPreview, setBannerPreview] = useState(null);
   const [heroPreview, setHeroPreview] = useState(null);
@@ -51,18 +117,8 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
 
   const [errors, setErrors] = useState({});
 
-  const uploadImage = async (file) => {
-    const storageRef = ref(storage, `provinces/${Date.now()}-${file.name}`);
-    await uploadBytesResumable(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    return url;
-  };
-
   const handleContentChange = (e, name) => {
-    console.log(e);
-
     setForm((prev) => ({ ...prev, [name]: e }));
-
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
@@ -75,79 +131,84 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
     setErrors(prev => ({ ...prev, description: "" }));
   };
 
-  const handleChange = async (event) => {
-    const { name, value, type, files } = event.target;
+  const handleChange = (event) => {
+    const { name, value, type } = event.target;
+    if (type === "file") return;
 
-    if (type === 'file') {
-      const file = files[0];
-      if (file) {
-        try {
-          if (name === 'bannerURL') {
-            // await validateImageDimensions(file, { width: 1500, height: 500 });
-            const previewURL = URL.createObjectURL(file);
-            setBannerPreview(previewURL);
-            const imageURL = await uploadImage(file);
-            setForm(prev => ({ ...prev, bannerURL: imageURL }));
-          }
-          else if (name === 'heroURL') {
-            // await validateImageDimensions(file, { width: 350, height: 400 });
-            const previewURL = URL.createObjectURL(file);
-            setHeroPreview(previewURL);
-            const imageURL = await uploadImage(file);
-            setForm(prev => ({ ...prev, heroURL: imageURL }));
-          }
-          else if (name === 'logo') {
-            // await validateImageDimensions(file, { width: 350, height: 400 });
-            const previewURL = URL.createObjectURL(file);
-            setLogoPreview(previewURL);
-            const imageURL = await uploadImage(file);
-            setForm(prev => ({ ...prev, logo: imageURL }));
-          }
-          else if (name.startsWith('sectionImage')) {
-            const sectionIndex = parseInt(name.split('-')[1]);
-            const previewURL = URL.createObjectURL(file);
-            setSectionPreviews(prev => {
-              const newPreviews = [...prev];
-              newPreviews[sectionIndex] = previewURL;
-              return newPreviews;
-            });
-            const imageURL = await uploadImage(file);
-            setForm(prev => {
-              const newSections = [...prev.sections];
-              newSections[sectionIndex] = {
-                ...newSections[sectionIndex],
-                url: imageURL
-              };
-              return { ...prev, sections: newSections };
-            });
-          }
-        } catch (error) {
-          toast.error(error.message);
-        }
-      }
-    } else if (name.startsWith('section-')) {
-      const [, index, field] = name.split('-');
-      setForm(prev => {
+    if (name.startsWith("section-")) {
+      const [, index, field] = name.split("-");
+      setForm((prev) => {
         const newSections = [...prev.sections];
-        newSections[parseInt(index)] = {
-          ...newSections[parseInt(index)],
-          [field]: value
+        newSections[parseInt(index, 10)] = {
+          ...newSections[parseInt(index, 10)],
+          [field]: value,
         };
         return { ...prev, sections: newSections };
       });
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
-    else {
-      setForm(prev => ({ ...prev, [name]: value }));
+  };
 
-    }
+  const handleBannerFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBannerPreview(URL.createObjectURL(file));
+    setForm((prev) => ({
+      ...prev,
+      bannerFile: file,
+      bannerURL: prev.bannerURL,
+    }));
+    setErrors((prev) => ({ ...prev, bannerURL: undefined }));
+  };
+
+  const handleHeroFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setHeroPreview(URL.createObjectURL(file));
+    setForm((prev) => ({
+      ...prev,
+      heroFile: file,
+      heroURL: prev.heroURL,
+    }));
+    setErrors((prev) => ({ ...prev, heroURL: undefined }));
+  };
+
+  const handleLogoFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoPreview(URL.createObjectURL(file));
+    setForm((prev) => ({
+      ...prev,
+      logoFile: file,
+      logo: prev.logo,
+    }));
+    setErrors((prev) => ({ ...prev, logo: undefined }));
+  };
+
+  const handleSectionFileChange = (e, index) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSectionFiles((prev) => {
+      const next = [...prev];
+      while (next.length <= index) next.push(null);
+      next[index] = file;
+      return next;
+    });
+    setSectionPreviews((prev) => {
+      const next = [...prev];
+      next[index] = URL.createObjectURL(file);
+      return next;
+    });
   };
 
   const addSection = () => {
     setForm((prevValues) => ({
       ...prevValues,
-      sections: [...prevValues.sections, { title: '', description: '', url: '' }],
+      sections: [...prevValues.sections, { title: "", description: "", url: "" }],
     }));
-    setSectionPreviews([...sectionPreviews, '']);
+    setSectionPreviews((prev) => [...prev, ""]);
+    setSectionFiles((prev) => [...prev, null]);
   };
 
   const removeSection = (index) => {
@@ -155,50 +216,43 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
       ...prevValues,
       sections: prevValues.sections.filter((_, i) => i !== index),
     }));
-    setSectionPreviews(sectionPreviews.filter((_, i) => i !== index));
+    setSectionPreviews((prev) => prev.filter((_, i) => i !== index));
+    setSectionFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
+    const formData = mbbsUniversityFormToFormData(form, sectionFiles);
     try {
       if (ele && ele._id) {
-        // Update existing country
-
-
-        const res = await dispatch(updateMbbsUniversity({ id: ele._id, data: form }));
+        const res = await dispatch(
+          updateMbbsUniversity({ id: ele._id, data: formData })
+        );
         if (updateMbbsUniversity.fulfilled.match(res)) {
           toast.success("✅ University updated successfully!");
-          loadUniversity()
+          loadUniversity();
           handleClose();
-        }
-        else if (updateMbbsUniversity.rejected.match(res)) {
-          // Failure case with detailed error
+        } else if (updateMbbsUniversity.rejected.match(res)) {
           const errorMsg =
             res.payload?.message || res.error?.message || "Unknown error occurred.";
           toast.error("❌ Failed to update university: " + errorMsg);
         }
       } else {
-        // Create new University
-
-        // console.log(form, "+++++++++++++++++++++-----------");
-        const res = await dispatch(creatembbsUniversity(form));
-        console.log(res,"------------------------------------------------------");
-        
+        const res = await dispatch(creatembbsUniversity(formData));
         if (creatembbsUniversity.fulfilled.match(res)) {
           toast.success("✅ University created successfully!");
-          loadUniversity()
+          loadUniversity();
           handleClose();
         } else if (creatembbsUniversity.rejected.match(res)) {
-          // Failure case with detailed error
           const errorMsg =
             res.payload?.message || res.error?.message || "Unknown error occurred.";
           toast.error("❌ Failed to create university: " + errorMsg);
         }
       }
     } catch (error) {
-      console.error("Failed to create Province:", error);
-      toast.error("Failed to create Province");
+      console.error("Failed to save university:", error);
+      toast.error("Failed to save university");
     }
-  }
+  };
 
   useEffect(() => {
     const data = async () => {
@@ -207,7 +261,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
     data()
   }, [])
   return (
-    <Modal show={open} onHide={handleClose} size="lg" centered scrollable>
+    <Modal show onHide={handleClose} size="lg" centered scrollable>
       <Modal.Header closeButton className="text-black">
         <Modal.Title>Add University</Modal.Title>
       </Modal.Header>
@@ -230,12 +284,17 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
             <Form.Control
               type="file"
               name="bannerURL"
-              onChange={(e) => {
-                handleChange(e, "banner")
-              }}
+              accept="image/*"
+              onChange={handleBannerFileChange}
               isInvalid={!!errors.bannerURL}
             />
-            {ele?.bannerURL && <img src={ele?.bannerURL} alt="Banner" className="mt-2 img-fluid rounded" />}
+            {(bannerPreview || form.bannerURL) && (
+              <img
+                src={bannerPreview || form.bannerURL}
+                alt="Banner"
+                className="mt-2 img-fluid rounded"
+              />
+            )}
           </Form.Group>
 
           <Form.Group className="mt-3">
@@ -243,12 +302,18 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
             <Form.Control
               type="file"
               name="heroURL"
-              onChange={(e) => {
-                handleChange(e, "image")
-              }}
+              accept="image/*"
+              onChange={handleHeroFileChange}
               isInvalid={!!errors.heroURL}
             />
-            {ele?.heroURL && <img src={ele?.heroURL} alt="Hero Image" className="mt-2 rounded-circle" width="100" />}
+            {(heroPreview || form.heroURL) && (
+              <img
+                src={heroPreview || form.heroURL}
+                alt="Hero"
+                className="mt-2 rounded-circle"
+                width="100"
+              />
+            )}
           </Form.Group>
 
           <Form.Group className="mt-3">
@@ -256,12 +321,18 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
             <Form.Control
               type="file"
               name="logo"
-              onChange={(e) => {
-                handleChange(e, "logo")
-              }}
+              accept="image/*"
+              onChange={handleLogoFileChange}
               isInvalid={!!errors.logo}
             />
-            {ele?.logo && <img src={ele?.logo} alt="logo" className="mt-2 rounded-circle" width="100" />}
+            {(logoPreview || form.logo) && (
+              <img
+                src={logoPreview || form.logo}
+                alt="Logo"
+                className="mt-2 rounded-circle"
+                width="100"
+              />
+            )}
           </Form.Group>
           <Form.Group className="mt-3">
             <Form.Label>Description</Form.Label>
@@ -337,11 +408,16 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
                     <Form.Label>Section Image</Form.Label>
                     <Form.Control
                       type="file"
-                      name={`sections.${index}.url`}
-                      onChange={handleChange}
+                      name={`sectionUrl_${index}`}
+                      accept="image/*"
+                      onChange={(e) => handleSectionFileChange(e, index)}
                     />
-                    {sectionPreviews[index] && (
-                      <img src={sectionPreviews[index]} alt="Preview" className="mt-2 img-fluid rounded" />
+                    {(sectionPreviews[index] || section.url) && (
+                      <img
+                        src={sectionPreviews[index] || section.url}
+                        alt="Section"
+                        className="mt-2 img-fluid rounded"
+                      />
                     )}
                   </Form.Group>
 

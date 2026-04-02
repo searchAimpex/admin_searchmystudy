@@ -54,41 +54,42 @@ export const deleteMbbsStudy = createAsyncThunk(
     }
 );
 
+
 export const createMbbstudyThunk = createAsyncThunk(
-  'abroad/createMbbstudyThunk',
-  async (abroadData, thunkAPI) => {
+  "countries/createCountry",
+  async (payload, thunkAPI) => {
     try {
-      const response = await fetch("https://searchmystudy.com/api/admin/countries", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(abroadData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData);
-      }
-
-      const data = await response.json();
-      return data;
+      const isFormData = payload instanceof FormData;
+      const response = await axios.post(
+        "http://localhost:5001/api/admin/countries",
+        payload,
+        isFormData
+          ? {}
+          : { headers: { "Content-Type": "application/json" } }
+      );
+      return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
+      const msg =
+        error.response?.data?.message ??
+        error.response?.data ??
+        error.message;
+      return thunkAPI.rejectWithValue(
+        typeof msg === "string" ? msg : msg?.message || "Request failed"
+      );
     }
   }
 );
+
 
 export const updateMbbsStudy = createAsyncThunk(
   'abroad/updateMbbsStudy',  
     async ({ id, data }, thunkAPI) => {
         try {
+        const isFormData = data instanceof FormData;
         const response = await fetch(`https://searchmystudy.com/api/admin/countries/${id}`, {
             method: 'PUT',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
+            headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+            body: isFormData ? data : JSON.stringify(data),
         });
     
         if (!response.ok) {
