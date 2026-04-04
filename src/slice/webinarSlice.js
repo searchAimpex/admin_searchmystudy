@@ -7,31 +7,24 @@ export const createWebinar = createAsyncThunk(
   'blogs/createBlog',
   async (blogData, thunkAPI) => {
     try {
-      console.log("Sending Webinar data:", blogData);
-
+      const isFormData = blogData instanceof FormData;
       const response = await fetch("https://searchmystudy.com/api/admin/webinar", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(blogData),
+        ...(isFormData
+          ? { body: blogData }
+          : {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(blogData),
+            }),
       });
-
-      console.log("Response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error response data:", errorData);
         return thunkAPI.rejectWithValue(errorData);
       }
 
-      const data = await response.json();
-      console.log("Success response data:", data);
-      fetchWebinar();
-      return data;
-
+      return await response.json();
     } catch (error) {
-      console.error("Fetch error:", error);
       return thunkAPI.rejectWithValue(error.message);
     }
   }
@@ -114,15 +107,17 @@ export const deleteWebinarLeads = createAsyncThunk(
 // updateWebinar
 export const updateWebinar = createAsyncThunk(
   'blogs/updateWebinar',
-  async ({id, data}, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue }) => {
     if (!id) {
       return rejectWithValue({ message: "No Webinar ID provided" });
     }
     try {
-      const response = await axios.put(`https://searchmystudy.com/api/admin/webinar/${id}`,data);
-      fetchWebinar();
-      console.log("Update response:", response.data);
-      
+      const isFormData = data instanceof FormData;
+      const response = await axios.put(
+        `http://localhost:5001/api/admin/webinar/${id}`,
+        data,
+        isFormData ? {} : { headers: { 'Content-Type': 'application/json' } }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);

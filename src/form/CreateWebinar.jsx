@@ -1,68 +1,79 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { createWebinar, updateWebinar } from "../slice/webinarSlice";
-import { app } from "../firebase";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import {  toast, ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const storage = getStorage(app);
+const buildWebinarFormData = (form, imageFile) => {
+  const fd = new FormData();
+  fd.append("trainer_name", form.trainer_name ?? "");
+  fd.append("trainer_profession", form.trainer_profession ?? "");
+  fd.append("title", form.title ?? "");
+  fd.append("weekday", form.weekday ?? "");
+  fd.append("date", form.date ?? "");
+  fd.append("timeStart", form.timeStart ?? "");
+  fd.append("timeEnd", form.timeEnd ?? "");
+  if (imageFile) {
+    fd.append("imageURL", imageFile);
+  } else if (form.imageURL) {
+    fd.append("imageURL", form.imageURL);
+  }
+  return fd;
+};
 
-const CreateWebinar = ({ ele, handleClose,fetchData }) => {
+const CreateWebinar = ({ ele, handleClose, fetchData }) => {
   const dispatch = useDispatch();
+  const previewBlobRef = useRef(null);
 
   const [form, setForm] = useState({
     trainer_name: ele?.trainer_name || "",
-    trainer_profession: ele?.trainer_profession || '',
-    title: ele?.title || '',
-    weekday: ele?.weekday || '',
-    date: ele?.date || '',
+    trainer_profession: ele?.trainer_profession || "",
+    title: ele?.title || "",
+    weekday: ele?.weekday || "",
+    date: ele?.date || "",
     timeStart: ele?.timeStart || "",
     timeEnd: ele?.timeEnd || "",
-    imageURL: ele?.imageURL || ''
+    imageURL: ele?.imageURL || "",
   });
 
-  const [uploads, setUploads] = useState({
-    image: { progress: 0, preview: null, name: "", loading: false },
-  });
-
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(ele?.imageURL || "");
   const [errors, setErrors] = useState({});
 
-  // Firebase upload
-  const handleFileChange = (e, field) => {
-    const file = e.target.files[0];
+  const revokeBlobPreview = () => {
+    if (previewBlobRef.current) {
+      URL.revokeObjectURL(previewBlobRef.current);
+      previewBlobRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    revokeBlobPreview();
+    setForm({
+      trainer_name: ele?.trainer_name || "",
+      trainer_profession: ele?.trainer_profession || "",
+      title: ele?.title || "",
+      weekday: ele?.weekday || "",
+      date: ele?.date || "",
+      timeStart: ele?.timeStart || "",
+      timeEnd: ele?.timeEnd || "",
+      imageURL: ele?.imageURL || "",
+    });
+    setImageFile(null);
+    setImagePreview(ele?.imageURL || "");
+  }, [ele]);
+
+  useEffect(() => () => revokeBlobPreview(), []);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const previewURL = URL.createObjectURL(file);
-    setUploads((prev) => ({
-      ...prev,
-      image: { ...prev.image, loading: true, name: file.name, preview: previewURL },
-    }));
-
-    const storageRef = ref(storage, `webinar/${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploads((prev) => ({ ...prev, image: { ...prev.image, progress } }));
-      },
-      (error) => {
-        console.error("Upload error:", error);
-        toast.error("Failed to upload image");
-        setUploads((prev) => ({
-          ...prev,
-          image: { progress: 0, preview: null, name: "", loading: false },
-        }));
-      },
-      async () => {
-        const url = await getDownloadURL(uploadTask.snapshot.ref);
-        setForm((prev) => ({ ...prev, imageURL: url }));
-        setUploads((prev) => ({ ...prev, image: { ...prev.image, loading: false, progress: 100 } }));
-        toast.success("Image uploaded successfully!");
-      }
-    );
+    revokeBlobPreview();
+    const objectUrl = URL.createObjectURL(file);
+    previewBlobRef.current = objectUrl;
+    setImagePreview(objectUrl);
+    setImageFile(file);
   };
 
   const validateForm = () => {
@@ -74,7 +85,9 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
     if (!form.date.trim()) newErrors.date = "Date is required";
     if (!form.timeStart.trim()) newErrors.timeStart = "Start Time is required";
     if (!form.timeEnd.trim()) newErrors.timeEnd = "End Time is required";
-    if (!form.imageURL.trim()) newErrors.imageURL = "Image is required";
+    if (!imageFile && !String(form.imageURL || "").trim()) {
+      newErrors.imageURL = "Image is required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -86,31 +99,28 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
       return;
     }
     try {
-      console.log("Form Data:", form);
+      const formData = buildWebinarFormData(form, imageFile);
 
       if (ele && ele._id) {
-        // Update existing webinar
-        
-        const res = await dispatch(updateWebinar({ id: ele._id, data: form }));
-        
-        console.log(res);
+        const res = await dispatch(updateWebinar({ id: ele._id, data: formData }));
+        console.log(res,"res+++++++++++++++++++++++++++++");
         if (updateWebinar.fulfilled.match(res)) {
-          alert("Webinar updated successfully!");
+          toast.success("Webinar updated successfully!");
           handleClose();
-          fetchData()
+          fetchData?.();
         } else if (updateWebinar.rejected.match(res)) {
-          alert("Failed to update Webinar: " + (res.payload?.message || res.error.message || "Unknown error"));
+          toast.error(
+            "Failed to update Webinar: " + (res.payload?.message || res.error?.message || "Unknown error")
+          );
         }
       } else {
-        const res = await dispatch(createWebinar(form))
-        if (res.type === "blogs/createBlog/fulfilled") {
-          // alert("✅ Webinar created:", res.payload);
-          handleClose()
-          fetchData()
-          // show success toast / redirect
-        } else if (res.type === "blogs/createBlog/rejected") {
-          toast.error("❌ Webinar creation failed:", res.error?.message || "Unknown error");
-          // show error toast
+        const res = await dispatch(createWebinar(formData));
+        if (createWebinar.fulfilled.match(res)) {
+          toast.success("Webinar created");
+          handleClose();
+          fetchData?.();
+        } else if (createWebinar.rejected.match(res)) {
+          toast.error(res.payload?.message || res.error?.message || "Webinar creation failed");
         }
       }
     } catch (error) {
@@ -130,7 +140,6 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
             </div>
 
             <div className="p-4">
-              {/* Trainer Name */}
               <div className="col-12 mb-3">
                 <label className="form-label">Trainer Name</label>
                 <input
@@ -142,7 +151,6 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
                 {errors.trainer_name && <div className="invalid-feedback">{errors.trainer_name}</div>}
               </div>
 
-              {/* Trainer Profession */}
               <div className="col-12 mb-3">
                 <label className="form-label">Trainer Profession</label>
                 <input
@@ -154,7 +162,6 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
                 {errors.trainer_profession && <div className="invalid-feedback">{errors.trainer_profession}</div>}
               </div>
 
-              {/* Title */}
               <div className="col-12 mb-3">
                 <label className="form-label">Title</label>
                 <input
@@ -166,7 +173,6 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
                 {errors.title && <div className="invalid-feedback">{errors.title}</div>}
               </div>
 
-              {/* Weekday */}
               <div className="col-12 mb-3">
                 <label className="form-label">Weekday</label>
                 <input
@@ -178,7 +184,6 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
                 {errors.weekday && <div className="invalid-feedback">{errors.weekday}</div>}
               </div>
 
-              {/* Date */}
               <div className="col-12 mb-3">
                 <label className="form-label">Select Date</label>
                 <input
@@ -190,7 +195,6 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
                 {errors.date && <div className="invalid-feedback">{errors.date}</div>}
               </div>
 
-              {/* Start Time */}
               <div className="col-12 mb-3">
                 <label className="form-label">Start Time</label>
                 <input
@@ -202,7 +206,6 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
                 {errors.timeStart && <div className="invalid-feedback">{errors.timeStart}</div>}
               </div>
 
-              {/* End Time */}
               <div className="col-12 mb-3">
                 <label className="form-label">End Time</label>
                 <input
@@ -214,28 +217,25 @@ const CreateWebinar = ({ ele, handleClose,fetchData }) => {
                 {errors.timeEnd && <div className="invalid-feedback">{errors.timeEnd}</div>}
               </div>
 
-              {/* Image Upload */}
               <div className="col-12 mb-3">
                 <label className="form-label">Upload Image</label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleFileChange(e, "imageURL")}
+                  onChange={handleFileChange}
                   className={`form-control form-control-lg ${errors.imageURL ? "is-invalid" : ""}`}
                 />
                 <p style={{ color: "red" }}>Image Size should be 1200x600 px</p>
 
-                {ele?.imageURL && (
+                {imagePreview && (
                   <div className="mt-2">
-                    <img src={ele?.imageURL} alt="preview" style={{ width: "500px" }} />
-                    <div>Upload Progress: {Math.round(uploads.image.progress)}%</div>
+                    <img src={imagePreview} alt="preview" style={{ maxWidth: "100%", width: 500 }} />
                   </div>
                 )}
-                {errors.imageURL && <div className="invalid-feedback">{errors.imageURL}</div>}
+                {errors.imageURL && <div className="invalid-feedback d-block">{errors.imageURL}</div>}
               </div>
             </div>
 
-            {/* Footer */}
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" onClick={handleClose}>
                 Close

@@ -5,11 +5,7 @@ import "datatables.net-dt";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import {
-  deleteWebinarLeads,
-  fetchWebinar,
-  fetchWebinarLeadss,
-} from "../slice/webinarSlice";
+import { deleteWebinar, fetchWebinar } from "../slice/webinarSlice";
 import CreateWebinar from "../form/CreateWebinar";
 import { toast } from "react-toastify";
 
@@ -17,134 +13,177 @@ const WebinarManager = () => {
   const dispatch = useDispatch();
 
   const [webinars, setwebinars] = useState([]);
+  console.log(webinars,"webinars+++++++++++++++++++++++++++++");
   const [filteredWebinars, setFilteredWebinars] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingWebinar, setEditingWebinar] = useState(null);
 
-  const [filterCountry, setFilterCountry] = useState("");
-  const [filterName, setFilterName] = useState("");
+  const [filterWeekday, setFilterWeekday] = useState("");
+  const [filterSearch, setFilterSearch] = useState("");
 
   const fetchData = async () => {
-    const a = await dispatch(fetchWebinarLeadss());
-    setwebinars(a.payload);
-    setFilteredWebinars(a.payload);
+    const res = await dispatch(fetchWebinar());
+    if (!fetchWebinar.fulfilled.match(res)) {
+      toast.error("Failed to load webinars");
+      setwebinars([]);
+      setFilteredWebinars([]);
+      return;
+    }
+    const payload = res.payload;
+    const list = Array.isArray(payload) ? payload : [];
+    setwebinars(list);
+    setFilteredWebinars(list);
   };
 
   useEffect(() => {
     fetchData();
   }, [dispatch]);
 
-  // ✅ Apply filters
   useEffect(() => {
     let data = [...webinars];
 
-    if (filterCountry) {
+    if (filterWeekday) {
       data = data.filter(
         (item) =>
-          item.country?.toLowerCase() === filterCountry.toLowerCase()
+          String(item.weekday || "")
+            .toLowerCase()
+            .trim() === filterWeekday.toLowerCase().trim()
       );
     }
 
-    if (filterName) {
-      data = data.filter((item) =>
-        item.name?.toLowerCase().includes(filterName.toLowerCase())
-      );
+    if (filterSearch.trim()) {
+      const q = filterSearch.toLowerCase().trim();
+      data = data.filter((item) => {
+        const hay = [
+          item.title,
+          item.trainer_name,
+          item.trainer_profession,
+        ]
+          .map((x) => String(x || "").toLowerCase())
+          .join(" ");
+        return hay.includes(q);
+      });
     }
 
     setFilteredWebinars(data);
-  }, [filterCountry, filterName, webinars]);
+  }, [filterWeekday, filterSearch, webinars]);
 
-  // ✅ DataTable init
   useEffect(() => {
+    if ($.fn.DataTable.isDataTable("#dataTable")) {
+      $("#dataTable").DataTable().destroy();
+    }
     if (filteredWebinars?.length > 0) {
-      if ($.fn.DataTable.isDataTable("#dataTable")) {
-        $("#dataTable").DataTable().destroy();
-      }
-
       $("#dataTable").DataTable({
         paging: true,
         searching: true,
         pageLength: 5,
         lengthMenu: [5, 10, 20, 50],
         columnDefs: [
-          { targets: [1, 3], searchable: true },
           { targets: "_all", searchable: false },
+          { targets: [1, 2, 3, 4], searchable: true },
         ],
+        order: [[5, "desc"]],
       });
     }
   }, [filteredWebinars]);
 
-  // ✅ Checkbox
   const handleCheckboxChange = (id) => {
     setSelectedIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((item) => item !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  // ✅ Delete
   const handleDelete = async () => {
     if (selectedIds.length === 0) {
       toast.warning("Please select at least one webinar to delete.");
       return;
     }
 
-    if (!window.confirm(`Delete ${selectedIds.length} record(s)?`)) return;
+    if (!window.confirm(`Delete ${selectedIds.length} webinar(s)?`)) return;
 
-    await dispatch(deleteWebinarLeads(selectedIds));
-    toast.success("Deleted successfully");
-    setSelectedIds([]);
-    fetchData();
-    dispatch(fetchWebinar());
+    const res = await dispatch(deleteWebinar(selectedIds));
+    if (deleteWebinar.fulfilled.match(res)) {
+      toast.success("Deleted successfully");
+      setSelectedIds([]);
+      fetchData();
+      dispatch(fetchWebinar());
+    } else {
+      const msg =
+        res.payload?.message || res.error?.message || "Delete failed";
+      toast.error(String(msg));
+    }
   };
 
-  // ✅ Download CSV
   const handleDownloadCSV = () => {
     if (!filteredWebinars.length) {
       toast.warning("No data available");
       return;
     }
 
-    const headers = ["Country", "Email", "Name", "Number", "State"];
+    const headers = [
+      "Trainer Name",
+      "Trainer Profession",
+      "Title",
+      "Weekday",
+      "Date",
+      "Time Start",
+      "Time End",
+      "Image URL",
+    ];
 
     const rows = filteredWebinars.map((item) => [
-      item.country,
-      item.email,
-      item.name,
-      item.number,
-      item.state,
+      item.trainer_name,
+      item.trainer_profession,
+      item.title,
+      item.weekday,
+      item.date,
+      item.timeStart,
+      item.timeEnd,
+      item.imageURL,
     ]);
 
     const csv =
       "data:text/csv;charset=utf-8," +
       [headers, ...rows]
-        .map((row) => row.map((v) => `"${v || ""}"`).join(","))
+        .map((row) => row.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
         .join("\n");
 
     const link = document.createElement("a");
     link.href = encodeURI(csv);
-    link.download = "webinar_leads.csv";
+    link.download = "webinars.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const weekdayOptions = [
+    ...new Set(
+      webinars
+        .map((w) => (w.weekday ? String(w.weekday).trim() : ""))
+        .filter(Boolean)
+    ),
+  ].sort();
+
   return (
     <div className="card basic-data-table">
-      <div className="card-header d-flex justify-content-between">
+      <div className="card-header d-flex justify-content-between flex-wrap gap-2">
         <h5 className="card-title mb-0">Webinar Table</h5>
 
         <div>
-          {/* <button
+          <button
+            type="button"
             className="mx-2 btn btn-primary"
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              setEditingWebinar(null);
+              setShowModal(true);
+            }}
           >
             Add Webinar
-          </button> */}
+          </button>
 
           <button
+            type="button"
             className="mx-2 btn btn-danger"
             onClick={handleDelete}
           >
@@ -152,6 +191,7 @@ const WebinarManager = () => {
           </button>
 
           <button
+            type="button"
             className="mx-2 btn btn-success"
             onClick={handleDownloadCSV}
           >
@@ -160,31 +200,28 @@ const WebinarManager = () => {
         </div>
       </div>
 
-      {/* ✅ FILTERS */}
-      <div className="row m-3">
+      <div className="row m-3 g-2">
         <div className="col-md-3">
           <select
             className="form-control"
-            value={filterCountry}
-            onChange={(e) => setFilterCountry(e.target.value)}
+            value={filterWeekday}
+            onChange={(e) => setFilterWeekday(e.target.value)}
           >
-            <option value="">All Countries</option>
-            {[...new Set(webinars?.map((w) => w.country))].map(
-              (country, i) => (
-                <option key={i} value={country}>
-                  {country}
-                </option>
-              )
-            )}
+            <option value="">All weekdays</option>
+            {weekdayOptions.map((day) => (
+              <option key={day} value={day}>
+                {day}
+              </option>
+            ))}
           </select>
         </div>
 
-        <div className="col-md-3">
+        <div className="col-md-4">
           <input
             className="form-control"
-            placeholder="Search by Name"
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
+            placeholder="Search title, trainer name, or profession"
+            value={filterSearch}
+            onChange={(e) => setFilterSearch(e.target.value)}
           />
         </div>
       </div>
@@ -193,18 +230,21 @@ const WebinarManager = () => {
         <table id="dataTable" className="table bordered-table mb-0">
           <thead>
             <tr>
-              <th>Check</th>
-              <th>Country</th>
-              <th>Email</th>
-              <th>Name</th>
-              <th>Number</th>
-              <th>State</th>
+              <th style={{ width: "72px" }}>Check</th>
+              <th>Trainer Name</th>
+              <th>Trainer Profession</th>
+              <th>Title</th>
+              <th>Weekday</th>
+              <th>Date</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Image</th>
               <th>Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredWebinars.map((ele, ind) => (
+            {webinars.map((ele, ind) => (
               <tr key={ele._id}>
                 <td>
                   <input
@@ -214,16 +254,38 @@ const WebinarManager = () => {
                   />{" "}
                   {ind + 1}
                 </td>
-                <td>{ele.country}</td>
-                <td>{ele.email}</td>
-                <td>{ele.name}</td>
-                <td>{ele.number}</td>
-                <td>{ele.state}</td>
+                <td>{ele.trainer_name}</td>
+                <td>{ele.trainer_profession}</td>
+                <td>{ele.title}</td>
+                <td>{ele.weekday}</td>
+                <td>{ele.date}</td>
+                <td>{ele.timeStart}</td>
+                <td>{ele.timeEnd}</td>
+                <td>
+                  {ele.imageURL ? (
+                    <a href={`https://backend.searchmystudy.com/${ele.imageURL}`} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={`https://backend.searchmystudy.com/${ele.imageURL}`}
+                      alt=""
+                      style={{
+                        maxWidth: "96px",
+                        maxHeight: "48px",
+                        objectFit: "cover",
+                        borderRadius: "4px",
+                      }}
+                        />
+                        Click to view
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td>
                   <Link
                     to="#"
                     className="btn btn-sm btn-success"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       setEditingWebinar(ele);
                       setShowModal(true);
                     }}
