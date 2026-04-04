@@ -23,9 +23,14 @@ export const fetchMbbsCourse = createAsyncThunk(
 
 export const createMbbsCourse = createAsyncThunk(
     "mbbs/createMbbsCourse",
-    async(data,thunkAPI)=>{
+    async (data, thunkAPI) => {
         try {
-            const response = await axios.post("https://searchmystudy.com/api/admin/course",data)
+            const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+            const response = await axios.post(
+                "https://searchmystudy.com/api/admin/course",
+                data,
+                isFormData ? {} : undefined
+            );
             toast.success("Course created successfully")
             return response.data
         } catch (error) {
@@ -53,8 +58,13 @@ export const updateMbbsCourse = createAsyncThunk(
   'mbbs/updateMbbsCourse',  
    async ({ id, data }, thunkAPI) => {
     try {
-        const response = await axios.put(`https://searchmystudy.com/api/admin/course/${id}`, data )
-        return response?.data;
+        const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+        const response = await axios.put(
+          `https://searchmystudy.com/api/admin/course/${id}`,
+          data,
+          isFormData ? {} : undefined
+        );
+        return response?.data?.course ?? response?.data;
     } catch (error) {
         return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
     }

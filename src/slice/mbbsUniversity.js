@@ -65,7 +65,7 @@ export const updateMbbsUniversity = createAsyncThunk(
     try {
       const isFormData = data instanceof FormData;
       const response = await axios.put(
-        `http://localhost:5001/api/admin/university/${id}`,
+        `https://searchmystudy.com/api/admin/university/${id}`,
         data,
         isFormData ? {} : { headers: { "Content-Type": "application/json" } }
       );

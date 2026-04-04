@@ -61,7 +61,7 @@ export const createMbbstudyThunk = createAsyncThunk(
     try {
       const isFormData = payload instanceof FormData;
       const response = await axios.post(
-        "http://localhost:5001/api/admin/countries",
+        "https://searchmystudy.com/api/admin/countries",
         payload,
         isFormData
           ? {}

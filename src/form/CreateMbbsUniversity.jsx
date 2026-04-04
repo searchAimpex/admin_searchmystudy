@@ -290,7 +290,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
             />
             {(bannerPreview || form.bannerURL) && (
               <img
-                src={bannerPreview || form.bannerURL}
+                src={`https://backend.searchmystudy.com/${bannerPreview || form.bannerURL}`}
                 alt="Banner"
                 className="mt-2 img-fluid rounded"
               />
@@ -308,7 +308,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
             />
             {(heroPreview || form.heroURL) && (
               <img
-                src={heroPreview || form.heroURL}
+                src={`https://backend.searchmystudy.com/${heroPreview || form.heroURL}`}
                 alt="Hero"
                 className="mt-2 rounded-circle"
                 width="100"
@@ -327,7 +327,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
             />
             {(logoPreview || form.logo) && (
               <img
-                src={logoPreview || form.logo}
+                src={`https://backend.searchmystudy.com/${logoPreview || form.logo}`}
                 alt="Logo"
                 className="mt-2 rounded-circle"
                 width="100"
@@ -414,7 +414,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
                     />
                     {(sectionPreviews[index] || section.url) && (
                       <img
-                        src={sectionPreviews[index] || section.url}
+                        src={`https://backend.searchmystudy.com/${sectionPreviews[index] || section.url}`}  
                         alt="Section"
                         className="mt-2 img-fluid rounded"
                       />

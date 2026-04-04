@@ -128,7 +128,7 @@ const AbroadProvince = () => {
     {
       name: "Image",
       cell: (row) => (
-        <a href={row.heroURL} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row.heroURL}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),
@@ -136,7 +136,7 @@ const AbroadProvince = () => {
     {
       name: "Banner",
       cell: (row) => (
-        <a href={row.bannerURL} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row.bannerURL}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),

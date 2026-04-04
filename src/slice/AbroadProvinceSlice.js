@@ -46,12 +46,17 @@ export const createAbroadProvince = createAsyncThunk(
   'abroad/createAbroadProvince',
   async (abroadData, thunkAPI) => {
     try {
+      const isFormData = abroadData instanceof FormData;
       const response = await fetch("https://searchmystudy.com/api/admin/province", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(abroadData),
+        ...(isFormData
+          ? { body: abroadData }
+          : {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(abroadData),
+            }),
       });
 
       if (!response.ok) {
@@ -88,12 +93,17 @@ export const updateAbroadProvince = createAsyncThunk(
   'abroad/updateAbroadProvince',  
     async ({ id, data }, thunkAPI) => {
         try {
+        const isFormData = data instanceof FormData;
         const response = await fetch(`https://searchmystudy.com/api/admin/province/${id}`, {
             method: 'PUT',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
+            ...(isFormData
+              ? { body: data }
+              : {
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                }),
         });
     
         if (!response.ok) {

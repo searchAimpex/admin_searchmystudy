@@ -59,12 +59,17 @@ export const createAbroadStudyThunk = createAsyncThunk(
   'abroad/createAbroadStudy',
   async (abroadData, thunkAPI) => {
     try {
+      const isFormData = abroadData instanceof FormData;
       const response = await fetch("https://searchmystudy.com/api/admin/countries", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(abroadData),
+        ...(isFormData
+          ? { body: abroadData }
+          : {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(abroadData),
+            }),
       });
 
       if (!response.ok) {
@@ -86,7 +91,7 @@ export const updateAbroadStudy = createAsyncThunk(
     try {
       const isFormData = data instanceof FormData;
       const response = await axios.put(
-        `http://localhost:5001/api/admin/countries/${id}`,
+        `https://searchmystudy.com/api/admin/countries/${id}`,
         data,
         isFormData
           ? {}

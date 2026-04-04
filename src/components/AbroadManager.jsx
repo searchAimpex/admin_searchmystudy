@@ -118,7 +118,7 @@ const AbroadManager = () => {
     {
       name: "Flag",
       cell: row => (
-        <a href={row.flagURL} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row.flagURL}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),
@@ -126,7 +126,7 @@ const AbroadManager = () => {
     {
       name: "Banner",
       cell: row => (
-        <a href={row.bannerURL} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row.bannerURL}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),

@@ -116,7 +116,7 @@ const MbbsUniversityManager = () => {
     {
       name: "Image",
       cell: (row) => (
-        <a href={row.heroURL} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row.heroURL}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),
@@ -124,7 +124,7 @@ const MbbsUniversityManager = () => {
     {
       name: "Banner",
       cell: (row) => (
-        <a href={row.bannerURL} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row.bannerURL}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),
@@ -132,7 +132,7 @@ const MbbsUniversityManager = () => {
     {
       name: "Logo",
       cell: (row) => (
-        <a href={row.logo} target="_blank" rel="noopener noreferrer">
+        <a href={`https://backend.searchmystudy.com/${row.logo}`} target="_blank" rel="noopener noreferrer">
           Click to View
         </a>
       ),

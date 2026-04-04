@@ -11,8 +11,6 @@ import {
   updateMbbsCourse,
 } from "../slice/MbbsCourse.js";
 import TextEditor from "./TextEditor.jsx";
-import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
-import { app } from "../firebase";
 
 const categories = [
   "Arts",
@@ -62,13 +60,27 @@ const level = [
 
 const mode = ["Yearly", "Complete", "Semester"];
 
+/** Course create/update: JSON in `data` + optional brochure file as `broucherURL` (multipart). */
+const buildCourseFormData = (formState, brochureFile) => {
+  const fd = new FormData();
+  const dataPayload = { ...formState };
+  if (brochureFile) {
+    delete dataPayload.broucherURL;
+  }
+  fd.append("data", JSON.stringify(dataPayload));
+  if (brochureFile) {
+    fd.append("broucherURL", brochureFile);
+  }
+  return fd;
+};
+
 const CreateMbbsCourse = ({ ele, handleClose, loadCourse }) => {
   const dispatch = useDispatch();
-  const storage = getStorage(app);
   const { studyMbbs } = useSelector((state) => state.mbbsStudy);
   const { mbbsUniversity } = useSelector((state) => state.mbbsUniversity);
 
   const [broucherPreview, setBroucherPreview] = useState("");
+  const [broucherFile, setBroucherFile] = useState(null);
   const [university, setUniversity] = useState();
   const [loading, setLoading] = useState(false);
   const [currencies, setCurrencies] = useState([]);
@@ -169,23 +181,17 @@ const CreateMbbsCourse = ({ ele, handleClose, loadCourse }) => {
     },
   });
 
-  const uploadImage = async (file) => {
-    const storageRef = ref(storage, `provinces/${Date.now()}-${file.name}`);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    return url;
-  };
-
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 
     if (type === "file") {
       const file = files[0];
       if (file && name === "broucherURL") {
-        const previewURL = URL.createObjectURL(file);
-        setBroucherPreview(previewURL);
-        const imageURL = await uploadImage(file);
-        setForm((prev) => ({ ...prev, broucherURL: imageURL }));
+        setBroucherPreview((prev) => {
+          if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+          return URL.createObjectURL(file);
+        });
+        setBroucherFile(file);
       }
       return;
     }
@@ -236,8 +242,10 @@ const CreateMbbsCourse = ({ ele, handleClose, loadCourse }) => {
         return;
       }
 
+      const payload = buildCourseFormData(form, broucherFile);
+
       if (ele && ele._id) {
-        const res = await dispatch(updateMbbsCourse({ id: ele._id, data: form }));
+        const res = await dispatch(updateMbbsCourse({ id: ele._id, data: payload }));
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("Updated Successfully!")
           loadCourse();
@@ -249,9 +257,7 @@ const CreateMbbsCourse = ({ ele, handleClose, loadCourse }) => {
           toast.error("Network Issue!")
         }
       } else {
-        console.log(form, "-------------------------------");
-
-        const res = await dispatch(createMbbsCourse(form));
+        const res = await dispatch(createMbbsCourse(payload));
         if (createMbbsCourse.fulfilled.match(res)) {
           // toast.success("✅ Course created!");
           loadCourse();
@@ -293,6 +299,14 @@ const CreateMbbsCourse = ({ ele, handleClose, loadCourse }) => {
     };
     data();
   }, [dispatch]);
+
+  useEffect(() => {
+    setBroucherFile(null);
+    setBroucherPreview((prev) => {
+      if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return "";
+    });
+  }, [ele?._id]);
 
   return (
     <Modal show={true} onHide={handleClose} size="lg" centered scrollable>
@@ -396,9 +410,9 @@ const CreateMbbsCourse = ({ ele, handleClose, loadCourse }) => {
               name="broucherURL"
               onChange={handleChange}
             />
-            {broucherPreview && (
+            {(broucherPreview || (!broucherFile && form.broucherURL)) && (
               <img
-                src={broucherPreview}
+                src={broucherPreview || form.broucherURL}
                 alt="broucher"
                 className="mt-2 img-fluid rounded"
               />

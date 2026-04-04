@@ -324,7 +324,7 @@ const CreateMbbsForm = ({ loadAbroadStudy, ele, handleClose }) => {
             />
             {(uploads.banner.preview || form.bannerURL) && (
               <img
-                src={`http://localhost:5001/${uploads.banner.preview || form.bannerURL}`}
+                src={`https://backend.searchmystudy.com/${uploads.banner.preview || form.bannerURL}`}
                 alt="Banner"
                 className="mt-2 img-fluid rounded"
               />
@@ -343,7 +343,7 @@ const CreateMbbsForm = ({ loadAbroadStudy, ele, handleClose }) => {
             />
             {(uploads.flag.preview || form.flagURL) && (
               <img
-                src={`http://localhost:5001/${uploads.flag.preview || form.flagURL}`}
+                src={`https://backend.searchmystudy.com/${uploads.flag.preview || form.flagURL}`}
                 alt="Flag"
                 className="mt-2 rounded-circle"
                 width="100"
@@ -398,7 +398,7 @@ const CreateMbbsForm = ({ loadAbroadStudy, ele, handleClose }) => {
                     />
                     {(sectionPreviews[index] || section.url) && (
                       <img
-                        src={`http://localhost:5001/${sectionPreviews[index] || section.url}`}
+                        src={`https://backend.searchmystudy.com/${sectionPreviews[index] || section.url}`}
                         alt="Section"
                         className="mt-2 img-fluid rounded"
                       />
