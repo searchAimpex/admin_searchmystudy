@@ -114,7 +114,7 @@ export const updateWebinar = createAsyncThunk(
     try {
       const isFormData = data instanceof FormData;
       const response = await axios.put(
-        `http://localhost:5001/api/admin/webinar/${id}`,
+        `https://searchmystudy.com/api/admin/webinar/${id}`,
         data,
         isFormData ? {} : { headers: { 'Content-Type': 'application/json' } }
       );

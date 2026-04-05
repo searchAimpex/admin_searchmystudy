@@ -264,7 +264,7 @@ const WebinarManager = () => {
                 <td>
                   {ele.imageURL ? (
                     <a href={`https://backend.searchmystudy.com/${ele.imageURL}`} target="_blank" rel="noopener noreferrer">
-                    <img
+                    {/* <img
                       src={`https://backend.searchmystudy.com/${ele.imageURL}`}
                       alt=""
                       style={{
@@ -273,7 +273,7 @@ const WebinarManager = () => {
                         objectFit: "cover",
                         borderRadius: "4px",
                       }}
-                        />
+                        /> */}
                         Click to view
                     </a>
                   ) : (
