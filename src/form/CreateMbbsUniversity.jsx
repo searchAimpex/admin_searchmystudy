@@ -295,6 +295,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
                 className="mt-2 img-fluid rounded"
               />
             )}
+            <p className="text-muted text-sm color-red-500">Image should be w-2400px h-700px</p>
           </Form.Group>
 
           <Form.Group className="mt-3">
@@ -306,6 +307,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
               onChange={handleHeroFileChange}
               isInvalid={!!errors.heroURL}
             />
+            <p className="text-muted text-sm color-red-500">Image should be w-400px h-300px</p>
             {(heroPreview || form.heroURL) && (
               <img
                 src={`https://backend.searchmystudy.com/${heroPreview || form.heroURL}`}
@@ -333,6 +335,7 @@ const CreateMbbsUniversity = ({ ele, handleClose, loadUniversity }) => {
                 width="100"
               />
             )}
+            <p className="text-muted text-sm color-red-500">Image should be w-150px h-150px</p>
           </Form.Group>
           <Form.Group className="mt-3">
             <Form.Label>Description</Form.Label>

@@ -4,18 +4,14 @@ import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 import "react-toastify/dist/ReactToastify.css";
 
 // Redux slices
-import { updateStudyCourse } from "../slice/AbroadCourseSlice.js";
+import { createAbroadCourse, updateStudyCourse } from "../slice/AbroadCourseSlice.js";
 import { fetchAbroadUniversity } from "../slice/AbroadUniversitySlice.js";
 import { fetchAbroadStudy } from "../slice/AbroadSlice.js";
 import { fetchAbroadProvince } from "../slice/AbroadProvinceSlice.js";
-import { createMbbsCourse } from "../slice/MbbsCourse.js";
 
 // Custom editor
 import TextEditor from "./TextEditor.jsx";
 
-// Firebase imports for file upload
-import { ref, uploadBytes, getDownloadURL, getStorage } from "firebase/storage";
-import { app } from "../firebase";
 import { toast, ToastContainer } from "react-toastify";
 
 const categories = [
@@ -66,9 +62,35 @@ const level = [
 
 const mode = ["Yearly", "Complete", "Semester"];
 
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+const getAssetUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  if (/^(https?:)?\/\//i.test(value) || value.startsWith("blob:")) return value;
+  return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+};
+
+const buildCourseFormData = (formState, brochureFile) => {
+  const fd = new FormData();
+  const dataPayload = {
+    ...formState,
+    Province: formState.Province && formState.Province !== "" ? formState.Province : null,
+  };
+
+  if (brochureFile) {
+    delete dataPayload.broucherURL;
+  }
+
+  fd.append("data", JSON.stringify(dataPayload));
+  if (brochureFile) {
+    fd.append("broucherURL", brochureFile, brochureFile.name);
+  }
+
+  return fd;
+};
+
 const CreateAbroadCourse = ({ ele, handleClose, loadCourse }) => {
   const dispatch = useDispatch();
-  const storage = getStorage(app);
 
   const [errors, setErrors] = useState({});
   const [university, setUniversity] = useState([]);
@@ -77,6 +99,7 @@ const CreateAbroadCourse = ({ ele, handleClose, loadCourse }) => {
   const [currencies, setCurrencies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [broucherPreview, setBroucherPreview] = useState("");
+  const [broucherFile, setBroucherFile] = useState(null);
 
   const [form, setForm] = useState({
     ProgramName: ele?.ProgramName || "",
@@ -185,26 +208,11 @@ const CreateAbroadCourse = ({ ele, handleClose, loadCourse }) => {
     setErrors((prev) => ({ ...prev, Eligibility: "" }));
   };
 
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = (file) => {
     if (!file) return;
-
-    try {
-      setLoading(true);
-      const fileName = `brochures/${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, fileName);
-
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-
-      setForm(prev => ({ ...prev, broucherURL: downloadURL }));
-      setBroucherPreview(downloadURL);
-      toast.success("Brochure uploaded successfully!");
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      toast.error("Failed to upload brochure");
-    } finally {
-      setLoading(false);
-    }
+    setBroucherFile(file);
+    setBroucherPreview(URL.createObjectURL(file));
+    setForm((prev) => ({ ...prev, broucherURL: prev.broucherURL }));
   };
 
   const handleIntakeChange = (idx, field, value) => {
@@ -250,15 +258,10 @@ const CreateAbroadCourse = ({ ele, handleClose, loadCourse }) => {
         return;
       }
 
-      const payload = {
-        ...form,
-        Province: form.Province && form.Province !== "" ? form.Province : null,
-      };
+      const payload = buildCourseFormData(form, broucherFile);
 
       let res;
       if (ele && ele._id) {
-        console.log(payload);
-
         res = await dispatch(updateStudyCourse({ id: ele._id, data: payload }));
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("✅ Course updated!");
@@ -274,9 +277,7 @@ const CreateAbroadCourse = ({ ele, handleClose, loadCourse }) => {
           );
         }
       } else {
-        // console.log(payload, "++++++++++++++++++++++++++++++");
-
-        const res = await dispatch(createMbbsCourse(payload));
+        const res = await dispatch(createAbroadCourse(payload));
 
         if (res?.meta?.requestStatus === "fulfilled") {
           toast.success("✅ Course created!");
@@ -440,6 +441,7 @@ const CreateAbroadCourse = ({ ele, handleClose, loadCourse }) => {
       if (ele?.broucherURL) {
         setBroucherPreview(ele.broucherURL);
       }
+      setBroucherFile(null);
     }
   }, [ele]);
 
@@ -566,9 +568,15 @@ const CreateAbroadCourse = ({ ele, handleClose, loadCourse }) => {
                 }
               }}
             />
-            {form.broucherURL && (
-              <small className="text-muted">
-                Brochure uploaded: {form.broucherURL.split('/').pop()}
+            {(broucherPreview || form.broucherURL) && (
+              <small className="text-muted d-block">
+                <a
+                  href={getAssetUrl(broucherPreview || form.broucherURL)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Brochure uploaded: {broucherFile?.name || (form.broucherURL || "").split('/').pop()}
+                </a>
               </small>
             )}
           </Form.Group>

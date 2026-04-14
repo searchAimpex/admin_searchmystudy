@@ -15,7 +15,15 @@ import { updateAbroadStudy } from "../slice/AbroadSlice";
 import TextEditor from "./TextEditor";
 import { createMbbstudyThunk } from "../slice/MbbsSlice";
 
-/** `url` in JSON is a server path; empty when a new file is sent as `sectionUrl_${i}` (multer saves to upload/). */
+const BACKEND_ASSET_BASE = "https://backend.searchmystudy.com";
+
+const getAssetUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  if (value.startsWith("blob:") || /^https?:\/\//i.test(value)) return value;
+  return `${BACKEND_ASSET_BASE}/${value.replace(/^\/+/, "")}`;
+};
+
+/** `url` in JSON is a server path; empty when a new file is sent as `sections[${i}].url` (multer saves to upload/). */
 function sectionUrlForPayload(sec, index, sectionFiles) {
   if (sectionFiles[index]) return "";
   const u = sec.url ?? "";
@@ -23,10 +31,6 @@ function sectionUrlForPayload(sec, index, sectionFiles) {
   return u;
 }
 
-/**
- * Multipart: text + sections/faq JSON + files bannerURL, flagURL, sectionUrl_0, sectionUrl_1, …
- * Backend must list those file field names in multer .fields() — see countries-multer.example.js
- */
 function mbbsFormToFormData(form, sectionFiles = []) {
   const fd = new FormData();
 
@@ -74,6 +78,12 @@ function mbbsFormToFormData(form, sectionFiles = []) {
   } else if (flagStr !== "") {
     fd.append("flagURL", flagStr);
   }
+
+  sectionFiles.forEach((file, index) => {
+    if (file) {
+      fd.append(`sections[${index}].url`, file, file.name);
+    }
+  });
 
   return fd;
 }
@@ -324,7 +334,7 @@ const CreateMbbsForm = ({ loadAbroadStudy, ele, handleClose }) => {
             />
             {(uploads.banner.preview || form.bannerURL) && (
               <img
-                src={`https://backend.searchmystudy.com/${uploads.banner.preview || form.bannerURL}`}
+                src={getAssetUrl(uploads.banner.preview || form.bannerURL)}
                 alt="Banner"
                 className="mt-2 img-fluid rounded"
               />
@@ -343,7 +353,7 @@ const CreateMbbsForm = ({ loadAbroadStudy, ele, handleClose }) => {
             />
             {(uploads.flag.preview || form.flagURL) && (
               <img
-                src={`https://backend.searchmystudy.com/${uploads.flag.preview || form.flagURL}`}
+                src={getAssetUrl(uploads.flag.preview || form.flagURL)}
                 alt="Flag"
                 className="mt-2 rounded-circle"
                 width="100"
@@ -398,7 +408,7 @@ const CreateMbbsForm = ({ loadAbroadStudy, ele, handleClose }) => {
                     />
                     {(sectionPreviews[index] || section.url) && (
                       <img
-                        src={`https://backend.searchmystudy.com/${sectionPreviews[index] || section.url}`}
+                        src={getAssetUrl(sectionPreviews[index] || section.url)}
                         alt="Section"
                         className="mt-2 img-fluid rounded"
                       />

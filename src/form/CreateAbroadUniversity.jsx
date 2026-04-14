@@ -284,6 +284,7 @@ const CreateAbroadUniversity = ({ ele, handleClose, loadUniversity }) => {
             {(bannerPreview || form.bannerURL) && (
               <img src={getAssetUrl(bannerPreview || form.bannerURL)} alt="Banner" className="mt-2 img-fluid rounded" />
             )}
+            <p className="text-muted text-sm color-red-500">Image should be w-2400px h-700px</p>
           </Form.Group>
 
           <Form.Group className="mt-3">
@@ -292,6 +293,7 @@ const CreateAbroadUniversity = ({ ele, handleClose, loadUniversity }) => {
             {(heroPreview || form.heroURL) && (
               <img src={getAssetUrl(heroPreview || form.heroURL)} alt="Hero" className="mt-2 rounded-circle" width="100" />
             )}
+            <p className="text-muted text-sm color-red-500">Image should be w-400px h-300px</p>
           </Form.Group>
 
           <Form.Group className="mt-3">
@@ -300,6 +302,7 @@ const CreateAbroadUniversity = ({ ele, handleClose, loadUniversity }) => {
             {(logoPreview || form.logo) && (
               <img src={getAssetUrl(logoPreview || form.logo)} alt="Logo" className="mt-2 rounded-circle" width="100" />
             )}
+            <p className="text-muted text-sm color-red-500">Image should be w-150px h-150px</p>
           </Form.Group>
 
           <Form.Group className="mt-3">

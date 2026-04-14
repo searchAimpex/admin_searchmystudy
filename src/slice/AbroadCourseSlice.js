@@ -44,7 +44,12 @@ export const createAbroadCourse = createAsyncThunk(
   'abroad/createAbroadCourse',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axios.post("https://searchmystudy.com/api/admin/course", data);
+      const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+      const response = await axios.post(
+        "https://searchmystudy.com/api/admin/course",
+        data,
+        isFormData ? {} : undefined
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -58,21 +63,17 @@ export const updateStudyCourse = createAsyncThunk(
   'abroad/updateStudyCourse',  
    async ({ id, data }, thunkAPI) => {
     try {
-        const response = await fetch(`https://searchmystudy.com/api/admin/course/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            return thunkAPI.rejectWithValue(errorData);
-        }
-
-        const updatedData = await response.json();
-        return updatedData;
+        const isFormData = typeof FormData !== "undefined" && data instanceof FormData;
+        const response = await axios.put(
+          `https://searchmystudy.com/api/admin/course/${id}`,
+          data,
+          isFormData ? {} : { headers: { "Content-Type": "application/json" } }
+        );
+        return response?.data?.course ?? response?.data;
     } catch (error) {
-        return thunkAPI.rejectWithValue(error.message || 'Something went wrong');
+        return thunkAPI.rejectWithValue(
+          error.response?.data?.message || error.message || 'Something went wrong'
+        );
     }
 }
 
